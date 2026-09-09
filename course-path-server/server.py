@@ -13,8 +13,10 @@ from mcp.server.fastmcp import FastMCP
 
 from schemas.common import error_response, success_response
 from schemas.course_path_plan import CoursePathInput, CoursePathRuleError
+from schemas.curriculum_extract import CurriculumExtractError, CurriculumExtractInput
 from tools.course_path_rules import build_course_path_data, load_course_catalog
 from tools.catalog_validate import validate_catalog
+from tools.curriculum_extract import extract_catalog_draft
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -68,6 +70,39 @@ def handle_catalog_validate(catalog: dict[str, Any]) -> dict[str, Any]:
     return success_response(result, warnings=result["warnings"], meta=meta)
 
 
+def handle_curriculum_extract(payload: dict[str, Any]) -> dict[str, Any]:
+    """Build a draft catalog from table text and return its validation result."""
+    started_at = time.perf_counter()
+    meta = {"tool": "curriculum_extract", "request_id": uuid4().hex}
+    try:
+        input_data = CurriculumExtractInput.from_payload(payload)
+        catalog = extract_catalog_draft(input_data)
+        validation = validate_catalog(catalog)
+        meta["elapsed_ms"] = round((time.perf_counter() - started_at) * 1000)
+        return success_response(
+            {"catalog": catalog, "validation": validation},
+            sources=[
+                {
+                    "document": input_data.document,
+                    "section": None,
+                    "page": None,
+                    "content": None,
+                    "chunk_index": None,
+                    "score": None,
+                }
+            ],
+            warnings=validation["warnings"],
+            meta=meta,
+        )
+    except CurriculumExtractError as error:
+        meta["elapsed_ms"] = round((time.perf_counter() - started_at) * 1000)
+        return error_response(error.code, error.message, details=error.details, meta=meta)
+    except Exception:
+        logger.exception("curriculum_extract failed")
+        meta["elapsed_ms"] = round((time.perf_counter() - started_at) * 1000)
+        return error_response("INTERNAL_ERROR", "内部错误", meta=meta)
+
+
 @mcp.tool()
 async def course_path_plan(
     major: str,
@@ -98,6 +133,32 @@ async def course_path_plan(
 async def catalog_validate(catalog: dict[str, Any]) -> dict[str, Any]:
     """Validate a course catalog draft without publishing it or modifying files."""
     return handle_catalog_validate(catalog)
+
+
+@mcp.tool()
+async def curriculum_extract(
+    document: str,
+    major: str,
+    cohort: str,
+    version: str,
+    course_table_tsv: str,
+    catalog_id: str | None = None,
+) -> dict[str, Any]:
+    """Convert extracted TSV curriculum-table text into a validated draft catalog.
+
+    This tool does not parse PDF or image files directly. OCR or manual table
+    extraction must provide the TSV text with the documented header columns.
+    """
+    return handle_curriculum_extract(
+        {
+            "document": document,
+            "major": major,
+            "cohort": cohort,
+            "version": version,
+            "course_table_tsv": course_table_tsv,
+            "catalog_id": catalog_id,
+        }
+    )
 
 
 def main() -> None:

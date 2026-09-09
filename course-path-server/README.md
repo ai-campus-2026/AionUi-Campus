@@ -132,6 +132,34 @@ Use this tool before review and publication. A `draft` or `mock` catalog can
 be structurally valid, but it still produces a not-verified warning and must
 not be treated as a formal curriculum source.
 
+## Curriculum extraction draft
+
+`curriculum_extract` converts an already extracted tab-separated table into a
+`draft` catalog and validates it immediately. This first version deliberately
+does not open PDF or image files and does not call an OCR or LLM provider.
+
+The `course_table_tsv` value must use a header row followed by one row per
+course. The required columns are:
+
+```text
+course_code  course_name  credits  semester  category  prerequisites  page  section
+```
+
+Columns are separated by tab characters. Multiple prerequisite codes in one
+row use `|`; an empty prerequisite field means that the course has none.
+
+Example table text:
+
+```text
+course_code	course_name	credits	semester	category	prerequisites	page	section
+SE101	程序设计基础	3	1	专业基础课		1	课程设置
+SE201	数据结构	4	2	专业核心课	SE101	2	课程设置
+```
+
+The tool returns the unpublished catalog in `data.catalog` and its diagnostics
+in `data.validation`. It always marks generated data as `draft`; a separate,
+human-approved publication step is required before formal planning use.
+
 ## Known limitations
 
 - The MVP checks prerequisite relationships and basic recommendations only.
