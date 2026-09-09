@@ -18,10 +18,13 @@ from schemas.common import error_response, success_response
 from server import handle_course_path_plan
 from server import handle_catalog_validate
 from server import handle_curriculum_extract
+from server import handle_catalog_review
 from tools.course_path_rules import build_course_path_data, load_course_catalog
 from tools.catalog_validate import validate_catalog
 from tools.curriculum_extract import extract_catalog_draft
 from schemas.curriculum_extract import CurriculumExtractError, CurriculumExtractInput
+from schemas.catalog_review import CatalogReviewError, CatalogReviewInput
+from tools.catalog_review import review_catalog
 
 
 CATALOG_PATH = PROJECT_ROOT / "data" / "course_catalog.json"
@@ -303,6 +306,7 @@ def test_server_exposes_and_calls_the_tool_over_stdio() -> None:
                     "course_path_plan",
                     "catalog_validate",
                     "curriculum_extract",
+                    "catalog_review",
                 }
 
                 result = await session.call_tool(
@@ -334,6 +338,14 @@ def test_server_exposes_and_calls_the_tool_over_stdio() -> None:
                 assert extraction_result.isError is False
                 assert extraction_result.structuredContent is not None
                 assert extraction_result.structuredContent["data"]["validation"]["valid"] is True
+
+                review_result = await session.call_tool(
+                    "catalog_review",
+                    arguments={"catalog": load_catalog(), "model_review": _model_review()},
+                )
+                assert review_result.isError is False
+                assert review_result.structuredContent is not None
+                assert review_result.structuredContent["data"]["auto_verified"] is True
 
     anyio.run(call_tool)
 
@@ -428,3 +440,75 @@ def test_curriculum_extract_returns_a_shared_error_for_invalid_table_text() -> N
     assert response["ok"] is False
     assert response["error"]["code"] == "INVALID_ARGUMENT"
     assert response["meta"]["tool"] == "curriculum_extract"
+
+
+def _model_review() -> dict[str, object]:
+    return {"model": "reviewer-test", "overall_confidence": 0.95, "findings": []}
+
+
+def test_catalog_review_auto_verifies_a_clean_high_confidence_catalog() -> None:
+    result = review_catalog(CatalogReviewInput(catalog=load_catalog(), model_review=_model_review()))
+
+    assert result["auto_verified"] is True
+    assert result["review_status"] == "AUTO_VERIFIED"
+    assert result["catalog"]["data_status"] == "auto_verified"
+    assert "CATALOG_AUTO_VERIFIED_NOT_OFFICIAL" in result["warnings"]
+
+
+def test_catalog_review_refuses_auto_verification_for_low_confidence() -> None:
+    model_review = _model_review()
+    model_review["overall_confidence"] = 0.89
+
+    result = review_catalog(CatalogReviewInput(catalog=load_catalog(), model_review=model_review))
+
+    assert result["auto_verified"] is False
+    assert result["review_status"] == "REVIEW_FAILED"
+    assert "MODEL_REVIEW_CONFIDENCE_LOW" in result["warnings"]
+
+
+def test_catalog_review_refuses_auto_verification_for_blocking_finding() -> None:
+    model_review = _model_review()
+    model_review["findings"] = [
+        {
+            "code": "PREREQUISITE_UNCLEAR",
+            "message": "原文未确认 SE401 的先修关系",
+            "severity": "blocking",
+            "course_code": "SE401",
+            "field": "prerequisites",
+            "evidence": {"page": 4, "content": "先修关系待确认"},
+        }
+    ]
+
+    result = review_catalog(CatalogReviewInput(catalog=load_catalog(), model_review=model_review))
+
+    assert result["auto_verified"] is False
+    assert "MODEL_REVIEW_BLOCKING_FINDINGS" in result["warnings"]
+
+
+def test_catalog_review_requires_a_structured_model_report() -> None:
+    with pytest.raises(CatalogReviewError) as error:
+        review_catalog(
+            CatalogReviewInput(
+                catalog=load_catalog(),
+                model_review={"model": "reviewer-test", "overall_confidence": 0.95, "findings": "none"},
+            )
+        )
+
+    assert error.value.details["reason"] == "findings_must_be_list"
+
+
+def test_catalog_review_returns_model_required_without_a_model_result() -> None:
+    result = review_catalog(CatalogReviewInput(catalog=load_catalog()))
+
+    assert result["auto_verified"] is False
+    assert result["review_status"] == "MODEL_REVIEW_REQUIRED"
+
+
+def test_catalog_review_returns_a_shared_error_for_invalid_model_review() -> None:
+    response = handle_catalog_review(
+        {"catalog": load_catalog(), "model_review": {"model": "reviewer-test", "overall_confidence": 1.2, "findings": []}}
+    )
+
+    assert response["ok"] is False
+    assert response["error"]["code"] == "INVALID_ARGUMENT"
+    assert response["meta"]["tool"] == "catalog_review"

@@ -14,9 +14,11 @@ from mcp.server.fastmcp import FastMCP
 from schemas.common import error_response, success_response
 from schemas.course_path_plan import CoursePathInput, CoursePathRuleError
 from schemas.curriculum_extract import CurriculumExtractError, CurriculumExtractInput
+from schemas.catalog_review import CatalogReviewError, CatalogReviewInput
 from tools.course_path_rules import build_course_path_data, load_course_catalog
 from tools.catalog_validate import validate_catalog
 from tools.curriculum_extract import extract_catalog_draft
+from tools.catalog_review import review_catalog
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -43,7 +45,7 @@ def handle_course_path_plan(payload: dict[str, Any]) -> dict[str, Any]:
         result = build_course_path_data(input_data, load_course_catalog(CATALOG_PATH))
         sources = result.pop("sources", [])
         warnings = result.pop("warnings", [])
-        if result.get("data_status") != "verified":
+        if result.get("data_status") not in {"verified", "official"}:
             warnings.append("COURSE_CATALOG_NOT_VERIFIED")
         meta["elapsed_ms"] = round((time.perf_counter() - started_at) * 1000)
         return success_response(result, sources=sources, warnings=warnings, meta=meta)
@@ -99,6 +101,23 @@ def handle_curriculum_extract(payload: dict[str, Any]) -> dict[str, Any]:
         return error_response(error.code, error.message, details=error.details, meta=meta)
     except Exception:
         logger.exception("curriculum_extract failed")
+        meta["elapsed_ms"] = round((time.perf_counter() - started_at) * 1000)
+        return error_response("INTERNAL_ERROR", "内部错误", meta=meta)
+
+
+def handle_catalog_review(payload: dict[str, Any]) -> dict[str, Any]:
+    """Decide whether a model-reviewed catalog can be auto-verified."""
+    started_at = time.perf_counter()
+    meta = {"tool": "catalog_review", "request_id": uuid4().hex}
+    try:
+        result = review_catalog(CatalogReviewInput.from_payload(payload))
+        meta["elapsed_ms"] = round((time.perf_counter() - started_at) * 1000)
+        return success_response(result, warnings=result["warnings"], meta=meta)
+    except CatalogReviewError as error:
+        meta["elapsed_ms"] = round((time.perf_counter() - started_at) * 1000)
+        return error_response(error.code, error.message, details=error.details, meta=meta)
+    except Exception:
+        logger.exception("catalog_review failed")
         meta["elapsed_ms"] = round((time.perf_counter() - started_at) * 1000)
         return error_response("INTERNAL_ERROR", "内部错误", meta=meta)
 
@@ -159,6 +178,19 @@ async def curriculum_extract(
             "catalog_id": catalog_id,
         }
     )
+
+
+@mcp.tool()
+async def catalog_review(
+    catalog: dict[str, Any],
+    model_review: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Apply deterministic release rules to a structured model-review result.
+
+    A provider adapter must supply model_review as JSON. This tool does not
+    accept free-form model prose and never writes the reviewed catalog to disk.
+    """
+    return handle_catalog_review({"catalog": catalog, "model_review": model_review})
 
 
 def main() -> None:

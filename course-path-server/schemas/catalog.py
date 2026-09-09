@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Literal, NotRequired, TypedDict
 
 
-CatalogStatus = Literal["draft", "verified", "mock"]
+CatalogStatus = Literal["draft", "auto_verified", "verified", "official", "mock"]
 
 CATALOG_REQUIRED_FIELDS = (
     "catalog_id",
@@ -59,3 +59,4 @@ class CourseCatalog(TypedDict):
     extraction_method: NotRequired[str]
     reviewed_by: NotRequired[str]
     reviewed_at: NotRequired[str]
+    review_summary: NotRequired[dict[str, object]]
