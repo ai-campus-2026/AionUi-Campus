@@ -32,7 +32,7 @@ def _validate_catalog_fields(catalog: Mapping[str, Any], errors: list[dict[str, 
         if value is None or (isinstance(value, str) and not value.strip()):
             _add_error(errors, "CATALOG_FIELD_REQUIRED", f"catalog.{field}", {"field": field})
 
-    if catalog.get("data_status") not in {"draft", "verified", "mock"}:
+    if catalog.get("data_status") not in {"draft", "auto_verified", "verified", "official", "mock"}:
         _add_error(errors, "CATALOG_STATUS_INVALID", "catalog.data_status", {"value": catalog.get("data_status")})
 
     if not isinstance(catalog.get("courses"), list):
@@ -134,7 +134,7 @@ def _validate_prerequisite_cycles(course_index: Mapping[str, dict[str, Any]], er
 
 def _warn_on_catalog_status(catalog: Mapping[str, Any], warnings: list[str]) -> None:
     status = catalog.get("data_status")
-    if status != "verified":
+    if status not in {"verified", "official"}:
         warnings.append(f"CATALOG_NOT_VERIFIED:{status}")
 
 

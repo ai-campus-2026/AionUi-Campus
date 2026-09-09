@@ -45,7 +45,8 @@ Run the focused test suite from `course-path-server/`:
 npx @modelcontextprotocol/inspector .\.venv\Scripts\python.exe server.py
 ```
 
-Inspector should list `course_path_plan` and `catalog_validate`.
+Inspector should list `course_path_plan`, `catalog_validate`,
+`curriculum_extract`, and `catalog_review`.
 
 `catalog_validate` is a read-only administrative tool for checking
 an extracted or manually entered catalog draft. It never publishes or writes a
@@ -118,8 +119,9 @@ semester, category, prerequisites, page/section
 
 The current catalog is a public-style mock dataset marked with
 `"data_status": "mock"`. It is suitable for development and tests only. A
-team-confirmed curriculum document must be reviewed and published as a
-`verified` catalog before the tool is used for formal academic conclusions.
+catalog can become `auto_verified` only after successful structural validation
+and a passing structured model review; that state is still returned with an
+explicit non-official warning.
 
 ## Catalog validation
 
@@ -128,7 +130,7 @@ team-confirmed curriculum document must be reviewed and published as a
 `warnings`. It checks required fields, duplicate course codes, prerequisite
 references, prerequisite cycles, and prerequisite semester ordering.
 
-Use this tool before review and publication. A `draft` or `mock` catalog can
+Use this tool before automatic model review. A `draft` or `mock` catalog can
 be structurally valid, but it still produces a not-verified warning and must
 not be treated as a formal curriculum source.
 
@@ -157,13 +159,39 @@ SE201	数据结构	4	2	专业核心课	SE101	2	课程设置
 ```
 
 The tool returns the unpublished catalog in `data.catalog` and its diagnostics
-in `data.validation`. It always marks generated data as `draft`; a separate,
-human-approved publication step is required before formal planning use.
+in `data.validation`. It always marks generated data as `draft`.
+
+## Automatic catalog review
+
+`catalog_review` is the automatic decision layer after a vision/OCR model has
+reviewed an extracted catalog against its source document. It combines the
+deterministic validation result with a structured model report. It never
+accepts unstructured prose as a decision and never writes a catalog to disk.
+
+A model report has this shape:
+
+```json
+{
+  "model": "configured-vision-reviewer",
+  "overall_confidence": 0.95,
+  "findings": []
+}
+```
+
+Each finding has `code`, `message`, `severity` (`low`, `medium`, `high`, or
+`blocking`), optional `course_code` and `field`, and optional source evidence.
+The catalog becomes `auto_verified` only when structural validation succeeds,
+there are no high/blocking findings, and `overall_confidence` is at least
+`0.90`. `auto_verified` is still not an official school publication and
+therefore returns an explicit warning.
+
+This phase defines and tests the safe decision boundary; it does not yet call a
+specific model provider. A subsequent provider adapter will send the PDF/image
+and draft to the team-selected vision model, then pass its JSON report here.
 
 ## Known limitations
 
 - The MVP checks prerequisite relationships and basic recommendations only.
 - It does not create an optimal multi-semester schedule or complex What-if
   plans.
-- It does not parse PDF or image files directly; those sources must be
-  reviewed and transformed into a structured course catalog first.
+- It does not parse PDF or image files directly or call a model provider yet.
