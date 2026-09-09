@@ -16,7 +16,9 @@ from schemas.course_path_plan import CoursePathInput, CoursePathRuleError
 from schemas.catalog import CATALOG_REQUIRED_FIELDS, COURSE_REQUIRED_FIELDS
 from schemas.common import error_response, success_response
 from server import handle_course_path_plan
+from server import handle_catalog_validate
 from tools.course_path_rules import build_course_path_data, load_course_catalog
+from tools.catalog_validate import validate_catalog
 
 
 CATALOG_PATH = PROJECT_ROOT / "data" / "course_catalog.json"
@@ -294,7 +296,7 @@ def test_server_exposes_and_calls_the_tool_over_stdio() -> None:
             async with ClientSession(read_stream, write_stream) as session:
                 await session.initialize()
                 tools = await session.list_tools()
-                assert [tool.name for tool in tools.tools] == ["course_path_plan"]
+                assert {tool.name for tool in tools.tools} == {"course_path_plan", "catalog_validate"}
 
                 result = await session.call_tool(
                     "course_path_plan",
@@ -310,4 +312,59 @@ def test_server_exposes_and_calls_the_tool_over_stdio() -> None:
                 assert result.structuredContent["ok"] is True
                 assert result.structuredContent["data"]["basic_advice"]["status"] == "NOT_ELIGIBLE"
 
+                validation_result = await session.call_tool(
+                    "catalog_validate",
+                    arguments={"catalog": load_catalog()},
+                )
+                assert validation_result.isError is False
+                assert validation_result.structuredContent is not None
+                assert validation_result.structuredContent["data"]["valid"] is True
+
     anyio.run(call_tool)
+
+
+def test_catalog_validation_accepts_the_current_mock_catalog() -> None:
+    result = validate_catalog(load_catalog())
+
+    assert result["valid"] is True
+    assert result["course_count"] == 7
+    assert result["errors"] == []
+    assert "CATALOG_NOT_VERIFIED:mock" in result["warnings"]
+
+
+def test_catalog_validation_rejects_duplicate_course_codes() -> None:
+    catalog = deepcopy(load_catalog())
+    catalog["courses"].append(deepcopy(catalog["courses"][0]))
+
+    result = validate_catalog(catalog)
+
+    assert result["valid"] is False
+    assert any(error["code"] == "COURSE_CODE_DUPLICATE" for error in result["errors"])
+
+
+def test_catalog_validation_rejects_unknown_prerequisites() -> None:
+    catalog = deepcopy(load_catalog())
+    catalog["courses"][0]["prerequisites"] = ["MISSING"]
+
+    result = validate_catalog(catalog)
+
+    assert result["valid"] is False
+    assert any(error["code"] == "PREREQUISITE_NOT_FOUND" for error in result["errors"])
+
+
+def test_catalog_validation_rejects_prerequisite_cycles() -> None:
+    catalog = deepcopy(load_catalog())
+    catalog["courses"][0]["prerequisites"] = ["SE201"]
+
+    result = validate_catalog(catalog)
+
+    assert result["valid"] is False
+    assert any(error["code"] == "PREREQUISITE_CYCLE" for error in result["errors"])
+
+
+def test_catalog_validation_returns_the_shared_response_envelope() -> None:
+    response = handle_catalog_validate(load_catalog())
+
+    assert response["ok"] is True
+    assert response["data"]["valid"] is True
+    assert response["meta"]["tool"] == "catalog_validate"
