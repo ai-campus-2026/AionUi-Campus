@@ -1,7 +1,9 @@
 """RAG MCP Server - 通过 MCP 协议向 Agent 暴露知识库检索能力
 
 本 server 是检索型 (retrieval-only) 工具: 只负责返回相关文档块
-(text + 来源 + 页码 + 相似度分数)，答案由调用方 Agent 自己的 LLM 生成。
+(text + 来源 + 页码 + 重排序/向量分数)，答案由调用方 Agent 自己的 LLM 生成。
+
+检索采用两阶段架构: 混合召回（向量 + BM25 经 RRF 融合）-> gte-rerank-v2 精排。
 
 注意: stdio 模式下 stdout 是 JSON-RPC 协议通道，任何 print 都会污染协议流，
 因此这里统一使用 logging 输出到 stderr。
@@ -70,13 +72,23 @@ async def load_document(file_path: str) -> str:
 
 @mcp.tool()
 async def search(question: str, top_k: int | None = None) -> str:
-    """在知识库中检索与问题最相关的文档块（向量语义检索）。
+    """在知识库中检索与问题最相关的文档块（两阶段：混合召回 + 重排序精排）。
+
+    检索流程：向量语义召回 + BM25 关键词召回经 RRF 融合后，再由 DashScope
+    gte-rerank-v2 重排序模型按真实相关性精排。BM25 一路专门补足精确 token 检索
+    （文号如「重邮〔2024〕15号」、条款号如「第五条」、数字阈值如「425分」），
+    这些是纯向量检索的弱项。
 
     返回 JSON: results 数组，每项含 text(文档块原文)、source(来源文件路径)、
-    page(页码, 1-based，仅 PDF 有，其他格式为 null)、similarity(相似度 0~1)、chunk_index。
+    page(页码, 1-based，仅 PDF 有，其他格式为 null)、rerank_score(重排序相关性
+    0~1，主要判分依据)、vector_similarity(向量余弦 0~1，辅助参考)、chunk_index。
 
-    相似度低于阈值的结果已被过滤。若 results 为空且响应含 best_similarity 与 hint 字段，
-    说明知识库非空但没有与问题相关的内容（hint 中给出了最高候选相似度），
+    响应中的 rerank_applied 字段标识精排是否生效：若为 false，说明重排序服务
+    调用失败已降级为纯向量/BM25 排序，结果可信度较低，此时应优先信任
+    vector_similarity 并在回答中谨慎表述（rerank_error 给出降级原因）。
+
+    低于阈值的结果已被过滤。若 results 为空且响应含 best_score 与 hint 字段，
+    说明知识库非空但没有与问题相关的内容（hint 中给出了最高候选分数），
     此时请直接告知用户未找到相关内容，不要凭空编造，也不要盲目重试相同问题。
     请基于返回的文档块原文回答用户问题，并注明来源文件与页码。
     """
@@ -112,7 +124,16 @@ async def delete_document(source: str) -> str:
 
 @mcp.tool()
 async def clear_knowledge_base() -> str:
-    """清空知识库中的所有文档（危险操作，不可恢复）。"""
+    """【清空 RAG 向量知识库工具】
+    功能：清空 RAG 向量知识库（ChromaDB 向量库 + BM25 倒排索引）中通过 load_document / load_pdf 加载的所有文档块。
+    操作不可恢复，执行前请先用 list_documents 确认范围，并向用户二次确认意图。
+
+    适用范围：仅清理本 RAG server 的 chroma_data/ 目录与内存中的 BM25 索引。
+    ⚠️ 不要用于清空 policy_search 的结构化政策知识库（knowledge_base/*.json）——
+       那是另一个 MCP server，请改调用 policy_search 的同名工具。
+
+    触发条件：用户明确提到"清空 RAG 知识库 / 清空向量库 / 重置 RAG / 删除所有检索文档"等表述。
+    """
     try:
         return await asyncio.to_thread(engine.clear)
     except Exception as e:

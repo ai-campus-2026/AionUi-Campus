@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 *.pyo
 chroma_data/
+mcp-config.json

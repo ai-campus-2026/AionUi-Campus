@@ -1,6 +1,7 @@
 """rag_engine / server 工具层核心单元测试
 
 embedding 使用字符频率假实现（L2 归一化），文本越相似余弦越高，
+rerank 默认通过配置关闭（走显式降级路径），
 因此所有测试均不访问 DashScope 网络，可离线运行。
 """
 
@@ -24,6 +25,7 @@ from rag_engine import (
     _sha256_file,
     results_to_text,
 )
+from rerank_client import RerankOutcome
 
 _DIM = 64
 
@@ -45,8 +47,9 @@ def _fake_embed_batch(texts: list[str]) -> list[list[float]]:
 
 @pytest.fixture
 def engine(tmp_path, monkeypatch):
-    """独立 Chroma 目录 + 假 embedding 的引擎实例"""
+    """独立 Chroma 目录 + 假 embedding + rerank 关闭（离线可复现）的引擎实例"""
     monkeypatch.setattr(Config, "CHROMA_PERSIST_DIR", str(tmp_path / "chroma"))
+    monkeypatch.setattr(Config, "RERANK_ENABLED", False)
     monkeypatch.setattr(rag_engine, "_embed_batch", _fake_embed_batch)
     return RAGEngine()
 
@@ -129,7 +132,11 @@ def test_load_txt_dedupe_and_search(engine, tmp_path):
     assert payload["error"] is None
     assert payload["count"] > 0
     top = payload["results"][0]
-    assert top["similarity"] >= Config.SCORE_THRESHOLD
+    # rerank 已关闭 -> 显式降级，排序依据为向量/BM25 融合分
+    assert payload["rerank_applied"] is False
+    assert "rerank_error" in payload
+    assert top["vector_similarity"] >= Config.SCORE_THRESHOLD
+    assert top["rerank_score"] is None
     assert top["page"] is None  # 非 PDF 格式无页码
     assert top["source"] == _normalize_source(path)
 
@@ -192,11 +199,124 @@ def test_search_hint_when_all_filtered(engine, tmp_path):
 
     assert engine.search("")["error"] == "问题不能为空"
 
-    payload = engine.search("zzzqqq")  # z/q 不在文档中，相似度恒为 0
+    payload = engine.search("zzzqqq")  # z/q 不在文档中，余弦恒为 0
     assert payload["error"] is None
     assert payload["count"] == 0
-    assert payload["best_similarity"] < Config.SCORE_THRESHOLD
-    assert "已全部过滤" in payload["hint"]
+    # rerank 关闭 -> 降级用余弦过滤；余弦 0 在粗筛阶段即被拦截，
+    # 因此走「召回无候选」分支或 best_score 分支，两者都必须给出可读 hint
+    assert "hint" in payload
+    assert payload["rerank_applied"] is False
+    if "best_score" in payload:
+        assert payload["best_score"] < Config.SCORE_THRESHOLD
+        assert "已全部过滤" in payload["hint"]
+    else:
+        assert "召回均无候选" in payload["hint"]
+
+
+def test_search_empty_knowledge_base(engine):
+    payload = engine.search("anything")
+    assert payload["count"] == 0
+    assert "知识库为空" in payload["error"]
+
+
+# ---------------------------------------------------------------------- #
+# 两阶段检索：rerank 精排与显式降级
+# ---------------------------------------------------------------------- #
+
+
+def _fake_rerank_scores(scores_by_text):
+    """构造一个按文本内容查表的假 rerank，返回可替换 rerank_documents 的函数"""
+
+    def _fake(query, documents, top_n=None):
+        scores = [scores_by_text.get(d, 0.0) for d in documents]
+        order = sorted(range(len(scores)), key=lambda i: -scores[i])
+        if top_n is not None:
+            order = order[:top_n]
+        return RerankOutcome(applied=True, scores=scores, order=order, model="fake-rerank")
+
+    return _fake
+
+
+def test_search_applies_rerank_and_reorders(engine, tmp_path, monkeypatch):
+    """rerank 生效时应按精排分数重排，并只保留超过 RERANK_THRESHOLD 的块"""
+    # 两个块：向量检索认为 a 更相关，但精排认定 b 才是正确答案
+    doc_a = "Machine learning studies algorithms that improve through experience. " * 4
+    doc_b = "Scholarship application deadline is September each year for students. " * 4
+    engine.load_document(_write(tmp_path, "a.txt", doc_a))
+    engine.load_document(_write(tmp_path, "b.txt", doc_b))
+
+    monkeypatch.setattr(Config, "RERANK_ENABLED", True)
+    monkeypatch.setattr(Config, "RERANK_THRESHOLD", 0.5)
+    # 精排：b 高分(0.92)、a 低分(0.21) —— 与向量顺序相反，用来验证确实重排了
+    monkeypatch.setattr(
+        rag_engine,
+        "rerank_documents",
+        _fake_rerank_scores({doc_b.strip(): 0.92, doc_a.strip(): 0.21}),
+    )
+
+    payload = engine.search("Machine learning algorithms")
+
+    assert payload["error"] is None
+    assert payload["rerank_applied"] is True
+    assert payload["rerank_model"] == "fake-rerank"
+    assert "rerank_error" not in payload
+    # a 的精排分 0.21 低于阈值 0.5 被过滤，只剩 b
+    assert payload["count"] == 1
+    top = payload["results"][0]
+    assert top["rerank_score"] == 0.92
+    assert "Scholarship" in top["text"]
+    assert top["vector_similarity"] is not None  # 双分数都保留
+
+
+def test_search_degrades_explicitly_when_rerank_fails(engine, tmp_path, monkeypatch):
+    """rerank 失败必须显式降级：标注 rerank_applied=false 与错误原因，且仍返回结果"""
+    engine.load_document(_write(tmp_path, "doc.md", ML_DOC))
+
+    monkeypatch.setattr(Config, "RERANK_ENABLED", True)
+
+    def _boom(query, documents, top_n=None):
+        return RerankOutcome(
+            applied=False,
+            scores=[None] * len(documents),
+            error="rerank 调用失败已降级: RuntimeError: Rerank API 返回 400: boom",
+            model=Config.RERANK_MODEL,
+        )
+
+    monkeypatch.setattr(rag_engine, "rerank_documents", _boom)
+
+    payload = engine.search("Machine learning studies algorithms")
+
+    assert payload["error"] is None  # 降级不是错误，检索仍可用
+    assert payload["rerank_applied"] is False
+    assert "boom" in payload["rerank_error"]
+    assert "未经重排序精排" in payload["rerank_hint"]
+    assert payload["count"] > 0  # 降级后仍返回向量/BM25 结果
+    for r in payload["results"]:
+        assert r["rerank_score"] is None
+        assert r["vector_similarity"] is not None
+
+
+def test_search_respects_top_k_after_rerank(engine, tmp_path, monkeypatch):
+    """精排后按 top_k 截断"""
+    for i in range(6):
+        engine.load_document(_write(tmp_path, f"d{i}.txt", f"document number {i} about machine learning " * 6))
+
+    monkeypatch.setattr(Config, "RERANK_ENABLED", True)
+    monkeypatch.setattr(Config, "RERANK_THRESHOLD", 0.0)
+    monkeypatch.setattr(
+        rag_engine,
+        "rerank_documents",
+        lambda query, documents, top_n=None: RerankOutcome(
+            applied=True,
+            scores=[0.9 - 0.01 * i for i in range(len(documents))],
+            order=list(range(len(documents))),
+            model="fake-rerank",
+        ),
+    )
+
+    payload = engine.search("machine learning", top_k=2)
+    assert payload["count"] == 2
+    assert len(payload["results"]) == 2
 
 
 # ---------------------------------------------------------------------- #
@@ -229,6 +349,7 @@ def test_list_and_delete_roundtrip(engine, tmp_path):
 
 def test_server_tool_validation(tmp_path, monkeypatch):
     monkeypatch.setattr(Config, "CHROMA_PERSIST_DIR", str(tmp_path / "chroma"))
+    monkeypatch.setattr(Config, "RERANK_ENABLED", False)  # 保持离线
     monkeypatch.setattr(rag_engine, "_embed_batch", _fake_embed_batch)
     import server  # 引擎初始化需在 Config 打补丁之后
 
