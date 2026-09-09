@@ -45,7 +45,11 @@ Run the focused test suite from `course-path-server/`:
 npx @modelcontextprotocol/inspector .\.venv\Scripts\python.exe server.py
 ```
 
-Inspector should list one tool named `course_path_plan`.
+Inspector should list `course_path_plan` and `catalog_validate`.
+
+`catalog_validate` is a read-only administrative tool for checking
+an extracted or manually entered catalog draft. It never publishes or writes a
+catalog file.
 
 ## Input example
 
@@ -116,6 +120,17 @@ The current catalog is a public-style mock dataset marked with
 `"data_status": "mock"`. It is suitable for development and tests only. A
 team-confirmed curriculum document must be reviewed and published as a
 `verified` catalog before the tool is used for formal academic conclusions.
+
+## Catalog validation
+
+`catalog_validate` accepts a complete catalog JSON object and returns
+`data.valid`, diagnostics in `data.errors`, and non-blocking diagnostics in
+`warnings`. It checks required fields, duplicate course codes, prerequisite
+references, prerequisite cycles, and prerequisite semester ordering.
+
+Use this tool before review and publication. A `draft` or `mock` catalog can
+be structurally valid, but it still produces a not-verified warning and must
+not be treated as a formal curriculum source.
 
 ## Known limitations
 

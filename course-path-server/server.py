@@ -14,6 +14,7 @@ from mcp.server.fastmcp import FastMCP
 from schemas.common import error_response, success_response
 from schemas.course_path_plan import CoursePathInput, CoursePathRuleError
 from tools.course_path_rules import build_course_path_data, load_course_catalog
+from tools.catalog_validate import validate_catalog
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -58,6 +59,15 @@ def handle_course_path_plan(payload: dict[str, Any]) -> dict[str, Any]:
         return error_response("INTERNAL_ERROR", "内部错误", meta=meta)
 
 
+def handle_catalog_validate(catalog: dict[str, Any]) -> dict[str, Any]:
+    """Validate a catalog draft without writing, publishing, or overwriting data."""
+    started_at = time.perf_counter()
+    meta = {"tool": "catalog_validate", "request_id": uuid4().hex}
+    result = validate_catalog(catalog)
+    meta["elapsed_ms"] = round((time.perf_counter() - started_at) * 1000)
+    return success_response(result, warnings=result["warnings"], meta=meta)
+
+
 @mcp.tool()
 async def course_path_plan(
     major: str,
@@ -82,6 +92,12 @@ async def course_path_plan(
             "planned_courses": planned_courses,
         }
     )
+
+
+@mcp.tool()
+async def catalog_validate(catalog: dict[str, Any]) -> dict[str, Any]:
+    """Validate a course catalog draft without publishing it or modifying files."""
+    return handle_catalog_validate(catalog)
 
 
 def main() -> None:
