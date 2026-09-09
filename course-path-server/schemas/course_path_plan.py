@@ -18,6 +18,7 @@ class CoursePathInput:
     target_course: str | None = None
     goal: str | None = None
     planned_courses: tuple[str, ...] = ()
+    attachment_path: str | None = None
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> "CoursePathInput":
@@ -39,6 +40,7 @@ class CoursePathInput:
             target_course=target_course,
             goal=goal,
             planned_courses=_course_codes(payload.get("planned_courses"), "planned_courses", required=False),
+            attachment_path=_optional_text(payload, "attachment_path"),
         )
 
 

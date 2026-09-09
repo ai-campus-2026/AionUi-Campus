@@ -67,6 +67,22 @@ catalog file.
 optional list used to check direct prerequisite conflicts for additional
 planned courses.
 
+`attachment_path` is optional. During V0.1, it is only read-only validated;
+course planning still uses the structured fields above. The server never
+copies, moves, deletes, logs, or returns the full path of an attachment.
+
+## Attachment safety
+
+Set `COURSE_PATH_ATTACHMENT_ROOT` locally to one controlled absolute folder,
+for example `D:/CampusFiles`. The optional `attachment_path` must resolve
+inside that folder, be a regular `.pdf`, `.png`, `.jpg`, or `.jpeg` file, and
+be no larger than 20 MB. The server reads it only to validate the file and
+calculate a content hash; it does not persist the attachment.
+
+If an attachment is absent or rejected, `course_path_plan` still runs from
+the submitted structured parameters and returns an attachment warning. This
+keeps the existing MVP available while file extraction is added later.
+
 ## Output example
 
 ```json
