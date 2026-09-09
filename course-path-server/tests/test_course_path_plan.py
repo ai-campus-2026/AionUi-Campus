@@ -25,6 +25,7 @@ from tools.curriculum_extract import extract_catalog_draft
 from schemas.curriculum_extract import CurriculumExtractError, CurriculumExtractInput
 from schemas.catalog_review import CatalogReviewError, CatalogReviewInput
 from tools.catalog_review import review_catalog
+from tools.attachment_validation import inspect_attachment
 
 
 CATALOG_PATH = PROJECT_ROOT / "data" / "course_catalog.json"
@@ -274,6 +275,68 @@ def test_server_returns_the_shared_envelope_for_a_course_conflict() -> None:
     assert response["data"]["basic_advice"]["status"] == "NOT_ELIGIBLE"
     assert response["data"]["prerequisite_conflicts"][0]["course"]["course_code"] == "SE401"
     assert response["meta"]["tool"] == "course_path_plan"
+
+
+def test_course_path_plan_accepts_a_valid_attachment_without_persisting_it(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    attachment = tmp_path / "curriculum.pdf"
+    attachment.write_bytes(b"curriculum document")
+    monkeypatch.setenv("COURSE_PATH_ATTACHMENT_ROOT", str(tmp_path))
+
+    response = handle_course_path_plan(
+        {
+            "major": "software-engineering",
+            "grade": "2026",
+            "completed_courses": [],
+            "target_course": "SE401",
+            "attachment_path": str(attachment),
+        }
+    )
+
+    assert response["ok"] is True
+    assert response["data"]["attachment"]["status"] == "VALID"
+    assert "attachment_path" not in response["data"]["attachment"]
+
+
+def test_course_path_plan_keeps_working_when_an_attachment_is_rejected(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("COURSE_PATH_ATTACHMENT_ROOT", str(tmp_path))
+
+    response = handle_course_path_plan(
+        {
+            "major": "software-engineering",
+            "grade": "2026",
+            "completed_courses": [],
+            "target_course": "SE401",
+            "attachment_path": str(tmp_path / "missing.pdf"),
+        }
+    )
+
+    assert response["ok"] is True
+    assert response["data"]["attachment"] == {"status": "REJECTED", "reason": "ATTACHMENT_NOT_FOUND"}
+    assert "ATTACHMENT_NOT_FOUND" in response["warnings"]
+
+
+def test_attachment_rejects_paths_outside_the_controlled_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    controlled_root = tmp_path / "controlled"
+    controlled_root.mkdir()
+    attachment = tmp_path / "outside.pdf"
+    attachment.write_bytes(b"outside")
+    monkeypatch.setenv("COURSE_PATH_ATTACHMENT_ROOT", str(controlled_root))
+
+    assert inspect_attachment(str(attachment)) == {
+        "status": "REJECTED",
+        "reason": "ATTACHMENT_PATH_OUTSIDE_ALLOWED_ROOT",
+    }
+
+
+def test_attachment_rejects_unapproved_file_types(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    attachment = tmp_path / "curriculum.txt"
+    attachment.write_text("not an approved attachment", encoding="utf-8")
+    monkeypatch.setenv("COURSE_PATH_ATTACHMENT_ROOT", str(tmp_path))
+
+    assert inspect_attachment(str(attachment)) == {
+        "status": "REJECTED",
+        "reason": "ATTACHMENT_TYPE_UNSUPPORTED",
+    }
 
 
 def test_server_returns_a_structured_error_for_invalid_arguments() -> None:

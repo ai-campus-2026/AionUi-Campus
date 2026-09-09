@@ -19,6 +19,7 @@ from tools.course_path_rules import build_course_path_data, load_course_catalog
 from tools.catalog_validate import validate_catalog
 from tools.curriculum_extract import extract_catalog_draft
 from tools.catalog_review import review_catalog
+from tools.attachment_validation import inspect_attachment
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -43,6 +44,11 @@ def handle_course_path_plan(payload: dict[str, Any]) -> dict[str, Any]:
     try:
         input_data = CoursePathInput.from_payload(payload)
         result = build_course_path_data(input_data, load_course_catalog(CATALOG_PATH))
+        attachment = inspect_attachment(input_data.attachment_path)
+        if attachment is not None:
+            result["attachment"] = attachment
+            if attachment["status"] != "VALID":
+                result["warnings"].append(attachment["reason"])
         sources = result.pop("sources", [])
         warnings = result.pop("warnings", [])
         if result.get("data_status") not in {"verified", "official"}:
@@ -130,6 +136,7 @@ async def course_path_plan(
     target_course: str | None = None,
     goal: str | None = None,
     planned_courses: list[str] | None = None,
+    attachment_path: str | None = None,
 ) -> dict[str, Any]:
     """Check prerequisites and missing courses for a target course.
 
@@ -144,6 +151,7 @@ async def course_path_plan(
             "target_course": target_course,
             "goal": goal,
             "planned_courses": planned_courses,
+            "attachment_path": attachment_path,
         }
     )
 
