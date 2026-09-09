@@ -13,6 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from schemas.course_path_plan import CoursePathInput, CoursePathRuleError
+from schemas.catalog import CATALOG_REQUIRED_FIELDS, COURSE_REQUIRED_FIELDS
 from schemas.common import error_response, success_response
 from server import handle_course_path_plan
 from tools.course_path_rules import build_course_path_data, load_course_catalog
@@ -198,6 +199,21 @@ def test_includes_mock_data_status_and_source() -> None:
 
     assert result["data_status"] == "mock"
     assert result["sources"][0]["document"] == "软件工程专业培养方案（公开样例）"
+    assert result["catalog"] == {
+        "catalog_id": "software-engineering-2026-v1",
+        "major": "software-engineering",
+        "cohort": "2026",
+        "version": "2026.1",
+    }
+
+
+def test_mock_catalog_matches_the_versioned_catalog_contract() -> None:
+    catalog = load_catalog()
+
+    assert set(CATALOG_REQUIRED_FIELDS).issubset(catalog)
+    assert catalog["data_status"] == "mock"
+    for course in catalog["courses"]:
+        assert set(COURSE_REQUIRED_FIELDS).issubset(course)
 
 
 def test_builds_the_shared_success_response() -> None:

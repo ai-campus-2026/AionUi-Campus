@@ -1,8 +1,10 @@
 {
+  "catalog_id": "software-engineering-2026-v1",
   "data_status": "mock",
   "document": "软件工程专业培养方案（公开样例）",
   "major": "software-engineering",
-  "cohort_version": "2026.1",
+  "cohort": "2026",
+  "version": "2026.1",
   "courses": [
     {
       "course_code": "SE101",

@@ -177,4 +177,10 @@ def build_course_path_data(input_data: CoursePathInput, catalog: Mapping[str, An
         "warnings": warnings,
         "sources": [_course_source(catalog, target_course)],
         "data_status": catalog.get("data_status"),
+        "catalog": {
+            "catalog_id": catalog.get("catalog_id"),
+            "major": catalog.get("major"),
+            "cohort": catalog.get("cohort"),
+            "version": catalog.get("version"),
+        },
     }
