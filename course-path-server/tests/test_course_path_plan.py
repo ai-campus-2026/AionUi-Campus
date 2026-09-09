@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import anyio
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
+import os
 from pathlib import Path
 import sys
 
@@ -19,6 +21,7 @@ from server import handle_course_path_plan
 from server import handle_catalog_validate
 from server import handle_curriculum_extract
 from server import handle_catalog_review
+from server import handle_curriculum_extract_from_attachment
 from tools.course_path_rules import build_course_path_data, load_course_catalog
 from tools.catalog_validate import validate_catalog
 from tools.curriculum_extract import extract_catalog_draft
@@ -26,6 +29,8 @@ from schemas.curriculum_extract import CurriculumExtractError, CurriculumExtract
 from schemas.catalog_review import CatalogReviewError, CatalogReviewInput
 from tools.catalog_review import review_catalog
 from tools.attachment_validation import inspect_attachment
+import tools.attachment_extract as attachment_extract
+from tools.attachment_extract import cleanup_stale_temporary_workspaces
 
 
 CATALOG_PATH = PROJECT_ROOT / "data" / "course_catalog.json"
@@ -339,6 +344,82 @@ def test_attachment_rejects_unapproved_file_types(tmp_path: Path, monkeypatch: p
     }
 
 
+def test_attachment_extraction_returns_model_not_configured_without_a_local_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    attachment = tmp_path / "curriculum.png"
+    attachment.write_bytes(b"image")
+    monkeypatch.setenv("COURSE_PATH_ATTACHMENT_ROOT", str(tmp_path))
+    monkeypatch.delenv("DASHSCOPE_API_KEY", raising=False)
+
+    response = handle_curriculum_extract_from_attachment(
+        {
+            "attachment_path": str(attachment),
+            "major": "software-engineering",
+            "cohort": "2026",
+            "version": "2026.1",
+        }
+    )
+
+    assert response["ok"] is False
+    assert response["error"]["code"] == "MODEL_NOT_CONFIGURED"
+    assert response["meta"]["tool"] == "curriculum_extract_from_attachment"
+
+
+def test_attachment_extraction_builds_a_transient_reviewed_catalog(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    attachment = tmp_path / "curriculum.png"
+    attachment.write_bytes(b"image")
+    monkeypatch.setenv("COURSE_PATH_ATTACHMENT_ROOT", str(tmp_path))
+
+    class FakeDashScopeClient:
+        def __init__(self, _config: object) -> None:
+            pass
+
+        def extract_tsv(self, _images: list[dict[str, object]]) -> str:
+            return (
+                "course_code\tcourse_name\tcredits\tsemester\tcategory\tprerequisites\tpage\tsection\n"
+                "SE101\t程序设计基础\t3\t1\t专业基础课\t\t1\t课程设置\n"
+                "SE201\t数据结构\t4\t2\t专业核心课\tSE101\t2\t课程设置"
+            )
+
+        def review_catalog(self, _images: list[dict[str, object]], _catalog: dict[str, object]) -> dict[str, object]:
+            return _model_review()
+
+    monkeypatch.setattr(attachment_extract, "DashScopeClient", FakeDashScopeClient)
+    response = handle_curriculum_extract_from_attachment(
+        {
+            "attachment_path": str(attachment),
+            "major": "software-engineering",
+            "cohort": "2026",
+            "version": "2026.1",
+        }
+    )
+
+    assert response["ok"] is True
+    assert response["data"]["catalog"]["data_status"] == "auto_verified"
+    assert response["data"]["review"]["auto_verified"] is True
+    assert "CATALOG_NOT_PERSISTED" in response["warnings"]
+
+
+def test_attachment_cleanup_removes_only_expired_server_workspaces(tmp_path: Path) -> None:
+    expired_workspace = tmp_path / "course-path-pdf-expired"
+    current_workspace = tmp_path / "course-path-pdf-current"
+    unrelated_directory = tmp_path / "unrelated"
+    expired_workspace.mkdir()
+    current_workspace.mkdir()
+    unrelated_directory.mkdir()
+    old_timestamp = (datetime.now(timezone.utc) - timedelta(hours=25)).timestamp()
+    os.utime(expired_workspace, (old_timestamp, old_timestamp))
+
+    cleanup_stale_temporary_workspaces(temporary_root=tmp_path)
+
+    assert expired_workspace.exists() is False
+    assert current_workspace.exists() is True
+    assert unrelated_directory.exists() is True
+
+
 def test_server_returns_a_structured_error_for_invalid_arguments() -> None:
     response = handle_course_path_plan(
         {
@@ -370,6 +451,7 @@ def test_server_exposes_and_calls_the_tool_over_stdio() -> None:
                     "catalog_validate",
                     "curriculum_extract",
                     "catalog_review",
+                    "curriculum_extract_from_attachment",
                 }
 
                 result = await session.call_tool(
