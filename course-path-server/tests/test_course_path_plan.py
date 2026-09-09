@@ -17,8 +17,11 @@ from schemas.catalog import CATALOG_REQUIRED_FIELDS, COURSE_REQUIRED_FIELDS
 from schemas.common import error_response, success_response
 from server import handle_course_path_plan
 from server import handle_catalog_validate
+from server import handle_curriculum_extract
 from tools.course_path_rules import build_course_path_data, load_course_catalog
 from tools.catalog_validate import validate_catalog
+from tools.curriculum_extract import extract_catalog_draft
+from schemas.curriculum_extract import CurriculumExtractError, CurriculumExtractInput
 
 
 CATALOG_PATH = PROJECT_ROOT / "data" / "course_catalog.json"
@@ -296,7 +299,11 @@ def test_server_exposes_and_calls_the_tool_over_stdio() -> None:
             async with ClientSession(read_stream, write_stream) as session:
                 await session.initialize()
                 tools = await session.list_tools()
-                assert {tool.name for tool in tools.tools} == {"course_path_plan", "catalog_validate"}
+                assert {tool.name for tool in tools.tools} == {
+                    "course_path_plan",
+                    "catalog_validate",
+                    "curriculum_extract",
+                }
 
                 result = await session.call_tool(
                     "course_path_plan",
@@ -319,6 +326,14 @@ def test_server_exposes_and_calls_the_tool_over_stdio() -> None:
                 assert validation_result.isError is False
                 assert validation_result.structuredContent is not None
                 assert validation_result.structuredContent["data"]["valid"] is True
+
+                extraction_result = await session.call_tool(
+                    "curriculum_extract",
+                    arguments=_extract_payload(),
+                )
+                assert extraction_result.isError is False
+                assert extraction_result.structuredContent is not None
+                assert extraction_result.structuredContent["data"]["validation"]["valid"] is True
 
     anyio.run(call_tool)
 
@@ -368,3 +383,48 @@ def test_catalog_validation_returns_the_shared_response_envelope() -> None:
     assert response["ok"] is True
     assert response["data"]["valid"] is True
     assert response["meta"]["tool"] == "catalog_validate"
+
+
+def _extract_payload() -> dict[str, object]:
+    return {
+        "document": "演示培养方案.pdf",
+        "major": "software-engineering",
+        "cohort": "2026",
+        "version": "2026.1",
+        "course_table_tsv": (
+            "course_code\tcourse_name\tcredits\tsemester\tcategory\tprerequisites\tpage\tsection\n"
+            "SE101\t程序设计基础\t3\t1\t专业基础课\t\t1\t课程设置\n"
+            "SE201\t数据结构\t4\t2\t专业核心课\tSE101\t2\t课程设置"
+        ),
+    }
+
+
+def test_curriculum_extract_creates_a_valid_draft_catalog() -> None:
+    catalog = extract_catalog_draft(CurriculumExtractInput.from_payload(_extract_payload()))
+
+    assert catalog["catalog_id"] == "software-engineering-2026-2026-1"
+    assert catalog["data_status"] == "draft"
+    assert catalog["courses"][1]["prerequisites"] == ["SE101"]
+    assert validate_catalog(catalog)["valid"] is True
+
+
+def test_curriculum_extract_rejects_missing_table_columns() -> None:
+    payload = _extract_payload()
+    payload["course_table_tsv"] = "course_code\tcourse_name\nSE101\t程序设计基础"
+
+    with pytest.raises(CurriculumExtractError) as error:
+        extract_catalog_draft(CurriculumExtractInput.from_payload(payload))
+
+    assert error.value.code == "INVALID_ARGUMENT"
+    assert error.value.details["reason"] == "required_columns_missing"
+
+
+def test_curriculum_extract_returns_a_shared_error_for_invalid_table_text() -> None:
+    payload = _extract_payload()
+    payload["course_table_tsv"] = "course_code\tcourse_name\nSE101\t程序设计基础"
+
+    response = handle_curriculum_extract(payload)
+
+    assert response["ok"] is False
+    assert response["error"]["code"] == "INVALID_ARGUMENT"
+    assert response["meta"]["tool"] == "curriculum_extract"
