@@ -28,7 +28,7 @@ class CatalogReviewInput:
         return cls(catalog=catalog, model_review=model_review)
 
 
-@dataclass(frozen=True)
+@dataclass
 class CatalogReviewError(Exception):
     """A recoverable malformed automated-review input error."""
 

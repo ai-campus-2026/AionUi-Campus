@@ -46,7 +46,8 @@ npx @modelcontextprotocol/inspector .\.venv\Scripts\python.exe server.py
 ```
 
 Inspector should list `course_path_plan`, `catalog_validate`,
-`curriculum_extract`, and `catalog_review`.
+`curriculum_extract`, `catalog_review`, and
+`curriculum_extract_from_attachment`.
 
 `catalog_validate` is a read-only administrative tool for checking
 an extracted or manually entered catalog draft. It never publishes or writes a
@@ -82,6 +83,35 @@ calculate a content hash; it does not persist the attachment.
 If an attachment is absent or rejected, `course_path_plan` still runs from
 the submitted structured parameters and returns an attachment warning. This
 keeps the existing MVP available while file extraction is added later.
+
+## Model-assisted attachment extraction
+
+`curriculum_extract_from_attachment` is the opt-in transient pipeline for a
+checked local PDF/image. It calls `qwen-vl-ocr` to return TSV course-table
+text, turns that text into a draft with `curriculum_extract`, then calls
+`qwen3.7-plus` for a structured review before applying `catalog_review`.
+
+The non-secret settings are committed in `data/model_config.json`. The
+runtime reads `DASHSCOPE_API_KEY` only from the local process environment; it
+does not load, log, return, or commit a key. A missing key returns
+`MODEL_NOT_CONFIGURED` without disclosing configuration values.
+
+For images, the adapter sends a Base64 data URL and therefore limits each model
+input image to 7 MB. PDFs are rendered to at most five scaled PNG pages in an
+automatically removed temporary directory. The extracted catalog is returned
+only in the current MCP response with `CATALOG_NOT_PERSISTED`; it never
+overwrites `data/course_catalog.json`.
+
+Example request:
+
+```json
+{
+  "attachment_path": "D:/CampusFiles/curriculum.pdf",
+  "major": "software-engineering",
+  "cohort": "2026",
+  "version": "2026.1"
+}
+```
 
 ## Output example
 
@@ -201,13 +231,12 @@ there are no high/blocking findings, and `overall_confidence` is at least
 `0.90`. `auto_verified` is still not an official school publication and
 therefore returns an explicit warning.
 
-This phase defines and tests the safe decision boundary; it does not yet call a
-specific model provider. A subsequent provider adapter will send the PDF/image
-and draft to the team-selected vision model, then pass its JSON report here.
+This phase defines and tests the safe decision boundary used by the DashScope
+adapter. The adapter only uses a local environment variable at request time.
 
 ## Known limitations
 
 - The MVP checks prerequisite relationships and basic recommendations only.
 - It does not create an optimal multi-semester schedule or complex What-if
   plans.
-- It does not parse PDF or image files directly or call a model provider yet.
+- PDF extraction is limited to the first five pages in V0.1.

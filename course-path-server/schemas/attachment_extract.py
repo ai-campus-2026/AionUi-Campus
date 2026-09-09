@@ -1,4 +1,4 @@
-"""Input structures for transforming extracted curriculum tables into drafts."""
+"""Input structures for model-assisted extraction from a local attachment."""
 
 from __future__ import annotations
 
@@ -7,31 +7,29 @@ from typing import Any
 
 
 @dataclass(frozen=True)
-class CurriculumExtractInput:
-    """Metadata and TSV table text supplied by an OCR or manual extraction step."""
+class AttachmentExtractInput:
+    """Metadata plus an already validated local attachment path."""
 
-    document: str
+    attachment_path: str
     major: str
     cohort: str
     version: str
-    course_table_tsv: str
     catalog_id: str | None = None
 
     @classmethod
-    def from_payload(cls, payload: dict[str, Any]) -> "CurriculumExtractInput":
+    def from_payload(cls, payload: dict[str, Any]) -> "AttachmentExtractInput":
         return cls(
-            document=_required_text(payload, "document"),
+            attachment_path=_required_text(payload, "attachment_path"),
             major=_required_text(payload, "major"),
             cohort=_required_text(payload, "cohort"),
             version=_required_text(payload, "version"),
-            course_table_tsv=_required_text(payload, "course_table_tsv"),
             catalog_id=_optional_text(payload, "catalog_id"),
         )
 
 
 @dataclass
-class CurriculumExtractError(Exception):
-    """A recoverable input or table-format error from curriculum extraction."""
+class AttachmentExtractError(Exception):
+    """A recoverable input or temporary-document processing error."""
 
     code: str
     message: str
@@ -41,7 +39,7 @@ class CurriculumExtractError(Exception):
 def _required_text(payload: dict[str, Any], field: str) -> str:
     value = _optional_text(payload, field)
     if value is None:
-        raise _invalid_argument(f"{field}_required")
+        raise AttachmentExtractError("INVALID_ARGUMENT", "附件提取参数错误", {"reason": f"{field}_required"})
     return value
 
 
@@ -50,13 +48,5 @@ def _optional_text(payload: dict[str, Any], field: str) -> str | None:
     if value is None:
         return None
     if not isinstance(value, str) or not value.strip():
-        raise _invalid_argument(f"{field}_must_be_non_empty_string")
+        raise AttachmentExtractError("INVALID_ARGUMENT", "附件提取参数错误", {"reason": f"{field}_must_be_non_empty_string"})
     return value.strip()
-
-
-def _invalid_argument(reason: str) -> CurriculumExtractError:
-    return CurriculumExtractError(
-        code="INVALID_ARGUMENT",
-        message="培养方案提取参数错误",
-        details={"reason": reason},
-    )

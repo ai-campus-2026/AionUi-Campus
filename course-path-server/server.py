@@ -15,11 +15,13 @@ from schemas.common import error_response, success_response
 from schemas.course_path_plan import CoursePathInput, CoursePathRuleError
 from schemas.curriculum_extract import CurriculumExtractError, CurriculumExtractInput
 from schemas.catalog_review import CatalogReviewError, CatalogReviewInput
+from schemas.attachment_extract import AttachmentExtractError, AttachmentExtractInput
 from tools.course_path_rules import build_course_path_data, load_course_catalog
 from tools.catalog_validate import validate_catalog
 from tools.curriculum_extract import extract_catalog_draft
 from tools.catalog_review import review_catalog
 from tools.attachment_validation import inspect_attachment
+from tools.attachment_extract import extract_catalog_from_attachment
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -128,6 +130,25 @@ def handle_catalog_review(payload: dict[str, Any]) -> dict[str, Any]:
         return error_response("INTERNAL_ERROR", "内部错误", meta=meta)
 
 
+def handle_curriculum_extract_from_attachment(payload: dict[str, Any]) -> dict[str, Any]:
+    """Extract a transient curriculum catalog from a checked local attachment."""
+    started_at = time.perf_counter()
+    meta = {"tool": "curriculum_extract_from_attachment", "request_id": uuid4().hex}
+    try:
+        input_data = AttachmentExtractInput.from_payload(payload)
+        result = extract_catalog_from_attachment(input_data)
+        meta["elapsed_ms"] = round((time.perf_counter() - started_at) * 1000)
+        warnings = [*result["validation"]["warnings"], *result["review"]["warnings"], "CATALOG_NOT_PERSISTED"]
+        return success_response(result, warnings=list(dict.fromkeys(warnings)), meta=meta)
+    except AttachmentExtractError as error:
+        meta["elapsed_ms"] = round((time.perf_counter() - started_at) * 1000)
+        return error_response(error.code, error.message, details=error.details, meta=meta)
+    except Exception:
+        logger.exception("curriculum_extract_from_attachment failed")
+        meta["elapsed_ms"] = round((time.perf_counter() - started_at) * 1000)
+        return error_response("INTERNAL_ERROR", "内部错误", meta=meta)
+
+
 @mcp.tool()
 async def course_path_plan(
     major: str,
@@ -199,6 +220,30 @@ async def catalog_review(
     accept free-form model prose and never writes the reviewed catalog to disk.
     """
     return handle_catalog_review({"catalog": catalog, "model_review": model_review})
+
+
+@mcp.tool()
+async def curriculum_extract_from_attachment(
+    attachment_path: str,
+    major: str,
+    cohort: str,
+    version: str,
+    catalog_id: str | None = None,
+) -> dict[str, Any]:
+    """Extract and review a transient catalog from a checked local PDF or image.
+
+    It calls the configured local DashScope models and never writes the result
+    into the public course catalog.
+    """
+    return handle_curriculum_extract_from_attachment(
+        {
+            "attachment_path": attachment_path,
+            "major": major,
+            "cohort": cohort,
+            "version": version,
+            "catalog_id": catalog_id,
+        }
+    )
 
 
 def main() -> None:
