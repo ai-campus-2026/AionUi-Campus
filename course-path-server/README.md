@@ -112,6 +112,12 @@ student IDs. After the same controlled-path checks, it copies the source file
 into this server's `curriculum_knowledge_base/` partition and records its
 metadata by `major`, `cohort`, and `version`.
 
+When the user uploads a document in AionUi and says “导入培养方案” (with the
+major, cohort, and version), the Agent should call this tool using the current
+upload's managed local path. The user should not need to type that path. This
+requires the MCP process to be configured with the same controlled upload root
+used by AionUi.
+
 The original attachment is never moved, changed, or deleted. Its complete
 original path is not saved in the index or returned by the tool. Re-uploading
 the same file for the same major/cohort/version reuses the existing record.
@@ -140,6 +146,34 @@ requires `confirm: true` and clears only files and candidate records inside
 original uploaded files, or modify `data/course_catalog.json`. Its response
 includes `COURSE_CATALOG_MAY_BE_STALE` because an already published catalog may
 need to be replaced after a curriculum change.
+
+### AionUi MCP configuration
+
+Each computer imports a local MCP configuration. `command`, `args`, and `cwd`
+must point to that computer's Python and cloned project. `COURSE_PATH_ATTACHMENT_ROOT`
+is the AionUi-managed upload root that this server is allowed to read; it is an
+input boundary, not the curriculum storage destination.
+
+```json
+{
+  "mcpServers": {
+    "course_path_server": {
+      "command": "C:/path/to/python.exe",
+      "args": ["D:/path/to/AionUi-Campus/course-path-server/server.py"],
+      "cwd": "D:/path/to/AionUi-Campus/course-path-server",
+      "env": {
+        "COURSE_PATH_ATTACHMENT_ROOT": "D:/path/to/AionUi-managed-uploads",
+        "CURRICULUM_KNOWLEDGE_BASE_DIR": "D:/path/to/curriculum-knowledge-base"
+      }
+    }
+  }
+}
+```
+
+`CURRICULUM_KNOWLEDGE_BASE_DIR` is optional. When omitted, the server stores
+shared curriculum data in `course-path-server/curriculum_knowledge_base/`.
+Keep `DASHSCOPE_API_KEY` only in each computer's local MCP configuration or
+process environment; never place an actual key in a committed JSON file.
 
 Example request:
 
