@@ -3,3 +3,6 @@ __pycache__/
 .pytest_cache/
 .venv/
 .env
+/curriculum_knowledge_base/documents/
+/curriculum_knowledge_base/catalogs/
+/curriculum_knowledge_base/index.json

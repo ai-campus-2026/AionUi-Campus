@@ -22,6 +22,9 @@ from server import handle_catalog_validate
 from server import handle_curriculum_extract
 from server import handle_catalog_review
 from server import handle_curriculum_extract_from_attachment
+from server import handle_curriculum_ingest_from_attachment
+from server import handle_list_curriculum_documents
+from server import handle_clear_curriculum_knowledge_base
 from tools.course_path_rules import build_course_path_data, load_course_catalog
 from tools.catalog_validate import validate_catalog
 from tools.curriculum_extract import extract_catalog_draft
@@ -31,6 +34,7 @@ from tools.catalog_review import review_catalog
 from tools.attachment_validation import inspect_attachment
 import tools.attachment_extract as attachment_extract
 from tools.attachment_extract import cleanup_stale_temporary_workspaces
+from tools.curriculum_store import CurriculumKnowledgeStore, CurriculumStoreError
 
 
 CATALOG_PATH = PROJECT_ROOT / "data" / "course_catalog.json"
@@ -420,6 +424,148 @@ def test_attachment_cleanup_removes_only_expired_server_workspaces(tmp_path: Pat
     assert unrelated_directory.exists() is True
 
 
+def _store_curriculum_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[CurriculumKnowledgeStore, Path, dict[str, object]]:
+    attachment = tmp_path / "curriculum.pdf"
+    attachment.write_bytes(b"shared-curriculum-document")
+    monkeypatch.setenv("COURSE_PATH_ATTACHMENT_ROOT", str(tmp_path))
+    inspection = inspect_attachment(str(attachment))
+    assert inspection is not None
+    store = CurriculumKnowledgeStore(tmp_path / "curriculum_knowledge_base")
+    entry, created = store.store_source(
+        attachment_path=str(attachment),
+        attachment=inspection,
+        major="software-engineering",
+        cohort="2026",
+        version="2026.1",
+    )
+    assert created is True
+    return store, attachment, entry
+
+
+def test_curriculum_store_copies_a_shared_plan_without_retaining_its_original_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store, attachment, entry = _store_curriculum_source(tmp_path, monkeypatch)
+
+    assert (store.base_dir / entry["stored_file"]).read_bytes() == attachment.read_bytes()
+    assert str(attachment) not in str(entry)
+    assert entry["knowledge_base"] == "curriculum"
+    assert entry["processing_status"] == "SOURCE_STORED"
+
+
+def test_curriculum_store_deduplicates_the_same_curriculum_version(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store, attachment, first_entry = _store_curriculum_source(tmp_path, monkeypatch)
+    inspection = inspect_attachment(str(attachment))
+    assert inspection is not None
+
+    repeated_entry, created = store.store_source(
+        attachment_path=str(attachment),
+        attachment=inspection,
+        major="software-engineering",
+        cohort="2026",
+        version="2026.1",
+    )
+
+    assert created is False
+    assert repeated_entry["document_id"] == first_entry["document_id"]
+    assert len(store.list_documents()) == 1
+
+
+def test_curriculum_store_lists_documents_by_major_without_exposing_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store, attachment, _entry = _store_curriculum_source(tmp_path, monkeypatch)
+    inspection = inspect_attachment(str(attachment))
+    assert inspection is not None
+    store.store_source(
+        attachment_path=str(attachment),
+        attachment=inspection,
+        major="computer-science",
+        cohort="2026",
+        version="2026.1",
+    )
+
+    records = store.list_documents(major="software-engineering")
+
+    assert len(records) == 1
+    assert records[0]["major"] == "software-engineering"
+    assert "original_path" not in records[0]
+
+
+def test_curriculum_store_requires_confirmation_before_clearing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store, _attachment, _entry = _store_curriculum_source(tmp_path, monkeypatch)
+
+    with pytest.raises(CurriculumStoreError) as error:
+        store.clear(confirm=False)
+
+    assert error.value.code == "INVALID_ARGUMENT"
+    assert len(store.list_documents()) == 1
+
+
+def test_curriculum_store_clear_removes_only_its_runtime_records(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store, _attachment, _entry = _store_curriculum_source(tmp_path, monkeypatch)
+    public_catalog = tmp_path / "course_catalog.json"
+    public_catalog.write_text('{"keep": true}', encoding="utf-8")
+
+    removed = store.clear(confirm=True)
+
+    assert removed == 1
+    assert store.list_documents() == []
+    assert public_catalog.read_text(encoding="utf-8") == '{"keep": true}'
+
+
+def test_ingestion_keeps_the_source_when_model_extraction_is_unavailable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import server as course_server
+
+    attachment = tmp_path / "curriculum.png"
+    attachment.write_bytes(b"image")
+    monkeypatch.setenv("COURSE_PATH_ATTACHMENT_ROOT", str(tmp_path))
+    monkeypatch.setattr(course_server, "curriculum_store", CurriculumKnowledgeStore(tmp_path / "curriculum_knowledge_base"))
+    monkeypatch.delenv("DASHSCOPE_API_KEY", raising=False)
+
+    response = handle_curriculum_ingest_from_attachment(
+        {
+            "attachment_path": str(attachment),
+            "major": "software-engineering",
+            "cohort": "2026",
+            "version": "2026.1",
+        }
+    )
+
+    assert response["ok"] is True
+    assert response["data"]["document"]["processing_status"] == "EXTRACTION_FAILED"
+    assert "MODEL_NOT_CONFIGURED" in response["warnings"]
+    assert response["data"]["catalog_published"] is False
+
+
+def test_list_and_clear_handlers_use_the_curriculum_partition_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import server as course_server
+
+    store, _attachment, _entry = _store_curriculum_source(tmp_path, monkeypatch)
+    monkeypatch.setattr(course_server, "curriculum_store", store)
+
+    listing = handle_list_curriculum_documents({"major": "software-engineering"})
+    clear_response = handle_clear_curriculum_knowledge_base({"confirm": True})
+
+    assert listing["ok"] is True
+    assert listing["data"]["total"] == 1
+    assert clear_response["ok"] is True
+    assert clear_response["data"]["removed_documents"] == 1
+    assert clear_response["data"]["course_catalog_modified"] is False
+
+
 def test_server_returns_a_structured_error_for_invalid_arguments() -> None:
     response = handle_course_path_plan(
         {
@@ -452,6 +598,9 @@ def test_server_exposes_and_calls_the_tool_over_stdio() -> None:
                     "curriculum_extract",
                     "catalog_review",
                     "curriculum_extract_from_attachment",
+                    "curriculum_ingest_from_attachment",
+                    "list_curriculum_documents",
+                    "clear_curriculum_knowledge_base",
                 }
 
                 result = await session.call_tool(

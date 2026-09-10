@@ -47,7 +47,8 @@ npx @modelcontextprotocol/inspector .\.venv\Scripts\python.exe server.py
 
 Inspector should list `course_path_plan`, `catalog_validate`,
 `curriculum_extract`, `catalog_review`, and
-`curriculum_extract_from_attachment`.
+`curriculum_extract_from_attachment`, `curriculum_ingest_from_attachment`,
+`list_curriculum_documents`, and `clear_curriculum_knowledge_base`.
 
 `catalog_validate` is a read-only administrative tool for checking
 an extracted or manually entered catalog draft. It never publishes or writes a
@@ -101,6 +102,44 @@ input image to 7 MB. PDFs are rendered to at most five scaled PNG pages in an
 automatically removed temporary directory. The extracted catalog is returned
 only in the current MCP response with `CATALOG_NOT_PERSISTED`; it never
 overwrites `data/course_catalog.json`.
+
+## Shared curriculum knowledge base
+
+`curriculum_ingest_from_attachment` is the persistent counterpart to the
+transient extraction tool. It is only for shared curriculum-plan PDFs or
+images, never transcripts, student records, completed-course lists, names, or
+student IDs. After the same controlled-path checks, it copies the source file
+into this server's `curriculum_knowledge_base/` partition and records its
+metadata by `major`, `cohort`, and `version`.
+
+The original attachment is never moved, changed, or deleted. Its complete
+original path is not saved in the index or returned by the tool. Re-uploading
+the same file for the same major/cohort/version reuses the existing record.
+
+The tool then attempts the existing OCR and model-review pipeline. If a model
+is unavailable, the source stays in the curriculum partition with
+`processing_status: "EXTRACTION_FAILED"`, so it can be retried later. A
+successful result is stored as a candidate catalog record but never replaces
+`data/course_catalog.json` automatically.
+
+Example request:
+
+```json
+{
+  "attachment_path": "D:/CampusFiles/software-engineering-2026.pdf",
+  "major": "software-engineering",
+  "cohort": "2026",
+  "version": "2026.1"
+}
+```
+
+Use `list_curriculum_documents` with optional `major`, `cohort`, and `version`
+filters to inspect the curriculum partition. `clear_curriculum_knowledge_base`
+requires `confirm: true` and clears only files and candidate records inside
+`curriculum_knowledge_base/`; it does not clear policy knowledge, alter the
+original uploaded files, or modify `data/course_catalog.json`. Its response
+includes `COURSE_CATALOG_MAY_BE_STALE` because an already published catalog may
+need to be replaced after a curriculum change.
 
 Example request:
 
