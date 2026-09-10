@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -27,7 +28,23 @@ from tools.curriculum_store import CurriculumKnowledgeStore, CurriculumStoreErro
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 CATALOG_PATH = PROJECT_ROOT / "data" / "course_catalog.json"
-CURRICULUM_KNOWLEDGE_BASE_PATH = PROJECT_ROOT / "curriculum_knowledge_base"
+
+
+def configured_directory(environment_name: str, default: Path) -> Path:
+    """Resolve an optional local storage directory without exposing its value."""
+    configured_value = os.getenv(environment_name, "").strip()
+    if not configured_value:
+        return default
+    candidate = Path(configured_value).expanduser()
+    if not candidate.is_absolute():
+        candidate = PROJECT_ROOT / candidate
+    return candidate.resolve()
+
+
+CURRICULUM_KNOWLEDGE_BASE_PATH = configured_directory(
+    "CURRICULUM_KNOWLEDGE_BASE_DIR",
+    PROJECT_ROOT / "curriculum_knowledge_base",
+)
 
 logging.basicConfig(
     stream=sys.stderr,
@@ -384,8 +401,13 @@ async def curriculum_ingest_from_attachment(
 ) -> dict[str, Any]:
     """Store a shared curriculum PDF/image in the curriculum knowledge base.
 
-    Use only for common curriculum-plan documents, never student transcripts or
-    personal records.  The original attachment is copied but never modified.
+    Call this when the user uploads a curriculum plan and asks to import it,
+    build a course catalog, or update a major's curriculum data. Use the
+    current uploaded attachment's managed local path. The user must provide
+    major, cohort, and version; ask for missing values instead of guessing.
+
+    Use only for common curriculum-plan documents, never student transcripts
+    or personal records. The original attachment is copied but never modified.
     Extraction and model review are attempted after storage; the public course
     catalog remains unchanged.
     """

@@ -25,6 +25,7 @@ from server import handle_curriculum_extract_from_attachment
 from server import handle_curriculum_ingest_from_attachment
 from server import handle_list_curriculum_documents
 from server import handle_clear_curriculum_knowledge_base
+from server import configured_directory
 from tools.course_path_rules import build_course_path_data, load_course_catalog
 from tools.catalog_validate import validate_catalog
 from tools.curriculum_extract import extract_catalog_draft
@@ -564,6 +565,27 @@ def test_list_and_clear_handlers_use_the_curriculum_partition_only(
     assert clear_response["ok"] is True
     assert clear_response["data"]["removed_documents"] == 1
     assert clear_response["data"]["course_catalog_modified"] is False
+
+
+def test_configured_directory_uses_default_when_storage_override_is_unset(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("CURRICULUM_KNOWLEDGE_BASE_DIR", raising=False)
+
+    resolved = configured_directory("CURRICULUM_KNOWLEDGE_BASE_DIR", tmp_path / "default")
+
+    assert resolved == tmp_path / "default"
+
+
+def test_configured_directory_accepts_an_absolute_local_storage_override(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    configured_path = tmp_path / "shared-curriculum"
+    monkeypatch.setenv("CURRICULUM_KNOWLEDGE_BASE_DIR", str(configured_path))
+
+    resolved = configured_directory("CURRICULUM_KNOWLEDGE_BASE_DIR", tmp_path / "default")
+
+    assert resolved == configured_path.resolve()
 
 
 def test_server_returns_a_structured_error_for_invalid_arguments() -> None:
