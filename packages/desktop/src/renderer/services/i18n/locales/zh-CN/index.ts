@@ -24,6 +24,7 @@ import team from './team.json';
 import pet from './pet.json';
 import workbench from './workbench.json';
 import report from './report.json';
+import policyChecklist from './policy-checklist.json';
 
 export default {
   common,
@@ -47,4 +48,5 @@ export default {
   pet,
   workbench,
   report,
+  policyChecklist,
 };

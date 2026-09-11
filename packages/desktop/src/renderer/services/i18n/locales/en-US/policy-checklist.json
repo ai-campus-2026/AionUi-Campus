@@ -1,0 +1,61 @@
+{
+  "navTitle": "Self-Check",
+  "pageTag": "Eligibility Self-Check",
+  "doc": {
+    "pg": "Postgraduate Recommendation",
+    "scholarship": "Scholarship"
+  },
+  "metaEffective": "Effective: {{date}}",
+  "metaSource": "Source file",
+  "verdict": {
+    "disqualified": "Not eligible",
+    "incomplete": "Basic gates not fully met",
+    "incompleteDesc": "{{met}}/{{total}} gates met, {{gaps}} still missing",
+    "qualified": "All basic gates met",
+    "qualifiedDesc": "{{bonus}} bonus materials provided; final verdict returned by reviewer"
+  },
+  "veto": {
+    "title": "Veto Items",
+    "desc": "Confirm each item below (default: No). Any hit disqualifies the application and collapses the gates below.",
+    "hit": "Hit",
+    "none": "No hit"
+  },
+  "base": {
+    "title": "Basic Gates",
+    "progress": "{{met}}/{{total}} met"
+  },
+  "bonus": {
+    "title": "Bonus Items",
+    "provided": "{{provided}}/{{total}} materials provided",
+    "hint": "Scored by rules",
+    "providedTag": "Provided"
+  },
+  "other": {
+    "title": "Other Notices"
+  },
+  "tag": {
+    "scoring": "Scoring",
+    "procedural": "Procedural",
+    "needEvidence": "Evidence required"
+  },
+  "sourceSection": "Section",
+  "field": {
+    "enterValue": "Enter value",
+    "requirement": "Required",
+    "yes": "Yes",
+    "no": "No",
+    "vetoHint": "Applies to you?",
+    "baseConfirmHint": "I meet this",
+    "uploadButton": "Upload",
+    "uploaded": "Uploaded",
+    "uploadedUnit": " file(s)"
+  },
+  "status": {
+    "met": "Met",
+    "notMet": "Not met"
+  },
+  "reset": "Reset",
+  "submit": "Submit",
+  "footerHint": "Self-check is for reference only; final eligibility is decided by the college",
+  "debug": "Debug info (temporary)"
+}

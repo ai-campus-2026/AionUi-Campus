@@ -1,0 +1,61 @@
+{
+  "navTitle": "申请自评",
+  "pageTag": "申请条件自评",
+  "doc": {
+    "pg": "推免研究生",
+    "scholarship": "奖学金"
+  },
+  "metaEffective": "生效日期：{{date}}",
+  "metaSource": "来源文件",
+  "verdict": {
+    "disqualified": "不符合申请资格",
+    "incomplete": "基础门槛尚未全部达标",
+    "incompleteDesc": "基础门槛已达标 {{met}}/{{total}} 项，仍有 {{gaps}} 项未满足",
+    "qualified": "基础门槛全部达标",
+    "qualifiedDesc": "已提供 {{bonus}} 项加分材料，最终判定与加分合计由审核端返回"
+  },
+  "veto": {
+    "title": "一票否决项",
+    "desc": "逐项确认以下情形是否存在（默认全部为“否”）。任一命中将直接判定为不符合资格，下方门槛自动收起。",
+    "hit": "已命中",
+    "none": "无命中"
+  },
+  "base": {
+    "title": "基础门槛",
+    "progress": "已达标 {{met}}/{{total}}"
+  },
+  "bonus": {
+    "title": "加分项",
+    "provided": "已提供 {{provided}}/{{total}} 项材料",
+    "hint": "分值由细则计算",
+    "providedTag": "已提供"
+  },
+  "other": {
+    "title": "其他须知"
+  },
+  "tag": {
+    "scoring": "计分项",
+    "procedural": "流程项",
+    "needEvidence": "需佐证"
+  },
+  "sourceSection": "条款",
+  "field": {
+    "enterValue": "请输入",
+    "requirement": "要求",
+    "yes": "是",
+    "no": "否",
+    "vetoHint": "是否存在此情形",
+    "baseConfirmHint": "我满足此项",
+    "uploadButton": "上传材料",
+    "uploaded": "已上传",
+    "uploadedUnit": "个文件"
+  },
+  "status": {
+    "met": "已达标",
+    "notMet": "未达标"
+  },
+  "reset": "重置",
+  "submit": "提交自评",
+  "footerHint": "自评结果仅作参考，最终资格以学院审核为准",
+  "debug": "调试信息（临时）"
+}
