@@ -111,12 +111,21 @@ async def delete_document(source: str) -> str:
 
 
 @mcp.tool()
-async def clear_knowledge_base() -> str:
-    """清空知识库中的所有文档（危险操作，不可恢复）。"""
+async def clear_general_knowledge_base() -> str:
+    """【清空通用知识库】仅清空 RAG 向量知识库（ChromaDB + BM25）中的所有文档。危险操作，不可恢复。
+
+    重要区分：本工具只作用于「通用知识库」（上传文档的向量/检索库），
+    绝不会清空结构化的「政策知识库」（policy-search）。若用户要清空的是政策库
+    （推免/奖学金/助学金等按条款结构化的政策），请改用 policy-search 的
+    clear_policy_knowledge_base 工具，不要用本工具。
+
+    触发：用户明确要清空通用/向量/文档问答知识库时，如"清空通用知识库""清空RAG向量库"
+    "删除所有上传的文档"。用户说"清空政策知识库"时不要调用本工具。
+    """
     try:
         return await asyncio.to_thread(engine.clear)
     except Exception as e:
-        logger.exception("clear_knowledge_base 失败")
+        logger.exception("clear_general_knowledge_base 失败")
         return _err_text(f"清空失败 - {e}")
 
 

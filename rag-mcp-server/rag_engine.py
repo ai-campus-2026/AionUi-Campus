@@ -54,7 +54,7 @@ class RAGEngine:
             raise RuntimeError(
                 f"知识库由 embedding 模型 {stored_model!r} 构建，当前配置为 "
                 f"{Config.EMBEDDING_MODEL!r}，向量维度可能不匹配。"
-                f"请清空知识库（clear_knowledge_base）或改回原模型。"
+                f"请清空通用知识库（clear_general_knowledge_base）或改回原模型。"
             )
 
         self._splitter = RecursiveCharacterTextSplitter(
