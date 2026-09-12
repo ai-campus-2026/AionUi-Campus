@@ -1,6 +1,6 @@
 // ========== 申请清单页：控件分发（按 input_kind 渲染，不做中文语义判断） ==========
 import React from 'react';
-import { Button, InputNumber, Switch, Typography, Upload } from '@arco-design/web-react';
+import { Button, InputNumber, Select, Switch, Typography, Upload } from '@arco-design/web-react';
 import { useTranslation } from 'react-i18next';
 import type { AnswerValue, EvidenceFile, PolicyCondition } from './types';
 
@@ -28,6 +28,8 @@ const ConditionField: React.FC<ConditionFieldProps> = ({
   const { t } = useTranslation();
 
   // number：数值输入 + 单位 + 阈值即时比对
+  // 不限制小数位（precision）：绩点 3.5、排名 1.67/33.33 等都可能带小数，
+  // 输入精度不影响判定（判定由 operator/value 字段决定）。
   if (condition.input_kind === 'number') {
     return (
       <div className='flex items-center gap-8px flex-wrap'>
@@ -37,7 +39,6 @@ const ConditionField: React.FC<ConditionFieldProps> = ({
           placeholder={t('policyChecklist.field.enterValue')}
           style={{ width: 160 }}
           min={0}
-          precision={condition.unit === '分' || condition.unit === '%' ? 1 : 0}
         />
         {condition.unit && condition.unit !== 'none' && (
           <Typography.Text type='secondary' style={{ fontSize: 13 }}>
@@ -124,6 +125,39 @@ const ConditionField: React.FC<ConditionFieldProps> = ({
           <Typography.Text style={{ fontSize: 12, color: 'var(--color-success-6)' }}>
             {t('policyChecklist.field.uploaded')} {evidence.length}{t('policyChecklist.field.uploadedUnit')}
           </Typography.Text>
+        )}
+      </div>
+    );
+  }
+
+  // select：档位选择（选项由后端 annotator 提供；缺失时用通用 是/否 兜底）
+  if (condition.input_kind === 'select') {
+    const options = condition.options?.length
+      ? condition.options.map((o) => ({ label: o, value: o }))
+      : [
+          { label: t('policyChecklist.field.yes'), value: 'yes' },
+          { label: t('policyChecklist.field.no'), value: 'no' },
+        ];
+    return (
+      <div className='flex items-center gap-8px flex-wrap'>
+        <Select
+          value={typeof value === 'string' ? value : undefined}
+          onChange={(v) => onChange(typeof v === 'string' ? v : null)}
+          placeholder={t('policyChecklist.field.selectPlaceholder')}
+          style={{ width: 200 }}
+          options={options}
+        />
+        {met !== undefined && value && (
+          <span
+            className='px-8px py-2px rd-999px'
+            style={{
+              fontSize: 12,
+              color: 'var(--color-success-6)',
+              background: 'var(--color-success-1)',
+            }}
+          >
+            {t('policyChecklist.status.met')}
+          </span>
         )}
       </div>
     );

@@ -12,9 +12,11 @@ interface BonusBoardProps {
   evidence: EvidenceMap;
   onAnswer: (id: string, value: AnswerValue) => void;
   onEvidence: (id: string, files: EvidenceFile[]) => void;
+  /** 提交自评后：未提供材料的加分项标"未提供"（字段判定：evidence 是否存在） */
+  submitted?: boolean;
 }
 
-const BonusBoard: React.FC<BonusBoardProps> = ({ conditions, answers, evidence, onAnswer, onEvidence }) => {
+const BonusBoard: React.FC<BonusBoardProps> = ({ conditions, answers, evidence, onAnswer, onEvidence, submitted }) => {
   const { t } = useTranslation();
   const provided = conditions.filter((c) => (evidence[c.id]?.length ?? 0) > 0).length;
 
@@ -53,6 +55,14 @@ const BonusBoard: React.FC<BonusBoardProps> = ({ conditions, answers, evidence, 
                     {t('policyChecklist.bonus.providedTag')}
                   </span>
                 )}
+                {submitted === true && (evidence[condition.id]?.length ?? 0) === 0 && (
+                  <span
+                    className='px-6px py-1px rd-6px'
+                    style={{ fontSize: 11, color: 'var(--color-warning-6)', background: 'var(--color-warning-1)' }}
+                  >
+                    ⚠ {t('policyChecklist.bonus.notProvidedTag')}
+                  </span>
+                )}
               </div>
             }
           >
@@ -60,6 +70,26 @@ const BonusBoard: React.FC<BonusBoardProps> = ({ conditions, answers, evidence, 
               <Typography.Text type='secondary' style={{ fontSize: 13 }}>
                 {condition.description}
               </Typography.Text>
+              {condition.variants && condition.variants.length > 0 && (
+                <div
+                  className='flex flex-col gap-4px rd-8px'
+                  style={{ padding: '6px 10px', background: 'var(--color-fill-2)' }}
+                >
+                  <Typography.Text type='secondary' style={{ fontSize: 12 }}>
+                    {t('policyChecklist.bonus.variants', { count: condition.variants.length })}
+                  </Typography.Text>
+                  {condition.variants.map((variant, i) => (
+                    <div key={i} className='flex items-baseline gap-6px flex-wrap'>
+                      <Typography.Text style={{ fontSize: 12 }}>{variant.requirement || variant.description}</Typography.Text>
+                      {variant.source_section && (
+                        <Typography.Text type='secondary' style={{ fontSize: 11 }}>
+                          {t('policyChecklist.sourceSection')} {variant.source_section}
+                        </Typography.Text>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
               <ConditionField
                 condition={condition}
                 value={answers[condition.id]}

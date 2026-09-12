@@ -1,6 +1,9 @@
 {
   "navTitle": "申请自评",
   "pageTag": "申请条件自评",
+  "panel": {
+    "close": "关闭清单"
+  },
   "doc": {
     "pg": "推免研究生",
     "scholarship": "奖学金"
@@ -18,7 +21,8 @@
     "title": "一票否决项",
     "desc": "逐项确认以下情形是否存在（默认全部为“否”）。任一命中将直接判定为不符合资格，下方门槛自动收起。",
     "hit": "已命中",
-    "none": "无命中"
+    "none": "无命中",
+    "cleared": "已确认无此情形"
   },
   "base": {
     "title": "基础门槛",
@@ -28,7 +32,9 @@
     "title": "加分项",
     "provided": "已提供 {{provided}}/{{total}} 项材料",
     "hint": "分值由细则计算",
-    "providedTag": "已提供"
+    "providedTag": "已提供",
+    "notProvidedTag": "未提供",
+    "variants": "另有 {{count}} 档要求："
   },
   "other": {
     "title": "其他须知"
@@ -47,15 +53,20 @@
     "vetoHint": "是否存在此情形",
     "baseConfirmHint": "我满足此项",
     "uploadButton": "上传材料",
+    "selectPlaceholder": "请选择",
     "uploaded": "已上传",
     "uploadedUnit": "个文件"
   },
   "status": {
     "met": "已达标",
-    "notMet": "未达标"
+    "notMet": "未达标",
+    "confirmed": "已确认",
+    "pending": "待确认"
   },
   "reset": "重置",
   "submit": "提交自评",
+  "submitted": "已提交",
+  "submitDone": "自评已提交（基础门槛达标 {{met}}/{{total}} 项），最终资格以学院审核为准",
   "footerHint": "自评结果仅作参考，最终资格以学院审核为准",
   "debug": "调试信息（临时）"
 }

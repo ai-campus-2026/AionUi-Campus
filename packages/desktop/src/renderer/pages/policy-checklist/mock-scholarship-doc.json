@@ -19,6 +19,7 @@
   },
   "requirements": {
     "gpa": {
+      "label": "绩点/成绩要求",
       "conditions": [
         {
           "id": "condition_011",
@@ -33,9 +34,9 @@
           "unit": "%",
           "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前10%。",
           "source_section": "无章节编号",
-          "board": "base",
+          "board": "bonus",
           "input_kind": "number",
-          "requires_evidence": false
+          "requires_evidence": true
         },
         {
           "id": "condition_013",
@@ -50,9 +51,9 @@
           "unit": "%",
           "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前10%。",
           "source_section": "3",
-          "board": "base",
+          "board": "bonus",
           "input_kind": "number",
-          "requires_evidence": false
+          "requires_evidence": true
         },
         {
           "id": "condition_016",
@@ -67,9 +68,9 @@
           "unit": "%",
           "source_quote": "学业成绩……排名均应在专业（或年级）前1/3",
           "source_section": "4",
-          "board": "base",
+          "board": "bonus",
           "input_kind": "number",
-          "requires_evidence": false
+          "requires_evidence": true
         },
         {
           "id": "condition_018",
@@ -84,9 +85,9 @@
           "unit": "%",
           "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前15%。",
           "source_section": "5",
-          "board": "base",
+          "board": "bonus",
           "input_kind": "number",
-          "requires_evidence": false
+          "requires_evidence": true
         },
         {
           "id": "condition_020",
@@ -101,13 +102,31 @@
           "unit": "%",
           "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前40%。",
           "source_section": "第六条",
-          "board": "base",
+          "board": "bonus",
           "input_kind": "number",
-          "requires_evidence": false
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_044",
+          "category": "gpa",
+          "item": "平均学分绩点",
+          "description": "申请奖学金对平均学分绩点的要求（加分项）",
+          "type": "scoring",
+          "quantifiable": true,
+          "requirement": "平均学分绩点 3.5 及以上",
+          "operator": ">=",
+          "value": 3.5,
+          "unit": "",
+          "source_quote": "申请者平均学分绩点应达到规定要求。",
+          "source_section": "无章节编号",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
         }
       ]
     },
     "academic": {
+      "label": "学业表现要求",
       "conditions": [
         {
           "id": "condition_005",
@@ -122,8 +141,8 @@
           "unit": "门",
           "source_quote": "（四）学习目的明确，学习态度端正，评定学年所修课程（不含任选、再修、重修、第二专业课程）无补考、重修。",
           "source_section": "第七条 （四）",
-          "board": "base",
-          "input_kind": "number",
+          "board": "veto",
+          "input_kind": "yes_no",
           "requires_evidence": false
         },
         {
@@ -140,7 +159,7 @@
           "source_quote": "在校二年级以上优秀学生；",
           "source_section": "第九条（一）",
           "board": "base",
-          "input_kind": "none",
+          "input_kind": "yes_no",
           "requires_evidence": false
         },
         {
@@ -156,9 +175,9 @@
           "unit": "%",
           "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前10%。",
           "source_section": "无章节编号",
-          "board": "base",
+          "board": "bonus",
           "input_kind": "number",
-          "requires_evidence": false
+          "requires_evidence": true
         },
         {
           "id": "condition_014",
@@ -173,9 +192,9 @@
           "unit": "%",
           "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前10%。",
           "source_section": "3",
-          "board": "base",
+          "board": "bonus",
           "input_kind": "number",
-          "requires_evidence": false
+          "requires_evidence": true
         },
         {
           "id": "condition_017",
@@ -190,9 +209,9 @@
           "unit": "%",
           "source_quote": "综合素质测评成绩排名均应在专业（或年级）前1/3",
           "source_section": "4",
-          "board": "base",
+          "board": "bonus",
           "input_kind": "number",
-          "requires_evidence": false
+          "requires_evidence": true
         },
         {
           "id": "condition_019",
@@ -207,9 +226,9 @@
           "unit": "%",
           "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前15%。",
           "source_section": "5",
-          "board": "base",
+          "board": "bonus",
           "input_kind": "number",
-          "requires_evidence": false
+          "requires_evidence": true
         },
         {
           "id": "condition_021",
@@ -224,9 +243,9 @@
           "unit": "%",
           "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前40%。",
           "source_section": "第六条",
-          "board": "base",
+          "board": "bonus",
           "input_kind": "number",
-          "requires_evidence": false
+          "requires_evidence": true
         },
         {
           "id": "condition_028",
@@ -265,6 +284,7 @@
       ]
     },
     "disciplinary": {
+      "label": "纪律/品行要求",
       "conditions": [
         {
           "id": "condition_002",
@@ -279,7 +299,7 @@
           "unit": "none",
           "source_quote": "（一）具有坚定正确的政治方向和远大理想，热爱社会主义祖国，拥护中国共产党的领导；",
           "source_section": "第七条 （一）",
-          "board": "base",
+          "board": "other",
           "input_kind": "none",
           "requires_evidence": false
         },
@@ -296,7 +316,7 @@
           "unit": "none",
           "source_quote": "（二）自觉遵守宪法、法律法规，遵守校规校纪；",
           "source_section": "第七条 （二）",
-          "board": "base",
+          "board": "other",
           "input_kind": "none",
           "requires_evidence": false
         },
@@ -313,8 +333,8 @@
           "unit": "none",
           "source_quote": "（三）具备良好的道德品质和行为习惯：热爱生活、关心集体，尊敬师长、团结同学，诚实守信、乐于助人，生活俭朴、身心健康，积极参加公益活动；",
           "source_section": "第七条 （三）",
-          "board": "base",
-          "input_kind": "yes_no",
+          "board": "other",
+          "input_kind": "none",
           "requires_evidence": false
         },
         {
@@ -330,7 +350,7 @@
           "unit": "none",
           "source_quote": "被认定为家庭经济困难学生",
           "source_section": "4",
-          "board": "base",
+          "board": "other",
           "input_kind": "none",
           "requires_evidence": false
         },
@@ -347,7 +367,7 @@
           "unit": "none",
           "source_quote": "热爱社会主义祖国，拥护中国共产党的领导；",
           "source_section": "未标注章节",
-          "board": "base",
+          "board": "other",
           "input_kind": "none",
           "requires_evidence": false
         },
@@ -364,7 +384,7 @@
           "unit": "none",
           "source_quote": "遵守宪法和法律，遵守学校规章制度；",
           "source_section": "未注明章节（原文片段）",
-          "board": "base",
+          "board": "veto",
           "input_kind": "yes_no",
           "requires_evidence": false
         },
@@ -381,7 +401,7 @@
           "unit": "none",
           "source_quote": "3. 诚实守信，道德品质优良；",
           "source_section": "未知章节（原文仅提供条目编号3）",
-          "board": "base",
+          "board": "other",
           "input_kind": "none",
           "requires_evidence": false
         },
@@ -398,7 +418,7 @@
           "unit": "none",
           "source_quote": "6. 自立自强，乐于助人，积极参加公益活动。",
           "source_section": "（二）评定原则",
-          "board": "base",
+          "board": "other",
           "input_kind": "none",
           "requires_evidence": false
         },
@@ -415,8 +435,8 @@
           "unit": "none",
           "source_quote": "符合申请条件的家庭经济困难学生，按照特别困难、困难、一般困难顺序，结合学业、品行等现实表现",
           "source_section": "国家助学金条款",
-          "board": "base",
-          "input_kind": "yes_no",
+          "board": "other",
+          "input_kind": "none",
           "requires_evidence": false
         },
         {
@@ -432,7 +452,7 @@
           "unit": "none",
           "source_quote": "（二）违反校规校纪，并受到院、校通报批评或学校纪律处分者；",
           "source_section": "第十四条",
-          "board": "base",
+          "board": "veto",
           "input_kind": "yes_no",
           "requires_evidence": false
         },
@@ -449,13 +469,14 @@
           "unit": "none",
           "source_quote": "在受益期间违反国家法律法规及学校规章制度，受到学校警告以上处分者，从受到处分次月起终止奖助学金发放。",
           "source_section": "第十五条",
-          "board": "base",
+          "board": "veto",
           "input_kind": "yes_no",
           "requires_evidence": false
         }
       ]
     },
     "competition": {
+      "label": "竞赛/获奖要求",
       "conditions": [
         {
           "id": "condition_022",
@@ -470,8 +491,8 @@
           "unit": "none",
           "source_quote": "在课外科技创新、学科竞赛活动中获得省部级以上等级奖；",
           "source_section": "未知",
-          "board": "base",
-          "input_kind": "none",
+          "board": "bonus",
+          "input_kind": "select",
           "requires_evidence": false
         },
         {
@@ -487,13 +508,14 @@
           "unit": "none",
           "source_quote": "在文体艺术等竞赛活动中获得省部级以上等级奖；",
           "source_section": "未知",
-          "board": "base",
-          "input_kind": "none",
+          "board": "bonus",
+          "input_kind": "select",
           "requires_evidence": false
         }
       ]
     },
     "bonus": {
+      "label": "加分项",
       "conditions": [
         {
           "id": "condition_010",
@@ -510,7 +532,7 @@
           "source_section": "第九条（二）",
           "board": "bonus",
           "input_kind": "number",
-          "requires_evidence": false
+          "requires_evidence": true
         },
         {
           "id": "condition_042",
@@ -526,7 +548,7 @@
           "source_quote": "从事义工活动时长认定，可参照注册志愿者的志愿服务时长。",
           "source_section": "第十七条",
           "board": "bonus",
-          "input_kind": "none",
+          "input_kind": "select",
           "requires_evidence": false
         },
         {
@@ -543,12 +565,13 @@
           "source_quote": "评定学年内担任各级各类学生干部、干事等，经主管部门或学院考核为\"合格\"以上，也可折算为一定义工时长。",
           "source_section": "第十七条",
           "board": "bonus",
-          "input_kind": "none",
+          "input_kind": "select",
           "requires_evidence": false
         }
       ]
     },
     "procedural": {
+      "label": "流程性要求",
       "conditions": [
         {
           "id": "condition_006",
@@ -563,7 +586,7 @@
           "unit": "none",
           "source_quote": "（二）国家奖学金、春华秋实奖学金及奖励金额为8000元以上的社会奖学金采用公开申报、评审或答辩方式评定，其他奖学金按评定学年综合素质测评成绩从高到低排序评定；",
           "source_section": "第八条 （二）",
-          "board": "base",
+          "board": "other",
           "input_kind": "none",
           "requires_evidence": false
         },
@@ -580,7 +603,7 @@
           "unit": "none",
           "source_quote": "（三）学生在同一学年只能申请获得一类奖学金（科创文体奖学金除外）。",
           "source_section": "第八条 （三）",
-          "board": "base",
+          "board": "other",
           "input_kind": "none",
           "requires_evidence": false
         },
@@ -597,8 +620,8 @@
           "unit": "none",
           "source_quote": "家庭经济困难学生可同时申请获得助学金。",
           "source_section": "第八条 （三）",
-          "board": "base",
-          "input_kind": "none",
+          "board": "bonus",
+          "input_kind": "select",
           "requires_evidence": false
         },
         {
@@ -615,8 +638,8 @@
           "source_quote": "学生根据各类奖助学金申请条件，在规定时间内提出申请",
           "source_section": "第十三条",
           "board": "base",
-          "input_kind": "none",
-          "requires_evidence": false
+          "input_kind": "upload",
+          "requires_evidence": true
         },
         {
           "id": "condition_035",
@@ -631,7 +654,7 @@
           "unit": "none",
           "source_quote": "学院成立学生奖助学金评审小组，对申请学生进行评审",
           "source_section": "第十三条",
-          "board": "base",
+          "board": "other",
           "input_kind": "none",
           "requires_evidence": false
         },
@@ -650,7 +673,7 @@
           "source_section": "第十三条",
           "board": "base",
           "input_kind": "number",
-          "requires_evidence": false
+          "requires_evidence": true
         },
         {
           "id": "condition_037",
@@ -682,13 +705,14 @@
           "unit": "none",
           "source_quote": "（三）在奖助学金申请和评审推荐过程中弄虚作假者；",
           "source_section": "第十四条",
-          "board": "base",
-          "input_kind": "none",
+          "board": "veto",
+          "input_kind": "yes_no",
           "requires_evidence": false
         }
       ]
     },
     "other": {
+      "label": "其他要求",
       "conditions": [
         {
           "id": "condition_001",
@@ -721,7 +745,7 @@
           "source_quote": "其他符合《重庆邮电大学学生科技文化创新活动工作实施方案》相关条件的项目。",
           "source_section": "第三条",
           "board": "other",
-          "input_kind": "yes_no",
+          "input_kind": "none",
           "requires_evidence": false
         },
         {
@@ -771,8 +795,8 @@
           "unit": "none",
           "source_quote": "（四）其他经学生工作部（处）认定不能参加评定者。",
           "source_section": "第十四条",
-          "board": "veto",
-          "input_kind": "yes_no",
+          "board": "other",
+          "input_kind": "none",
           "requires_evidence": false
         }
       ]

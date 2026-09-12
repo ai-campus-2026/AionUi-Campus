@@ -1,6 +1,9 @@
 {
   "navTitle": "Self-Check",
   "pageTag": "Eligibility Self-Check",
+  "panel": {
+    "close": "Close checklist"
+  },
   "doc": {
     "pg": "Postgraduate Recommendation",
     "scholarship": "Scholarship"
@@ -18,7 +21,8 @@
     "title": "Veto Items",
     "desc": "Confirm each item below (default: No). Any hit disqualifies the application and collapses the gates below.",
     "hit": "Hit",
-    "none": "No hit"
+    "none": "No hit",
+    "cleared": "Confirmed absent"
   },
   "base": {
     "title": "Basic Gates",
@@ -28,7 +32,9 @@
     "title": "Bonus Items",
     "provided": "{{provided}}/{{total}} materials provided",
     "hint": "Scored by rules",
-    "providedTag": "Provided"
+    "providedTag": "Provided",
+    "notProvidedTag": "Not provided",
+    "variants": "{{count}} other tiers:"
   },
   "other": {
     "title": "Other Notices"
@@ -47,15 +53,20 @@
     "vetoHint": "Applies to you?",
     "baseConfirmHint": "I meet this",
     "uploadButton": "Upload",
+    "selectPlaceholder": "Select",
     "uploaded": "Uploaded",
     "uploadedUnit": " file(s)"
   },
   "status": {
     "met": "Met",
-    "notMet": "Not met"
+    "notMet": "Not met",
+    "confirmed": "Confirmed",
+    "pending": "Pending"
   },
   "reset": "Reset",
   "submit": "Submit",
+  "submitted": "Submitted",
+  "submitDone": "Self-check submitted ({{met}}/{{total}} gates met). Final eligibility is decided by the college.",
   "footerHint": "Self-check is for reference only; final eligibility is decided by the college",
   "debug": "Debug info (temporary)"
 }

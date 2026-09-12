@@ -15,6 +15,8 @@ import { AnswerTemplate, mockCourseRuleSuccessResult } from '@renderer/component
 import type { CampusRuleToolResult } from '@renderer/components/campus-rule';
 import { tryParseCampusRuleResult } from '@renderer/components/campus-rule/adaptPolicyResult';
 import RuleErrorBox from '@renderer/components/campus-rule/RuleErrorBox';
+import { usePolicyChecklistPanel, type ChecklistDocKey, type ChecklistHints } from '@renderer/pages/policy-checklist/checklistPanelStore';
+import { parseUserHints, extractUserInfoHints } from '@renderer/pages/policy-checklist/parseUserHints';
 import './MessageToolGroupSummary.css';
 
 // 测试开关，验证完成务必改为 false
@@ -169,6 +171,39 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
   }, [hasRunning]);
 
   const tools = useMemo(() => normalizeToolMessages(messages), [messages]);
+
+  // 政策清单右侧面板：AI 调用 query_policy（completed）时，按其 category 自动打开
+  // 对应清单文档（无需点击侧边栏入口）。category 未命中清单文档（如 academic）不触发。
+  // 同一会话会积累多条 query_policy（新旧问题各一条），取【最后一条】命中为准，
+  // 否则历史旧问题会覆盖新问题（如奖学金→推免切换失效）。
+  const { openChecklist } = usePolicyChecklistPanel();
+  useEffect(() => {
+    let latestKey: ChecklistDocKey | null = null;
+    let latestHints: ChecklistHints = {};
+    for (const item of tools) {
+      if (item.status !== 'completed' || !item.name?.includes('query_policy') || !item.input) continue;
+      let parsed: Record<string, unknown> | null = null;
+      try {
+        parsed = JSON.parse(item.input.trim());
+      } catch {
+        continue;
+      }
+      const args = (parsed?.args as Record<string, unknown> | undefined) ?? {};
+      const category = parsed?.category ?? args.category;
+      if (category === 'scholarship' || category === 'postgraduate_recommendation') {
+        latestKey = category as ChecklistDocKey; // 不 return，持续往后找最新一条
+        // 对话预填：优先用 LLM 按 schema 提取的结构化 user_info
+        // （gpa/gpa_rank_percent/extra），问题原文正则兜底（年级等文本信息）
+        const userInfo = parsed?.user_info ?? args.user_info;
+        const q = parsed?.question ?? parsed?.query ?? parsed?.prompt ?? args.question ?? args.query;
+        latestHints = {
+          ...(typeof q === 'string' && q.trim() ? parseUserHints(q) : {}),
+          ...extractUserInfoHints(userInfo),
+        };
+      }
+    }
+    if (latestKey) openChecklist(latestKey, latestHints);
+  }, [tools, openChecklist]);
 
   // 提取校园规则/政策检索结果，在折叠面板外层直接渲染（默认可见，无需展开 View Steps）
   // 兼容两种返回：1) 前端自己的结构化结果（type=campus_rule_analysis/policy_retrieval）

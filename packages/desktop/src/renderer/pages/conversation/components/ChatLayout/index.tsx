@@ -11,6 +11,8 @@ import { useLayoutConstraints } from '@/renderer/pages/conversation/hooks/useLay
 import { useTitleRename } from '@/renderer/pages/conversation/hooks/useTitleRename';
 import { useWorkspaceCollapse } from '@/renderer/pages/conversation/hooks/useWorkspaceCollapse';
 import { PreviewPanel, usePreviewContext } from '@/renderer/pages/conversation/Preview';
+import PolicyChecklistPanel from '@/renderer/pages/policy-checklist/PolicyChecklistPanel';
+import { usePolicyChecklistPanel } from '@/renderer/pages/policy-checklist/checklistPanelStore';
 import { dispatchWorkspaceToggleEvent } from '@/renderer/utils/workspace/workspaceEvents';
 import classNames from 'classnames';
 import {
@@ -45,6 +47,16 @@ const ChatLayout: React.FC<{
    * same-project conversation switches (no remount).
    */
   previewHosted?: boolean;
+  /**
+   * 校园规则解码器：右侧区域常驻「申请自评」清单面板（桌面端），
+   * 仅主动打开文件预览时临时覆盖。仅普通对话会话开启；团队页不传。
+   */
+  checklistResident?: boolean;
+  /**
+   * 校园规则解码器：不渲染右侧工作区文件树面板（临时工作区会因文件出现
+   * 自动展开占位）。清单面板常驻时右侧只保留清单/预览区域。
+   */
+  workspacePanelDisabled?: boolean;
   /** Conversation ID for mode switching */
   conversation_id?: string;
   /** Custom tabs slot; when provided, replaces the default ConversationTabs */
@@ -66,21 +78,26 @@ const ChatLayout: React.FC<{
 }> = (props) => {
   const { conversation_id, workspacePath, isTemporaryWorkspace } = props;
   const { backend, presetAssistant, agent_name, workspaceEnabled = true, workspacePreferenceKey } = props;
+  const workspacePanelDisabled = Boolean(props.workspacePanelDisabled);
   const layout = useLayoutContext();
   const isDesktop = !layout?.isMobile;
   const isMobile = Boolean(layout?.isMobile);
 
   // Preview panel state
   const { isOpen: isPreviewOpenRaw } = usePreviewContext();
+  // 政策清单面板：AI 调用 query_policy 命中清单文档时在右侧直接显示（无需点击入口）
+  const checklistPanelActive = Boolean(usePolicyChecklistPanel().docKey);
   const previewHosted = Boolean(props.previewHosted);
   // For project conversations the preview lives at the Layout host, so this
   // ChatLayout must behave as if there is no preview: chat fills, no split, no
   // preview panel. Everywhere below uses `isPreviewOpen` for that local decision.
-  const isPreviewOpen = isPreviewOpenRaw && !previewHosted;
+  // 桌面端右侧区域常驻（默认清单面板）；移动端维持触发/主动打开才显示。
+  const checklistResident = Boolean(props.checklistResident);
+  const isPreviewOpen = !previewHosted && ((checklistResident && isDesktop) || isPreviewOpenRaw || checklistPanelActive);
 
   // --- Hook A: workspace collapse ---
   const { rightSiderCollapsed, setRightSiderCollapsed } = useWorkspaceCollapse({
-    workspaceEnabled,
+    workspaceEnabled: workspaceEnabled && !workspacePanelDisabled,
     isMobile,
     conversation_id,
     preferenceKey: workspacePreferenceKey ?? conversation_id,
@@ -298,13 +315,13 @@ const ChatLayout: React.FC<{
                     lineStyle: { width: '2px' },
                   })}
                 <div className={classNames('h-full w-full overflow-hidden', isDesktop ? '' : 'rounded-[15px]')}>
-                  <PreviewPanel />
+                  {isPreviewOpenRaw ? <PreviewPanel /> : <PolicyChecklistPanel />}
                 </div>
               </div>
             )}
           </div>
         </div>
-        {workspaceEnabled && !layout?.isMobile && (
+        {workspaceEnabled && !workspacePanelDisabled && !layout?.isMobile && (
           <div
             className={classNames('!bg-1 relative chat-layout-right-sider layout-sider')}
             style={{
@@ -336,7 +353,7 @@ const ChatLayout: React.FC<{
         )}
 
         {/* Mobile workspace overlay: backdrop + fixed panel + floating collapse handle */}
-        {workspaceEnabled && layout?.isMobile && (
+        {workspaceEnabled && !workspacePanelDisabled && layout?.isMobile && (
           <MobileWorkspaceOverlay
             rightSiderCollapsed={rightSiderCollapsed}
             setRightSiderCollapsed={setRightSiderCollapsed}

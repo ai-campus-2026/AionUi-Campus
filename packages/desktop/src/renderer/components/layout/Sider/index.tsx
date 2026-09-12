@@ -7,13 +7,18 @@ import { useAuth } from '@renderer/hooks/context/AuthContext';
 import { useLayoutContext } from '@renderer/hooks/context/LayoutContext';
 import { blurActiveElement } from '@renderer/utils/ui/focus';
 import { useThemeContext } from '@renderer/hooks/context/ThemeContext';
-import { SiderToolbar, SiderSearchEntry, SiderScheduledEntry, SiderAssistantEntry, SiderWorkbenchEntry, SiderPolicyChecklistEntry } from './SiderNav';
+import { SiderToolbar, SiderSearchEntry, SiderScheduledEntry, SiderAssistantEntry, SiderWorkbenchEntry } from './SiderNav';
 import SiderFooter from './SiderFooter';
 import TeamSiderSection from './TeamSiderSection';
 import siderStyles from './Sider.module.css';
 
 const WorkspaceGroupedHistory = React.lazy(() => import('@renderer/pages/conversation/GroupedHistory'));
 const SettingsSider = React.lazy(() => import('@renderer/pages/settings/components/SettingsSider'));
+
+// 校园规则解码器定制：隐藏"助手"和"定时任务"导航入口。
+// 产品左侧只保留「工作台 / 历史会话」；需要恢复时置为 false。
+const HIDE_ASSISTANT_ENTRY = true;
+const HIDE_SCHEDULED_ENTRY = true;
 
 interface SiderProps {
   onSessionClick?: () => void;
@@ -61,19 +66,6 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
     closePreview();
     setIsBatchMode(false);
     Promise.resolve(navigate('/workbench')).catch((error) => {
-      console.error('Navigation failed:', error);
-    });
-    if (onSessionClick) {
-      onSessionClick();
-    }
-  };
-
-  const handlePolicyChecklistClick = () => {
-    cleanupSiderTooltips();
-    blurActiveElement();
-    closePreview();
-    setIsBatchMode(false);
-    Promise.resolve(navigate('/policy-checklist')).catch((error) => {
       console.error('Navigation failed:', error);
     });
     if (onSessionClick) {
@@ -214,6 +206,7 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
               siderTooltipProps={siderTooltipProps}
               onNewChat={handleNewChat}
               onToggleBatchMode={() => setIsBatchMode((prev) => !prev)}
+              hideNewChat
             />
             {/* Search entry — desktop moves this into the titlebar toolbar;
                 mobile keeps it here in the sidebar. */}
@@ -234,30 +227,26 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
               siderTooltipProps={siderTooltipProps}
               onClick={handleWorkbenchClick}
             />
-            {/* Policy checklist nav entry - eligibility self-check */}
-            <SiderPolicyChecklistEntry
-              isMobile={isMobile}
-              isActive={pathname.startsWith('/policy-checklist')}
-              collapsed={collapsed}
-              siderTooltipProps={siderTooltipProps}
-              onClick={handlePolicyChecklistClick}
-            />
             {/* Assistant nav entry - fixed above Scheduled */}
-            <SiderAssistantEntry
-              isMobile={isMobile}
-              isActive={pathname.startsWith('/assistants')}
-              collapsed={collapsed}
-              siderTooltipProps={siderTooltipProps}
-              onClick={handleAssistantClick}
-            />
+            {!HIDE_ASSISTANT_ENTRY && (
+              <SiderAssistantEntry
+                isMobile={isMobile}
+                isActive={pathname.startsWith('/assistants')}
+                collapsed={collapsed}
+                siderTooltipProps={siderTooltipProps}
+                onClick={handleAssistantClick}
+              />
+            )}
             {/* Scheduled tasks nav entry - fixed above scroll */}
-            <SiderScheduledEntry
-              isMobile={isMobile}
-              isActive={pathname === '/scheduled'}
-              collapsed={collapsed}
-              siderTooltipProps={siderTooltipProps}
-              onClick={handleScheduledClick}
-            />
+            {!HIDE_SCHEDULED_ENTRY && (
+              <SiderScheduledEntry
+                isMobile={isMobile}
+                isActive={pathname === '/scheduled'}
+                collapsed={collapsed}
+                siderTooltipProps={siderTooltipProps}
+                onClick={handleScheduledClick}
+              />
+            )}
             {/* Divider between fixed top nav and scrollable content area */}
             <div
               className={classNames(

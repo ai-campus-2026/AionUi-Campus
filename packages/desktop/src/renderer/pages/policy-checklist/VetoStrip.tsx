@@ -10,9 +10,11 @@ interface VetoStripProps {
   conditions: PolicyCondition[];
   answers: Record<string, AnswerValue>;
   onAnswer: (id: string, value: AnswerValue) => void;
+  /** 提交自评后：未命中的否决项标"已确认无此情形"（字段判定：answers[id] !== true） */
+  submitted?: boolean;
 }
 
-const VetoStrip: React.FC<VetoStripProps> = ({ conditions, answers, onAnswer }) => {
+const VetoStrip: React.FC<VetoStripProps> = ({ conditions, answers, onAnswer, submitted }) => {
   const { t } = useTranslation();
   const hitCount = conditions.filter((c) => answers[c.id] === true).length;
 
@@ -39,13 +41,14 @@ const VetoStrip: React.FC<VetoStripProps> = ({ conditions, answers, onAnswer }) 
       <div className='flex flex-wrap gap-8px'>
         {conditions.map((condition) => {
           const hit = answers[condition.id] === true;
+          const cleared = submitted === true && !hit;
           return (
             <div
               key={condition.id}
               className='flex items-center gap-8px px-12px py-8px rd-10px'
               style={{
-                background: hit ? 'var(--color-danger-1)' : 'var(--color-fill-2)',
-                border: hit ? '1px solid var(--color-danger-4)' : '1px solid transparent',
+                background: hit ? 'var(--color-danger-1)' : cleared ? 'var(--color-success-1)' : 'var(--color-fill-2)',
+                border: hit ? '1px solid var(--color-danger-4)' : cleared ? '1px solid var(--color-success-4)' : '1px solid transparent',
                 transition: 'all 200ms ease',
               }}
             >
@@ -55,6 +58,14 @@ const VetoStrip: React.FC<VetoStripProps> = ({ conditions, answers, onAnswer }) 
               >
                 {condition.item}
               </Typography.Text>
+              {cleared && (
+                <span
+                  className='px-6px py-1px rd-6px'
+                  style={{ fontSize: 11, color: 'var(--color-success-6)', background: 'var(--color-success-2)' }}
+                >
+                  ✓ {t('policyChecklist.veto.cleared')}
+                </span>
+              )}
               <ConditionField
                 condition={condition}
                 vetoMode

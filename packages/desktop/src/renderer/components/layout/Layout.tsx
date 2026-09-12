@@ -27,6 +27,7 @@ import { isMacEnvironment } from '@renderer/pages/conversation/utils/detectPlatf
 import { dispatchWorkspaceToggleEvent } from '@renderer/utils/workspace/workspaceEvents';
 import { MIN_PREVIEW_PANEL_PX } from '@renderer/pages/conversation/utils/layoutCalc';
 import { PreviewPanel } from '@renderer/pages/conversation/Preview';
+import PolicyChecklistPanel from '@renderer/pages/policy-checklist/PolicyChecklistPanel';
 import { ExpandLeft } from '@icon-park/react';
 import { LayoutContext } from '@renderer/hooks/context/LayoutContext';
 import { NavigationHistoryProvider } from '@renderer/hooks/context/NavigationHistoryContext';
@@ -41,8 +42,12 @@ import { IS_DISCONTINUED_BUILD } from '@/renderer/utils/discontinuedBuild';
 import UpdateMigrationDialog from '@/renderer/components/settings/UpdateMigrationDialog';
 import '@renderer/styles/layout.css';
 
-const SidebarIcon: React.FC<{ size?: number; strokeWidth?: number }> = ({ size = 18, strokeWidth = 4 }) => (
-  <svg
+// 校园规则解码器定制：隐藏 Layout 级项目文件树（Explorer）区域。
+// 项目会话中布局为「聊天 | 申请清单 | 项目文件树」，文件树在最右侧自动展开占位；
+// 产品演示只需要「聊天 | 清单」，故整体隐藏。需要恢复时置为 false。
+const HIDE_PROJECT_EXPLORER = true;
+
+const SidebarIcon: React.FC<{ size?: number; strokeWidth?: number }> = ({ size = 18, strokeWidth = 4 }) => (  <svg
     width={size}
     height={size}
     viewBox='0 0 48 48'
@@ -177,7 +182,7 @@ const Layout: React.FC<{
   // their reserve. Active only when a project is bound and on desktop.
   const currentProject = useCurrentProject();
   const { containerRef: mainRowRef, containerWidth: mainRowWidth } = useContainerWidth();
-  const explorerActive = Boolean(currentProject) && !isMobile;
+  const explorerActive = Boolean(currentProject) && !isMobile && !HIDE_PROJECT_EXPLORER;
   const { widthPx: explorerWidthPx, createDragHandle: createExplorerDragHandle } = useProjectExplorerColumnWidth(
     mainRowWidth,
     isPreviewOpen,
@@ -188,7 +193,7 @@ const Layout: React.FC<{
   const { collapsed: explorerCollapsed } = useProjectPanelCollapse({
     projectId: currentProject,
     isMobile,
-    active: Boolean(currentProject),
+    active: Boolean(currentProject) && !HIDE_PROJECT_EXPLORER,
   });
   const isMacRuntime = isMacEnvironment();
   const toggleExplorer = useCallback(() => {
@@ -199,7 +204,9 @@ const Layout: React.FC<{
   // P4 (②B): hoist the preview region to the Layout host for project
   // conversations so it is structurally persistent (no remount on same-project
   // switches). ChatLayout renders chat only in that case (previewHosted).
-  const previewRegionActive = Boolean(currentProject) && !isMobile && isPreviewOpen;
+  // 右侧区域常驻政策清单面板（触发即显示、无需点击入口）；仅当用户主动
+  // 打开文件预览（isPreviewOpen）时临时显示文件预览，关闭后回到清单。
+  const previewRegionActive = Boolean(currentProject) && !isMobile;
   const { widthPx: previewWidthPx, createDragHandle: createPreviewRegionDragHandle } = useProjectPreviewRegionWidth(
     mainRowWidth,
     explorerCollapsed ? 0 : explorerWidthPx,
@@ -572,11 +579,11 @@ const Layout: React.FC<{
                     lineStyle: { width: '2px' },
                   })}
                   <div className='h-full w-full overflow-hidden'>
-                    <PreviewPanel />
+                    {isPreviewOpen ? <PreviewPanel /> : <PolicyChecklistPanel />}
                   </div>
                 </div>
               )}
-              {!isMobile && (
+              {!isMobile && !HIDE_PROJECT_EXPLORER && (
                 <ProjectPanelHost
                   widthPx={explorerWidthPx}
                   collapsed={explorerCollapsed}
@@ -592,7 +599,7 @@ const Layout: React.FC<{
 
             {/* Desktop expand button when the explorer is collapsed. Not on mac
                 (the Titlebar workspace button owns the toggle there). */}
-            {!isMobile && !isMacRuntime && Boolean(currentProject) && explorerCollapsed && (
+            {!isMobile && !isMacRuntime && Boolean(currentProject) && !HIDE_PROJECT_EXPLORER && explorerCollapsed && (
               <button
                 type='button'
                 className='workspace-toggle-floating fixed z-101 flex items-center justify-center'
@@ -615,7 +622,7 @@ const Layout: React.FC<{
             )}
 
             {/* Mobile overlay: backdrop + fixed panel + floating collapse handle. */}
-            {isMobile && Boolean(currentProject) && (
+            {isMobile && Boolean(currentProject) && !HIDE_PROJECT_EXPLORER && (
               <ProjectPanelMobileOverlay
                 projectId={currentProject as string}
                 collapsed={explorerCollapsed}

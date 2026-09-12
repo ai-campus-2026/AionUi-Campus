@@ -15,6 +15,42 @@ export function flattenConditions(doc: PolicyDoc): PolicyCondition[] {
   return Object.values(doc.requirements).flatMap((group) => group.conditions);
 }
 
+/**
+ * 加分项按 item 合并：同一概念（如"学业成绩排名"）在多类奖学金/多个条款中
+ * 各有阈值，annotator 会逐条回填导致列表刷屏。合并为一条主条件（保留第一个
+ * 输入控件与判定），其余档位写入 variants 供展示。
+ * 只合并 bonus 板：该板判定只看"是否提供了材料"，合并不改变判定语义；
+ * veto/base 必须逐条判定，不合并。
+ */
+export function mergeBonusItems(conditions: PolicyCondition[]): PolicyCondition[] {
+  const byItem = new Map<string, PolicyCondition[]>();
+  for (const condition of conditions) {
+    const arr = byItem.get(condition.item) ?? [];
+    arr.push(condition);
+    byItem.set(condition.item, arr);
+  }
+  const out: PolicyCondition[] = [];
+  for (const [item, arr] of byItem) {
+    if (arr.length === 1) {
+      out.push(arr[0]);
+      continue;
+    }
+    const [first, ...rest] = arr;
+    out.push({
+      ...first,
+      variants: rest.map((r) => ({
+        description: r.description,
+        requirement: r.requirement,
+        source_section: r.source_section,
+        operator: r.operator,
+        value: r.value,
+        unit: r.unit,
+      })),
+    });
+  }
+  return out;
+}
+
 /** 按板块分组：veto / base / bonus / other（其余未知值忽略） */
 export function groupByBoard(conditions: PolicyCondition[]): Record<Board, PolicyCondition[]> {
   const groups: Record<Board, PolicyCondition[]> = { veto: [], base: [], bonus: [], other: [] };
@@ -22,6 +58,8 @@ export function groupByBoard(conditions: PolicyCondition[]): Record<Board, Polic
     const board = groups[condition.board];
     if (board) board.push(condition);
   }
+  // bonus 板去重合并：同一 item 多条阈值合并为一条主条件 + variants
+  groups.bonus = mergeBonusItems(groups.bonus);
   return groups;
 }
 

@@ -27,6 +27,8 @@ export interface PolicyCondition {
   requires_evidence: boolean;
   /** 是否有明确阈值 */
   quantifiable: boolean;
+  /** select 控件的可选值（后端 annotator 后续补充；缺失时前端用通用 是/否 兜底） */
+  options?: string[];
   /** 要求文案 */
   requirement: string | null;
   /** 比较符（number 校验用） */
@@ -39,6 +41,21 @@ export interface PolicyCondition {
   source_quote: string;
   /** 出处条款 */
   source_section: string;
+  /**
+   * 合并变体：同一 item 在 bonus 板出现多条（不同奖学金/条款的不同阈值）时，
+   * 适配层合并为一条主条件，其余各档阈值放入 variants 供展示（判定仅用主条件）。
+   */
+  variants?: PolicyConditionVariant[];
+}
+
+/** 合并变体：同 item 的其余档位要求（仅展示用） */
+export interface PolicyConditionVariant {
+  description?: string;
+  requirement?: string | null;
+  source_section?: string;
+  operator?: string;
+  value?: number | null;
+  unit?: string;
 }
 
 /** 按类别分组的条件集合（requirements.xxx） */

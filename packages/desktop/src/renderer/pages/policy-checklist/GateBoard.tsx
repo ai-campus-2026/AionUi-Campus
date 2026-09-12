@@ -12,9 +12,11 @@ interface GateBoardProps {
   onAnswer: (id: string, value: AnswerValue) => void;
   onEvidence: (id: string, files: EvidenceFile[]) => void;
   metMap: Record<string, boolean>;
+  /** 提交自评后：已达标项标"已确认"，未达标项标"待确认"（纯字段判定，无中文语义） */
+  submitted?: boolean;
 }
 
-const GateBoard: React.FC<GateBoardProps> = ({ conditions, answers, evidence, onAnswer, onEvidence, metMap }) => {
+const GateBoard: React.FC<GateBoardProps> = ({ conditions, answers, evidence, onAnswer, onEvidence, metMap, submitted }) => {
   const { t } = useTranslation();
   const metCount = conditions.filter((c) => metMap[c.id]).length;
   const percent = conditions.length === 0 ? 0 : Math.round((metCount / conditions.length) * 100);
@@ -36,15 +38,26 @@ const GateBoard: React.FC<GateBoardProps> = ({ conditions, answers, evidence, on
       <div className='flex flex-col gap-8px'>
         {conditions.map((condition) => {
           const met = metMap[condition.id];
+          // 提交后状态：已达标 → 绿；未达标 → 橙（待确认）。全部由 metMap（字段判定）驱动
+          const confirmed = submitted === true && met;
+          const pending = submitted === true && !met;
           return (
             <div
               key={condition.id}
               className='flex flex-col gap-6px p-14px rd-12px'
               style={{
-                background: 'var(--color-bg-2)',
-                border: met
-                  ? '1px solid var(--color-success-3)'
-                  : '1px solid var(--color-border-2)',
+                background: confirmed
+                  ? 'var(--color-success-1)'
+                  : pending
+                    ? 'var(--color-warning-1)'
+                    : 'var(--color-bg-2)',
+                border: confirmed
+                  ? '1px solid var(--color-success-4)'
+                  : pending
+                    ? '1px solid var(--color-warning-4)'
+                    : met
+                      ? '1px solid var(--color-success-3)'
+                      : '1px solid var(--color-border-2)',
                 transition: 'all 200ms ease',
               }}
             >
@@ -52,6 +65,22 @@ const GateBoard: React.FC<GateBoardProps> = ({ conditions, answers, evidence, on
                 <Typography.Text style={{ fontSize: 14, fontWeight: 500 }}>
                   {condition.item}
                 </Typography.Text>
+                {confirmed && (
+                  <span
+                    className='px-6px py-1px rd-6px'
+                    style={{ fontSize: 11, color: 'var(--color-success-6)', background: 'var(--color-success-2)' }}
+                  >
+                    ✓ {t('policyChecklist.status.confirmed')}
+                  </span>
+                )}
+                {pending && (
+                  <span
+                    className='px-6px py-1px rd-6px'
+                    style={{ fontSize: 11, color: 'var(--color-warning-6)', background: 'var(--color-warning-2)' }}
+                  >
+                    ⚠ {t('policyChecklist.status.pending')}
+                  </span>
+                )}
                 {condition.type !== 'hard' && (
                   <span
                     className='px-6px py-1px rd-6px'
