@@ -50,24 +50,9 @@ export function isCampusPythonMcp(server: IMcpServer): boolean {
   return isPythonCommand(server.transport.command || '');
 }
 
-/**
- * 判断一个条目是否是「本项目 bootstrap 自己注册的内置校园 MCP」（builtin===true
- * 且是 Python MCP）。它代表「当前处于开发态、且仓库已被探测到」—— 用作自动弹窗
- * 的闸门：只有存在这种条目时才提醒填 key，避免在生产构建里打扰只是恰好装了某个
- * 无关 Python MCP 的最终用户。
- */
-export function isBootstrapCampusMcp(server: IMcpServer): boolean {
-  return server.builtin === true && isCampusPythonMcp(server);
-}
-
 /** 从 MCP 列表里筛出全部需要注入 key 的 Python MCP（按 id 去重、保持原顺序）。 */
 export function collectCampusPythonServers(servers: IMcpServer[]): IMcpServer[] {
   return servers.filter(isCampusPythonMcp);
-}
-
-/** 列表里是否存在「本项目 bootstrap 注册的内置校园 MCP」（开发态信号）。 */
-export function hasBootstrapCampusServer(servers: IMcpServer[]): boolean {
-  return servers.some(isBootstrapCampusMcp);
 }
 
 /** 判断 MCP 条目的 stdio env 里是否已带非空 DASHSCOPE_API_KEY。 */

@@ -19,7 +19,7 @@ import AionSelect from '@/renderer/components/base/AionSelect';
 import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
 import AddMcpServerModal from '@/renderer/pages/settings/components/AddMcpServerModal';
 import McpServerItem from '@/renderer/pages/settings/ToolsSettings/McpServerItem';
-import { collectCampusPythonServers, hasBootstrapCampusServer, hasCampusEnvKey } from '@/common/config/campusMcp';
+import { collectCampusPythonServers, hasCampusEnvKey } from '@/common/config/campusMcp';
 import { onCampusApiKeyDialogSaved, requestCampusApiKeyDialog } from '@/renderer/services/campusApiKeyDialogBus';
 import {
   useMcpServers,
@@ -50,12 +50,12 @@ const areEnvRecordsEqual = (a: Record<string, string>, b: Record<string, string>
 /**
  * 校园规则解码器 MCP 的缺 Key 提示条。
  *
- * 检测不靠硬编码名字：只要列表里存在「bootstrap 注册的内置 Python MCP」（开发态
- * 信号），就把全部 `python xxx/server.py` 形态的 stdio MCP 都纳入检查（policy_search、
- * rag、contract-scan 合同审查，以及后续新增的）。任一这样的条目 env 里没有
- * DASHSCOPE_API_KEY 就显示提示条（绿勾/enabled 都不可靠：Python server 没 key 也能
- * 启动并通过连接测试）。点按钮通过事件总线打开全局 CampusApiKeyDialog；弹窗保存
- * 成功后发事件让本提示条立即刷新消失，不必重开设置页。
+ * 检测不靠硬编码名字、也不靠 builtin 标记（校园 MCP 常是手动添加的，builtin 为
+ * false，用它当闸门会让提示条永远不出现）：凡是 `python xxx/server.py` 形态的 stdio
+ * MCP 都纳入检查（policy_search、rag、contract-scan 合同审查，以及后续新增的）。
+ * 任一条目 env 里没有 DASHSCOPE_API_KEY 就显示提示条（绿勾/enabled 都不可靠：
+ * Python server 没 key 也能启动并通过连接测试）。点按钮通过事件总线打开全局
+ * CampusApiKeyDialog；弹窗保存成功后发事件让本提示条立即刷新消失，不必重开设置页。
  */
 const CampusApiKeyNotice: React.FC = () => {
   const [missingNames, setMissingNames] = useState<string[]>([]);
@@ -63,11 +63,6 @@ const CampusApiKeyNotice: React.FC = () => {
   const refresh = useCallback(async () => {
     try {
       const servers = (await mcpService.listServers.invoke()) || [];
-      // 开发态闸门：没有本项目 bootstrap 注册的内置 Python MCP 就不打扰
-      if (!hasBootstrapCampusServer(servers)) {
-        setMissingNames([]);
-        return;
-      }
       const targets = collectCampusPythonServers(servers);
       setMissingNames(targets.filter((server) => !hasCampusEnvKey(server)).map((server) => server.name));
     } catch (error) {
