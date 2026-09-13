@@ -19,6 +19,8 @@ import AionSelect from '@/renderer/components/base/AionSelect';
 import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
 import AddMcpServerModal from '@/renderer/pages/settings/components/AddMcpServerModal';
 import McpServerItem from '@/renderer/pages/settings/ToolsSettings/McpServerItem';
+import { collectCampusPythonServers, hasBootstrapCampusServer, hasCampusEnvKey } from '@/common/config/campusMcp';
+import { onCampusApiKeyDialogSaved, requestCampusApiKeyDialog } from '@/renderer/services/campusApiKeyDialogBus';
 import {
   useMcpServers,
   useMcpConnection,
@@ -44,6 +46,61 @@ const areEnvRecordsEqual = (a: Record<string, string>, b: Record<string, string>
   const bKeys = Object.keys(b);
   return aKeys.length === bKeys.length && aKeys.every((key) => a[key] === b[key]);
 };
+
+/**
+ * 校园规则解码器 MCP 的缺 Key 提示条。
+ *
+ * 检测不靠硬编码名字：只要列表里存在「bootstrap 注册的内置 Python MCP」（开发态
+ * 信号），就把全部 `python xxx/server.py` 形态的 stdio MCP 都纳入检查（policy_search、
+ * rag、contract-scan 合同审查，以及后续新增的）。任一这样的条目 env 里没有
+ * DASHSCOPE_API_KEY 就显示提示条（绿勾/enabled 都不可靠：Python server 没 key 也能
+ * 启动并通过连接测试）。点按钮通过事件总线打开全局 CampusApiKeyDialog；弹窗保存
+ * 成功后发事件让本提示条立即刷新消失，不必重开设置页。
+ */
+const CampusApiKeyNotice: React.FC = () => {
+  const [missingNames, setMissingNames] = useState<string[]>([]);
+
+  const refresh = useCallback(async () => {
+    try {
+      const servers = (await mcpService.listServers.invoke()) || [];
+      // 开发态闸门：没有本项目 bootstrap 注册的内置 Python MCP 就不打扰
+      if (!hasBootstrapCampusServer(servers)) {
+        setMissingNames([]);
+        return;
+      }
+      const targets = collectCampusPythonServers(servers);
+      setMissingNames(targets.filter((server) => !hasCampusEnvKey(server)).map((server) => server.name));
+    } catch (error) {
+      console.warn('[CampusApiKeyNotice] refresh failed', error);
+      setMissingNames([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+    return onCampusApiKeyDialogSaved(() => {
+      void refresh();
+    });
+  }, [refresh]);
+
+  if (missingNames.length === 0) return null;
+
+  return (
+    <div className='flex items-center justify-between gap-12px px-12px py-8px rd-8px bg-fill-2 border border-solid border-[var(--bg-3)]'>
+      <span className='text-12px text-t-secondary leading-18px'>
+        校园规则解码器 MCP（{missingNames.join(' / ')}）缺少 DASHSCOPE_API_KEY，相关工具调用会失败。
+      </span>
+      <button
+        type='button'
+        onClick={() => requestCampusApiKeyDialog()}
+        className='shrink-0 px-12px py-4px rd-6px border-0 bg-[var(--primary-6)] text-white text-12px cursor-pointer hover:bg-[var(--primary-5)]'
+      >
+        填写 API Key
+      </button>
+    </div>
+  );
+};
+
 const ModalMcpManagementSection: React.FC<{
   message: MessageInstance;
   mcpServers: IMcpServer[];
@@ -192,6 +249,8 @@ const ModalMcpManagementSection: React.FC<{
         <div className='text-14px text-t-primary'>{t('settings.mcpSettings')}</div>
         <div>{renderAddButton()}</div>
       </div>
+
+      <CampusApiKeyNotice />
 
       <div className='flex-1 min-h-0'>
         {visibleMcpServers.length === 0 && extensionMcpServers.length === 0 ? (
