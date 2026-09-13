@@ -47,6 +47,21 @@ export const BROWSER_SESSION_PARTITION = 'persist:aionui-browser';
  */
 export const BUILTIN_BROWSER_MCP_NAME = 'aionui-browser';
 
+/**
+ * 校园规则解码器项目里、由 bootstrap 在仓库内探测到脚本后**首次注册**用的 MCP 名称。
+ *
+ * 必须与 Python 侧严格一致：policy-search/server.py 里 `Server("policy_search")`、
+ * rag-mcp-server README 的 mcpServers 配置键 `rag`。这两个名字只用于 main 进程的
+ * campusMcpBootstrap 把仓库内的两个脚本注册成内置条目。
+ *
+ * 注意：**检测哪些 MCP 需要 DashScope Key、以及注入 Key，都不再依赖名字**，而是按
+ * 「stdio + Python 解释器命令」这一特征通用地识别（见 common/config/campusMcp.ts），
+ * 这样才能把用户手动添加、源码在仓库外的 contract-scan 以及后续新增的 MCP 一并覆盖。
+ * 因此这里不再维护「全部校园 MCP 名单」常量。
+ */
+export const CAMPUS_POLICY_SEARCH_NAME = 'policy_search';
+export const CAMPUS_RAG_NAME = 'rag';
+
 // ===== 文件处理相关常量 =====
 
 /** 临时文件时间戳分隔符 */
