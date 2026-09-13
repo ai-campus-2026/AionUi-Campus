@@ -6,10 +6,19 @@
   },
   "doc": {
     "pg": "推免研究生",
-    "scholarship": "奖学金"
+    "scholarship": "奖学金",
+    "scholarshipCqu": "重庆大学奖学金"
   },
+  "docPickerPlaceholder": "选择要查询的政策文件",
+  "docPickerNoneHint": "向校园规则助手提问后，这里会根据你的问题与政策文件实时生成申请清单",
+  "emptyBeforeAsk": "还没有提问记录。在对话框里问一个校园规则问题，申请清单会自动生成",
+  "multiDocs": "已选 {{count}} 份文件",
+  "allDocs": "返回 {{count}} 份政策",
+  "filterBySelected": "已按你选择的查询文件过滤后端真实返回",
+  "followQuestion": "按本次问题实时返回（未过滤）",
   "metaEffective": "生效日期：{{date}}",
   "metaSource": "来源文件",
+  "liveTag": "实时",
   "verdict": {
     "disqualified": "不符合申请资格",
     "incomplete": "基础门槛尚未全部达标",
@@ -67,6 +76,10 @@
   "submit": "提交自评",
   "submitted": "已提交",
   "submitDone": "自评已提交（基础门槛达标 {{met}}/{{total}} 项），最终资格以学院审核为准",
+  "submittedSummary": "提交成功：{{pending}} 项待确认，{{confirmed}} 项已确认",
+  "submittedAllDone": "全部条件已确认，无待补充项",
+  "submittedPendingTitle": "待确认 · 需补充以下 {{count}} 项",
+  "submittedConfirmedTitle": "已确认 · 以下 {{count}} 项已满足",
   "footerHint": "自评结果仅作参考，最终资格以学院审核为准",
   "debug": "调试信息（临时）"
 }

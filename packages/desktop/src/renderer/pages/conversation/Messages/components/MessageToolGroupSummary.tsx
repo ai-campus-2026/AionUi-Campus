@@ -2,7 +2,7 @@ import type { BadgeProps } from '@arco-design/web-react';
 import { Badge, Button, Message, Spin, Tooltip } from '@arco-design/web-react';
 import { IconDown, IconRight } from '@arco-design/web-react/icon';
 import { Checklist, Download, Right } from '@icon-park/react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
 import { getAcpImageFileName } from '@/common/chat/acpToolCallOutput';
@@ -16,6 +16,7 @@ import type { CampusRuleToolResult } from '@renderer/components/campus-rule';
 import { tryParseCampusRuleResult } from '@renderer/components/campus-rule/adaptPolicyResult';
 import RuleErrorBox from '@renderer/components/campus-rule/RuleErrorBox';
 import { usePolicyChecklistPanel, type ChecklistDocKey, type ChecklistHints } from '@renderer/pages/policy-checklist/checklistPanelStore';
+import type { BackendPolicyResult } from '@renderer/pages/policy-checklist/adaptQueryPolicyResult';
 import { parseUserHints, extractUserInfoHints } from '@renderer/pages/policy-checklist/parseUserHints';
 import './MessageToolGroupSummary.css';
 
@@ -176,10 +177,16 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
   // 对应清单文档（无需点击侧边栏入口）。category 未命中清单文档（如 academic）不触发。
   // 同一会话会积累多条 query_policy（新旧问题各一条），取【最后一条】命中为准，
   // 否则历史旧问题会覆盖新问题（如奖学金→推免切换失效）。
+  // 同时把该次调用的【原始返回 results[0]】传给清单面板，实现"每次问答实时更新"。
   const { openChecklist } = usePolicyChecklistPanel();
+
+  // 同步解析失败（output 被截断/非 JSON）时，记录待回源的 key/hints，由 loadFull 兜底
+  const pendingChecklistRef = useRef<{ key: ChecklistDocKey; hints: ChecklistHints } | null>(null);
+
   useEffect(() => {
     let latestKey: ChecklistDocKey | null = null;
     let latestHints: ChecklistHints = {};
+    let latestRaw: BackendPolicyResult[] | null = null;
     for (const item of tools) {
       if (item.status !== 'completed' || !item.name?.includes('query_policy') || !item.input) continue;
       let parsed: Record<string, unknown> | null = null;
@@ -200,9 +207,18 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
           ...(typeof q === 'string' && q.trim() ? parseUserHints(q) : {}),
           ...extractUserInfoHints(userInfo),
         };
+        // 原始返回：query_policy output → 完整 results 数组（截断/非 JSON 时置 null，交给 loadFull 兜底）
+        try {
+          const out = item.output ? (JSON.parse(item.output) as { results?: BackendPolicyResult[] }) : null;
+          latestRaw = out && Array.isArray(out.results) && out.results.length > 0 ? out.results : null;
+        } catch {
+          latestRaw = null;
+        }
       }
     }
-    if (latestKey) openChecklist(latestKey, latestHints);
+    // 同步没解析出 raw 但确实调用了清单类工具：记录待回源，loadFull 拿到完整 output 后补齐
+    pendingChecklistRef.current = latestKey && !latestRaw ? { key: latestKey, hints: latestHints } : null;
+    if (latestKey) openChecklist(latestKey, latestHints, latestRaw);
   }, [tools, openChecklist]);
 
   // 提取校园规则/政策检索结果，在折叠面板外层直接渲染（默认可见，无需展开 View Steps）
@@ -236,6 +252,18 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
           });
           const next = normalizeToolMessages([message as ToolMessage]).find((candidate) => candidate.key === item.key);
           if (next?.output) {
+            // 清单面板兜底：同步解析失败时，用完整 output 补齐实时数据
+            const pending = pendingChecklistRef.current;
+            if (pending) {
+              try {
+                const out = JSON.parse(next.output) as { results?: BackendPolicyResult[] };
+                if (Array.isArray(out?.results) && out.results.length > 0) {
+                  openChecklist(pending.key, pending.hints, out.results);
+                }
+              } catch {
+                // 完整 output 仍非 JSON：清单保持同步解析的结果（可能为固化数据）
+              }
+            }
             const parsed = tryParseCampusRuleResult(next.output);
             if (parsed) {
               if (!cancelled) setFullCampusResult(parsed);
@@ -251,7 +279,7 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
     return () => {
       cancelled = true;
     };
-  }, [tools]);
+  }, [tools, openChecklist]);
 
   const effectiveCampusResult = campusRuleResult ?? fullCampusResult;
 

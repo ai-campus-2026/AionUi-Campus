@@ -31,7 +31,7 @@ export interface PolicyCondition {
   options?: string[];
   /** 要求文案 */
   requirement: string | null;
-  /** 比较符（number 校验用） */
+  /** 比较符（number 校验用；真实 query_policy 返回可能缺失，缺失时前端不做阈值比较） */
   operator: string;
   /** 阈值 */
   value: number | null;
@@ -41,6 +41,12 @@ export interface PolicyCondition {
   source_quote: string;
   /** 出处条款 */
   source_section: string;
+  /** 后端判定状态（query_policy condition_matches[].match，渲染初始状态用） */
+  backendMatch?: string;
+  /** 后端返回的用户实际值（如 "前10.0%"） */
+  userValue?: string;
+  /** 后端返回的匹配详情 */
+  matchDetail?: string;
   /**
    * 合并变体：同一 item 在 bonus 板出现多条（不同奖学金/条款的不同阈值）时，
    * 适配层合并为一条主条件，其余各档阈值放入 variants 供展示（判定仅用主条件）。

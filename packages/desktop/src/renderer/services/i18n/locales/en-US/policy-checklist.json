@@ -6,10 +6,19 @@
   },
   "doc": {
     "pg": "Postgraduate Recommendation",
-    "scholarship": "Scholarship"
+    "scholarship": "Scholarship",
+    "scholarshipCqu": "CQU Scholarship"
   },
+  "docPickerPlaceholder": "Select policy files",
+  "docPickerNoneHint": "Ask a rule question in the chat, and the checklist will be generated live from your question and policy files.",
+  "emptyBeforeAsk": "No questions yet. Ask a campus rule question in the chat and the checklist will appear here.",
+  "multiDocs": "{{count}} files selected",
+  "allDocs": "{{count}} policies returned",
+  "filterBySelected": "Filtered by the files you selected (real backend results)",
+  "followQuestion": "Live results for this question (unfiltered)",
   "metaEffective": "Effective: {{date}}",
   "metaSource": "Source file",
+  "liveTag": "Live",
   "verdict": {
     "disqualified": "Not eligible",
     "incomplete": "Basic gates not fully met",
@@ -67,6 +76,10 @@
   "submit": "Submit",
   "submitted": "Submitted",
   "submitDone": "Self-check submitted ({{met}}/{{total}} gates met). Final eligibility is decided by the college.",
+  "submittedSummary": "Submitted: {{pending}} pending, {{confirmed}} confirmed",
+  "submittedAllDone": "All conditions confirmed, nothing to supplement",
+  "submittedPendingTitle": "Pending · {{count}} item(s) to supplement",
+  "submittedConfirmedTitle": "Confirmed · {{count}} item(s) met",
   "footerHint": "Self-check is for reference only; final eligibility is decided by the college",
   "debug": "Debug info (temporary)"
 }

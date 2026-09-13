@@ -47,9 +47,9 @@ const ConditionField: React.FC<ConditionFieldProps> = ({
         )}
         {condition.quantifiable && condition.requirement && (
           <Typography.Text type='secondary' style={{ fontSize: 12 }}>
-            {t('policyChecklist.field.requirement')}：{condition.operator === '>=' ? '≥' : condition.operator === '<=' ? '≤' : condition.operator}{' '}
-            {condition.value}
-            {condition.unit && condition.unit !== 'none' ? condition.unit : ''}
+            {condition.operator
+              ? `${t('policyChecklist.field.requirement')}：${condition.operator === '>=' ? '≥' : condition.operator === '<=' ? '≤' : condition.operator} ${condition.value}${condition.unit && condition.unit !== 'none' ? condition.unit : ''}`
+              : `${t('policyChecklist.field.requirement')}：${condition.requirement}`}
           </Typography.Text>
         )}
         {met !== undefined && typeof value === 'number' && (
