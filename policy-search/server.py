@@ -28,6 +28,7 @@ from config import Config
 from policy_store import PolicyStore
 from policy_parser import PolicyParser
 from policy_matcher import PolicyMatcher
+from checklist_annotator import annotate_policy
 
 
 # ============================================================
@@ -157,8 +158,10 @@ TOOLS = [
             "- 帮我看看、帮我查一下、匹配一下\n"
             "适用场景：用户提供了个人信息，想知道自己符合哪些政策条件。\n"
             "返回结果包含：\n"
-            "- overall_verdict：总体判定（likely_eligible/not_eligible/needs_review等）\n"
-            "- condition_matches：逐条匹配结果\n"
+            "- overall_verdict：总体判定（disqualified/not_eligible/needs_more_info/needs_review/likely_eligible）\n"
+            "- veto_blocked / triggered_vetoes：是否被一票否决及命中项（附带原文引用）\n"
+            "- board_matches：按 veto/base/bonus/other 分组的精简索引（含 id/item/match）\n"
+            "- condition_matches：逐条匹配全量明细（含 board/input_kind/requires_evidence 与逐条对比）\n"
             "- source_quote：原文引用（必须展示给用户）\n"
             "- missing_info：缺失信息\n"
             "示例：用户说'我的GPA3.7，有1篇SCI论文，符合哪些保研政策？'时调用此工具。"
@@ -441,10 +444,15 @@ async def _handle_query_policy(arguments: Dict[str, Any]) -> List[TextContent]:
                 )
             ]
 
-        # 2. 逐条匹配
+        # 2. 出数据前统一兜底：展示字段缺失/非法时用规则补齐（合法 LLM 值原样保留）
+        #    使 board/input_kind/requires_evidence 永不为空，前端分组始终生效
+        for policy in policies:
+            annotate_policy(policy, force=False)
+
+        # 3. 逐条匹配
         results = matcher.match_all_policies(user_info, policies)
 
-        # 3. 按 verdict 排序
+        # 4. 按 verdict 排序
         verdict_order = {"likely_eligible": 0, "needs_review": 1, "needs_more_info": 2, "not_eligible": 3}
         results.sort(key=lambda x: verdict_order.get(x["overall_verdict"], 99))
 
@@ -452,7 +460,8 @@ async def _handle_query_policy(arguments: Dict[str, Any]) -> List[TextContent]:
             "total_policies": len(results),
             "results": results,
         }
-        return [TextContent(type="text", text=json.dumps(output, ensure_ascii=False, indent=2))]
+        # 响应体积敏感：紧凑 JSON（无缩进空白），避免大响应在管线中被截断
+        return [TextContent(type="text", text=json.dumps(output, ensure_ascii=False, separators=(",", ":")))]
 
     except Exception as e:
         return [TextContent(type="text", text=json.dumps({"error": f"查询失败: {str(e)}"}, ensure_ascii=False))]

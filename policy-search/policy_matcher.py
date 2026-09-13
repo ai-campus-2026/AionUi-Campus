@@ -19,6 +19,23 @@ UNIT_FIELD_MAP = {
 }
 
 
+# 学生口语申报 → 条文用词的同义扩展表：
+# 条文里可能写"不及格/补考"，但用户（或 agent）申报时说的是"挂科"。
+# 仅用于"一票否决申报"的宽松匹配，命中即视为申报了该否决项。
+VETO_SYNONYMS = {
+    "挂科": ("不及格", "补考", "不合格"),
+    "不及格": ("挂科", "补考"),
+    "补考": ("不及格", "挂科"),
+    "处分": ("记过", "违纪", "留校察看", "通报批评"),
+    "违纪": ("处分", "违规"),
+    "作弊": ("学术不端", "弄虚作假", "造假", "抄袭"),
+    "学术不端": ("作弊", "抄袭", "造假", "弄虚作假", "冒名"),
+    "抄袭": ("学术不端", "作弊", "造假", "弄虚作假", "冒名"),
+    "弄虚作假": ("造假", "作弊", "学术不端", "抄袭"),
+    "造假": ("弄虚作假", "作弊", "学术不端", "抄袭"),
+}
+
+
 class PolicyMatcher:
     """政策条件匹配器"""
 
@@ -29,14 +46,32 @@ class PolicyMatcher:
     def _veto_declared(self, condition: Dict[str, Any], user_info: Dict[str, Any]) -> bool:
         """判断某条一票否决是否被用户申报触发。
         兼容两种入参：
-          user_info['declared_vetoes']: List[str] (条件 id 或 item 关键词) 或 Dict{id/item: bool}
+          user_info['declared_vetoes']: List[str] (条件 id、item 关键词或口语说法) 或 Dict{id/item: bool}
           user_info['answers']: List[{id, value}]，value 为真值视为触发
+        关键词匹配覆盖 item/description/requirement/source_quote，并做口语同义扩展
+        （挂科≈不及格/补考），避免条文措辞变化导致申报失效。
         """
         cid = condition.get("id")
         item = condition.get("item", "") or ""
+        text = "".join(
+            str(condition.get(k, "") or "")
+            for k in ("item", "description", "requirement", "source_quote")
+        )
 
         def truthy(v):
             return v is True or str(v).strip() in ("是", "有", "true", "True", "violated", "1")
+
+        def hit(tk: str) -> bool:
+            if not tk:
+                return False
+            if tk == cid:
+                return True
+            if len(tk) < 2:  # 单字符不做子串匹配，防误伤
+                return False
+            if item and (tk in item or item in tk):
+                return True
+            candidates = (tk, *VETO_SYNONYMS.get(tk, ()))
+            return any(cd in text for cd in candidates)
 
         declared = user_info.get("declared_vetoes") or []
         if isinstance(declared, dict):
@@ -46,7 +81,7 @@ class PolicyMatcher:
         else:
             tokens = {str(x) for x in declared}
         for tk in tokens:
-            if tk and (tk == cid or (item and (tk in item or item in tk))):
+            if hit(tk):
                 return True
 
         for ans in user_info.get("answers", []) or []:
@@ -379,22 +414,28 @@ class PolicyMatcher:
         else:
             verdict = "likely_eligible"
 
-        # 按板块分组（前端直接消费）
+        # 按板块分组（前端直接消费）：只放精简索引 {id,item,match}，
+        # 全量明细统一见 condition_matches，前端按 id 关联——
+        # 避免同一批条件多处全量展开导致响应体过大被系统截断
         board_matches = {"veto": [], "base": [], "bonus": [], "other": []}
         for cond, m in zip(conditions, matches):
-            b = cond.get("board", "other")
-            board_matches.setdefault(b, []).append(m)
+            b = cond.get("board")
+            if b not in board_matches:
+                b = "other"
+            board_matches[b].append({
+                "id": m.get("id"),
+                "item": m.get("item"),
+                "match": m.get("match"),
+            })
 
-        # 按类别汇总匹配结果
+        # 按类别分组的精简索引（label + 条件 id 列表）
         category_matches = {}
-        requirements = policy.get("requirements", {})
         for cat_key, cat_data in requirements.items():
-            cat_conditions = cat_data.get("conditions", [])
-            cat_match_results = [m for m in matches if m.get("item") in [c.get("item") for c in cat_conditions]]
-            if cat_match_results:
+            ids = [c.get("id") for c in cat_data.get("conditions", []) if isinstance(c, dict)]
+            if ids:
                 category_matches[cat_key] = {
                     "label": cat_data.get("label", cat_key),
-                    "matches": cat_match_results,
+                    "ids": ids,
                 }
 
         return {
