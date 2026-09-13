@@ -222,6 +222,10 @@ const AionrsConversationPanel: React.FC<{ conversation: AionrsConversation; slid
     // project host (structurally persistent across same-project conversation
     // switches — no remount). ChatLayout then renders chat only.
     previewHosted: Boolean(conversation.project_id),
+    // 校园规则解码器：普通对话右侧常驻「申请自评」清单面板
+    checklistResident: true,
+    // 校园规则解码器：不渲染右侧工作区文件树面板（临时工作区会自动展开占位）
+    workspacePanelDisabled: true,
     workspacePath: conversation.extra?.workspace,
     // Key the workspace-panel collapse preference per-project (falls back to
     // conversation_id inside ChatLayout when there is no project) so the panel's
@@ -395,6 +399,8 @@ const ChatConversation: React.FC<{
       sider={<ChatSlider conversation={conversation} />}
       workspaceEnabled={workspaceEnabled}
       previewHosted={Boolean(conversation?.project_id)}
+      checklistResident={Boolean(conversation)}
+      workspacePanelDisabled={Boolean(conversation)}
       workspacePath={conversation?.extra?.workspace}
       workspacePreferenceKey={conversation?.project_id}
       isTemporaryWorkspace={

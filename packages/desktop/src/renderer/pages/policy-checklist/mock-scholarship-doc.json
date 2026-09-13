@@ -1,0 +1,963 @@
+{
+  "meta": {
+    "doc_id": "重庆邮电_2016_001",
+    "school": "重庆邮电大学",
+    "department": "未知",
+    "year": 2016,
+    "category": "scholarship",
+    "title": "重庆邮电大学普通本科学生奖助学金评审办法",
+    "source_file": "重庆邮电大学奖助学金评审办法_重邮2016-84号.txt",
+    "effective_date": "2016-01-01",
+    "tags": [
+      "本科",
+      "奖学金",
+      "助学金",
+      "国家奖学金",
+      "国家励志奖学金",
+      "学业奖学金"
+    ]
+  },
+  "requirements": {
+    "gpa": {
+      "label": "绩点/成绩要求",
+      "conditions": [
+        {
+          "id": "condition_011",
+          "category": "gpa",
+          "item": "学业成绩排名",
+          "description": "申请国家奖学金及8000元以上社会奖学金的学业成绩排名要求",
+          "type": "ranking",
+          "quantifiable": true,
+          "requirement": "专业（或年级）前10%",
+          "operator": "<=",
+          "value": 10,
+          "unit": "%",
+          "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前10%。",
+          "source_section": "无章节编号",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_013",
+          "category": "gpa",
+          "item": "学业成绩排名",
+          "description": "申请者学业成绩在专业（或年级）中的排名要求",
+          "type": "ranking",
+          "quantifiable": true,
+          "requirement": "排名前10%",
+          "operator": "<=",
+          "value": 10,
+          "unit": "%",
+          "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前10%。",
+          "source_section": "3",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_016",
+          "category": "gpa",
+          "item": "学业成绩排名",
+          "description": "学业成绩在专业（或年级）内的排名要求",
+          "type": "ranking",
+          "quantifiable": true,
+          "requirement": "学业成绩排名在专业（或年级）前1/3",
+          "operator": "<=",
+          "value": 33.33,
+          "unit": "%",
+          "source_quote": "学业成绩……排名均应在专业（或年级）前1/3",
+          "source_section": "4",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_018",
+          "category": "gpa",
+          "item": "学业成绩排名",
+          "description": "申请者学业成绩在专业（或年级）中的排名要求",
+          "type": "ranking",
+          "quantifiable": true,
+          "requirement": "排名前15%",
+          "operator": "<=",
+          "value": 15,
+          "unit": "%",
+          "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前15%。",
+          "source_section": "5",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_020",
+          "category": "gpa",
+          "item": "学业成绩排名",
+          "description": "申请者学业成绩在专业（或年级）内的相对排名要求",
+          "type": "ranking",
+          "quantifiable": true,
+          "requirement": "排名在专业（或年级）前40%",
+          "operator": "<=",
+          "value": 40,
+          "unit": "%",
+          "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前40%。",
+          "source_section": "第六条",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_044",
+          "category": "gpa",
+          "item": "平均学分绩点",
+          "description": "申请奖学金对平均学分绩点的要求（加分项）",
+          "type": "scoring",
+          "quantifiable": true,
+          "requirement": "平均学分绩点 3.5 及以上",
+          "operator": ">=",
+          "value": 3.5,
+          "unit": "",
+          "source_quote": "申请者平均学分绩点应达到规定要求。",
+          "source_section": "无章节编号",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
+        }
+      ]
+    },
+    "academic": {
+      "label": "学业表现要求",
+      "conditions": [
+        {
+          "id": "condition_005",
+          "category": "academic",
+          "item": "课程修读与学业表现",
+          "description": "评定学年所修课程（不含任选、再修、重修、第二专业课程）无补考、重修",
+          "type": "hard",
+          "quantifiable": true,
+          "requirement": "所修课程无补考、重修",
+          "operator": "==",
+          "value": 0,
+          "unit": "门",
+          "source_quote": "（四）学习目的明确，学习态度端正，评定学年所修课程（不含任选、再修、重修、第二专业课程）无补考、重修。",
+          "source_section": "第七条 （四）",
+          "board": "veto",
+          "input_kind": "yes_no",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_009",
+          "category": "academic",
+          "item": "年级要求",
+          "description": "申请者须为在校二年级以上学生",
+          "type": "hard",
+          "quantifiable": false,
+          "requirement": "在校二年级以上",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "在校二年级以上优秀学生；",
+          "source_section": "第九条（一）",
+          "board": "base",
+          "input_kind": "yes_no",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_012",
+          "category": "academic",
+          "item": "综合素质测评成绩排名",
+          "description": "申请国家奖学金及8000元以上社会奖学金的综合素质测评成绩排名要求",
+          "type": "ranking",
+          "quantifiable": true,
+          "requirement": "专业（或年级）前10%",
+          "operator": "<=",
+          "value": 10,
+          "unit": "%",
+          "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前10%。",
+          "source_section": "无章节编号",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_014",
+          "category": "academic",
+          "item": "综合素质测评成绩排名",
+          "description": "申请者综合素质测评成绩在专业（或年级）中的排名要求",
+          "type": "ranking",
+          "quantifiable": true,
+          "requirement": "排名前10%",
+          "operator": "<=",
+          "value": 10,
+          "unit": "%",
+          "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前10%。",
+          "source_section": "3",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_017",
+          "category": "academic",
+          "item": "综合素质测评成绩排名",
+          "description": "综合素质测评成绩在专业（或年级）内的排名要求",
+          "type": "ranking",
+          "quantifiable": true,
+          "requirement": "综合素质测评成绩排名在专业（或年级）前1/3",
+          "operator": "<=",
+          "value": 33.33,
+          "unit": "%",
+          "source_quote": "综合素质测评成绩排名均应在专业（或年级）前1/3",
+          "source_section": "4",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_019",
+          "category": "academic",
+          "item": "综合素质测评成绩排名",
+          "description": "申请者综合素质测评成绩在专业（或年级）中的排名要求",
+          "type": "ranking",
+          "quantifiable": true,
+          "requirement": "排名前15%",
+          "operator": "<=",
+          "value": 15,
+          "unit": "%",
+          "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前15%。",
+          "source_section": "5",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_021",
+          "category": "academic",
+          "item": "综合素质测评成绩排名",
+          "description": "申请者综合素质测评成绩在专业（或年级）内的相对排名要求",
+          "type": "ranking",
+          "quantifiable": true,
+          "requirement": "排名在专业（或年级）前40%",
+          "operator": "<=",
+          "value": 40,
+          "unit": "%",
+          "source_quote": "学业成绩和综合素质测评成绩排名均应在专业（或年级）前40%。",
+          "source_section": "第六条",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_028",
+          "category": "academic",
+          "item": "学习态度与进取精神",
+          "description": "要求学生具备勤奋学习、积极上进的学习态度和精神风貌",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "勤奋学习，积极上进",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "4. 勤奋学习，积极上进；",
+          "source_section": "未标注章节（原文序号4）",
+          "board": "base",
+          "input_kind": "yes_no",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_032",
+          "category": "academic",
+          "item": "学业表现要求",
+          "description": "申请学生须具备良好学业表现",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "学业表现良好",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "符合申请条件的家庭经济困难学生，按照特别困难、困难、一般困难顺序，结合学业、品行等现实表现",
+          "source_section": "国家助学金条款",
+          "board": "base",
+          "input_kind": "yes_no",
+          "requires_evidence": false
+        }
+      ]
+    },
+    "disciplinary": {
+      "label": "纪律/品行要求",
+      "conditions": [
+        {
+          "id": "condition_002",
+          "category": "disciplinary",
+          "item": "政治方向与思想立场",
+          "description": "要求申请人具有坚定正确的政治方向和远大理想，热爱祖国，拥护党的领导",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "具有坚定正确的政治方向和远大理想，热爱社会主义祖国，拥护中国共产党的领导",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "（一）具有坚定正确的政治方向和远大理想，热爱社会主义祖国，拥护中国共产党的领导；",
+          "source_section": "第七条 （一）",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_003",
+          "category": "disciplinary",
+          "item": "遵纪守法情况",
+          "description": "要求申请人自觉遵守宪法、法律法规及校规校纪",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "自觉遵守宪法、法律法规，遵守校规校纪",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "（二）自觉遵守宪法、法律法规，遵守校规校纪；",
+          "source_section": "第七条 （二）",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_004",
+          "category": "disciplinary",
+          "item": "道德品质与行为习惯",
+          "description": "涵盖生活态度、集体意识、尊师敬长、诚信互助、生活作风、身心健康及公益参与等多维品行要求",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "具备良好的道德品质和行为习惯：热爱生活、关心集体，尊敬师长、团结同学，诚实守信、乐于助人，生活俭朴、身心健康，积极参加公益活动",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "（三）具备良好的道德品质和行为习惯：热爱生活、关心集体，尊敬师长、团结同学，诚实守信、乐于助人，生活俭朴、身心健康，积极参加公益活动；",
+          "source_section": "第七条 （三）",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_015",
+          "category": "disciplinary",
+          "item": "家庭经济困难认定",
+          "description": "须被学校正式认定为家庭经济困难学生",
+          "type": "hard",
+          "quantifiable": false,
+          "requirement": "已被认定为家庭经济困难学生",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "被认定为家庭经济困难学生",
+          "source_section": "4",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_025",
+          "category": "disciplinary",
+          "item": "思想政治表现",
+          "description": "拥护党的领导和社会主义制度的基本政治要求",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "热爱社会主义祖国，拥护中国共产党的领导",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "热爱社会主义祖国，拥护中国共产党的领导；",
+          "source_section": "未标注章节",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_026",
+          "category": "disciplinary",
+          "item": "遵纪守法与校规遵守",
+          "description": "申请人须遵守国家法律法规及学校各项规章制度",
+          "type": "hard",
+          "quantifiable": false,
+          "requirement": "无违法违纪记录，无违反校纪校规行为",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "遵守宪法和法律，遵守学校规章制度；",
+          "source_section": "未注明章节（原文片段）",
+          "board": "veto",
+          "input_kind": "yes_no",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_027",
+          "category": "disciplinary",
+          "item": "道德品质要求",
+          "description": "要求申请人诚实守信，道德品质优良",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "诚实守信，道德品质优良",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "3. 诚实守信，道德品质优良；",
+          "source_section": "未知章节（原文仅提供条目编号3）",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_030",
+          "category": "disciplinary",
+          "item": "品行要求",
+          "description": "强调自立自强、乐于助人及参与公益活动的积极态度",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "自立自强，乐于助人，积极参加公益活动",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "6. 自立自强，乐于助人，积极参加公益活动。",
+          "source_section": "（二）评定原则",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_031",
+          "category": "disciplinary",
+          "item": "品行要求",
+          "description": "申请学生须具备良好品行表现",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "品行优良",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "符合申请条件的家庭经济困难学生，按照特别困难、困难、一般困难顺序，结合学业、品行等现实表现",
+          "source_section": "国家助学金条款",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_038",
+          "category": "disciplinary",
+          "item": "纪律处分记录",
+          "description": "违反校规校纪并受到院、校通报批评或学校纪律处分",
+          "type": "hard",
+          "quantifiable": false,
+          "requirement": "无通报批评或纪律处分记录",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "（二）违反校规校纪，并受到院、校通报批评或学校纪律处分者；",
+          "source_section": "第十四条",
+          "board": "veto",
+          "input_kind": "yes_no",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_041",
+          "category": "disciplinary",
+          "item": "纪律处分限制",
+          "description": "在校期间因违纪受到警告及以上处分的，将终止奖助学金发放",
+          "type": "hard",
+          "quantifiable": false,
+          "requirement": "未受警告及以上处分",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "在受益期间违反国家法律法规及学校规章制度，受到学校警告以上处分者，从受到处分次月起终止奖助学金发放。",
+          "source_section": "第十五条",
+          "board": "veto",
+          "input_kind": "yes_no",
+          "requires_evidence": false
+        }
+      ]
+    },
+    "competition": {
+      "label": "竞赛/获奖要求",
+      "conditions": [
+        {
+          "id": "condition_022",
+          "category": "competition",
+          "item": "学科竞赛获奖",
+          "description": "在课外科技创新、学科竞赛活动中获得省部级以上等级奖",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "获得省部级以上等级奖",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "在课外科技创新、学科竞赛活动中获得省部级以上等级奖；",
+          "source_section": "未知",
+          "board": "bonus",
+          "input_kind": "select",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_023",
+          "category": "competition",
+          "item": "文体艺术类竞赛获奖",
+          "description": "在文体艺术等竞赛活动中获得省部级以上等级奖",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "获得省部级以上等级奖",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "在文体艺术等竞赛活动中获得省部级以上等级奖；",
+          "source_section": "未知",
+          "board": "bonus",
+          "input_kind": "select",
+          "requires_evidence": false
+        }
+      ]
+    },
+    "bonus": {
+      "label": "加分项",
+      "conditions": [
+        {
+          "id": "condition_010",
+          "category": "bonus",
+          "item": "义工服务时长",
+          "description": "评定学年内义工活动时间作为申请前提条件之一",
+          "type": "hard",
+          "quantifiable": true,
+          "requirement": "义工活动时间 ≥ 20小时",
+          "operator": ">=",
+          "value": 20,
+          "unit": "小时",
+          "source_quote": "评定学年内从事义工活动时间原则上不低于20小时；",
+          "source_section": "第九条（二）",
+          "board": "bonus",
+          "input_kind": "number",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_042",
+          "category": "bonus",
+          "item": "义工活动时长认定",
+          "description": "义工服务时长可参照注册志愿者标准进行认定",
+          "type": "bonus",
+          "quantifiable": false,
+          "requirement": "可参照注册志愿者的志愿服务时长",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "从事义工活动时长认定，可参照注册志愿者的志愿服务时长。",
+          "source_section": "第十七条",
+          "board": "bonus",
+          "input_kind": "select",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_043",
+          "category": "bonus",
+          "item": "学生干部履职折算义工时长",
+          "description": "评定学年内担任学生干部或干事，经考核为'合格'以上，可折算为一定义工时长",
+          "type": "bonus",
+          "quantifiable": false,
+          "requirement": "担任各级各类学生干部、干事等，经主管部门或学院考核为'合格'以上",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "评定学年内担任各级各类学生干部、干事等，经主管部门或学院考核为\"合格\"以上，也可折算为一定义工时长。",
+          "source_section": "第十七条",
+          "board": "bonus",
+          "input_kind": "select",
+          "requires_evidence": false
+        }
+      ]
+    },
+    "procedural": {
+      "label": "流程性要求",
+      "conditions": [
+        {
+          "id": "condition_006",
+          "category": "procedural",
+          "item": "评定方式区分",
+          "description": "不同类别奖学金适用不同评定方式",
+          "type": "procedural",
+          "quantifiable": false,
+          "requirement": "国家奖学金、春华秋实奖学金及奖励金额≥8000元的社会奖学金须公开申报、评审或答辩；其余奖学金按综合素质测评成绩排序评定",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "（二）国家奖学金、春华秋实奖学金及奖励金额为8000元以上的社会奖学金采用公开申报、评审或答辩方式评定，其他奖学金按评定学年综合素质测评成绩从高到低排序评定；",
+          "source_section": "第八条 （二）",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_007",
+          "category": "procedural",
+          "item": "申请类别限制",
+          "description": "同一学年奖学金申请数量限制",
+          "type": "procedural",
+          "quantifiable": false,
+          "requirement": "学生在同一学年只能申请获得一类奖学金（科创文体奖学金除外）",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "（三）学生在同一学年只能申请获得一类奖学金（科创文体奖学金除外）。",
+          "source_section": "第八条 （三）",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_008",
+          "category": "procedural",
+          "item": "助学金兼得政策",
+          "description": "家庭经济困难学生可同时申领助学金",
+          "type": "preference",
+          "quantifiable": false,
+          "requirement": "家庭经济困难学生可同时申请获得助学金",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "家庭经济困难学生可同时申请获得助学金。",
+          "source_section": "第八条 （三）",
+          "board": "bonus",
+          "input_kind": "select",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_034",
+          "category": "procedural",
+          "item": "申请时限",
+          "description": "学生须在规定时间内提出申请",
+          "type": "procedural",
+          "quantifiable": false,
+          "requirement": "在规定时间内提交申请",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "学生根据各类奖助学金申请条件，在规定时间内提出申请",
+          "source_section": "第十三条",
+          "board": "base",
+          "input_kind": "upload",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_035",
+          "category": "procedural",
+          "item": "学院评审组织",
+          "description": "学院须成立学生奖助学金评审小组开展评审",
+          "type": "procedural",
+          "quantifiable": false,
+          "requirement": "学院成立评审小组进行评审",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "学院成立学生奖助学金评审小组，对申请学生进行评审",
+          "source_section": "第十三条",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_036",
+          "category": "procedural",
+          "item": "公示要求",
+          "description": "评审结果须公示3天且无异议",
+          "type": "procedural",
+          "quantifiable": true,
+          "requirement": "公示期不少于3天，且无异议",
+          "operator": ">=",
+          "value": 3,
+          "unit": "天",
+          "source_quote": "公示3天无异议后报送学生工作部（处）审查",
+          "source_section": "第十三条",
+          "board": "base",
+          "input_kind": "number",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_037",
+          "category": "procedural",
+          "item": "申请时效性",
+          "description": "未在规定时间内提出申请或提交材料",
+          "type": "procedural",
+          "quantifiable": false,
+          "requirement": "必须在规定时间内完成申请与材料提交",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "（一）未在规定时间内提出申请或提交材料者；",
+          "source_section": "第十四条",
+          "board": "base",
+          "input_kind": "upload",
+          "requires_evidence": true
+        },
+        {
+          "id": "condition_039",
+          "category": "procedural",
+          "item": "申请诚信要求",
+          "description": "在奖助学金申请和评审推荐过程中弄虚作假",
+          "type": "hard",
+          "quantifiable": false,
+          "requirement": "申请及评审过程须真实诚信",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "（三）在奖助学金申请和评审推荐过程中弄虚作假者；",
+          "source_section": "第十四条",
+          "board": "veto",
+          "input_kind": "yes_no",
+          "requires_evidence": false
+        }
+      ]
+    },
+    "other": {
+      "label": "其他要求",
+      "conditions": [
+        {
+          "id": "condition_001",
+          "category": "other",
+          "item": "学生身份要求",
+          "description": "申请者须为我校在籍全日制本科学生",
+          "type": "hard",
+          "quantifiable": false,
+          "requirement": "在籍全日制本科学生",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "第二条 本办法适用于我校在籍全日制本科学生。",
+          "source_section": "第二条",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_024",
+          "category": "other",
+          "item": "其他符合创新活动实施方案的项目",
+          "description": "未在本文件明确列举、但符合《重庆邮电大学学生科技文化创新活动工作实施方案》相关规定的科技文化创新类项目",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "须经认定符合校级创新活动实施方案要求",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "其他符合《重庆邮电大学学生科技文化创新活动工作实施方案》相关条件的项目。",
+          "source_section": "第三条",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_029",
+          "category": "other",
+          "item": "家庭经济困难及生活作风要求",
+          "description": "申请人须被认定为家庭经济困难学生，且日常生活中保持俭朴作风",
+          "type": "qualitative",
+          "quantifiable": false,
+          "requirement": "家庭经济困难，生活俭朴",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "5. 家庭经济困难，生活俭朴；",
+          "source_section": "第五条",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_033",
+          "category": "other",
+          "item": "家庭经济困难认定",
+          "description": "须经学校认定为家庭经济困难学生，并划分困难等级",
+          "type": "hard",
+          "quantifiable": false,
+          "requirement": "已被认定为家庭经济困难学生（特别困难/困难/一般困难）",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "符合申请条件的家庭经济困难学生，按照特别困难、困难、一般困难顺序",
+          "source_section": "国家助学金条款",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        },
+        {
+          "id": "condition_040",
+          "category": "other",
+          "item": "学生工作部认定资格否决",
+          "description": "经学生工作部（处）认定不能参加评定的情形",
+          "type": "hard",
+          "quantifiable": false,
+          "requirement": "未被学生工作部（处）认定为不具备参评资格",
+          "operator": "none",
+          "value": null,
+          "unit": "none",
+          "source_quote": "（四）其他经学生工作部（处）认定不能参加评定者。",
+          "source_section": "第十四条",
+          "board": "other",
+          "input_kind": "none",
+          "requires_evidence": false
+        }
+      ]
+    }
+  },
+  "logic_groups": [
+    {
+      "group_id": "group_basic",
+      "description": "基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001"
+      ]
+    },
+    {
+      "group_id": "group_basic",
+      "description": "基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001",
+        "condition_002",
+        "condition_003",
+        "condition_004"
+      ]
+    },
+    {
+      "group_id": "group_basic_eligibility",
+      "description": "基本申请资格与规则",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001",
+        "condition_002",
+        "condition_003"
+      ]
+    },
+    {
+      "group_id": "group_basic",
+      "description": "基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001",
+        "condition_002"
+      ]
+    },
+    {
+      "group_id": "group_basic",
+      "description": "国家奖学金及8000元以上社会奖学金基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001",
+        "condition_002"
+      ]
+    },
+    {
+      "group_id": "group_basic",
+      "description": "基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001",
+        "condition_002"
+      ]
+    },
+    {
+      "group_id": "group_basic",
+      "description": "国家励志奖学金、郭长波奖学金基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001",
+        "condition_002",
+        "condition_003"
+      ]
+    },
+    {
+      "group_id": "group_basic",
+      "description": "基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001",
+        "condition_002"
+      ]
+    },
+    {
+      "group_id": "group_basic",
+      "description": "基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001",
+        "condition_002"
+      ]
+    },
+    {
+      "group_id": "group_basic",
+      "description": "基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001"
+      ]
+    },
+    {
+      "group_id": "group_basic",
+      "description": "基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001"
+      ]
+    },
+    {
+      "group_id": "group_basic",
+      "description": "基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001"
+      ]
+    },
+    {
+      "group_id": "group_basic",
+      "description": "国家助学金基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001",
+        "condition_002",
+        "condition_003"
+      ]
+    },
+    {
+      "group_id": "group_procedural_basic",
+      "description": "基本流程性要求",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001",
+        "condition_002",
+        "condition_003"
+      ]
+    },
+    {
+      "group_id": "group_disqualification",
+      "description": "取消评定资格的否定性条件（满足任一即取消）",
+      "logic": "OR",
+      "condition_ids": [
+        "condition_001",
+        "condition_002",
+        "condition_003",
+        "condition_004"
+      ]
+    },
+    {
+      "group_id": "group_basic",
+      "description": "基本申请条件",
+      "logic": "AND",
+      "condition_ids": [
+        "condition_001"
+      ]
+    },
+    {
+      "group_id": "group_bonus_volunteer",
+      "description": "义工服务与学生干部履职相关加分项",
+      "logic": "OR",
+      "condition_ids": [
+        "condition_001",
+        "condition_002"
+      ]
+    }
+  ]
+}

@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 from config import Config
 from llm_client import LLMClient
+from checklist_annotator import annotate_policy
 
 
 class PolicyParser:
@@ -567,15 +568,29 @@ research=科研论文 | competition=竞赛获奖 | bonus=加分项 | procedural=
 【类型 type（选一个）】
 hard=硬性门槛 | scoring=评分项 | ranking=排名 | bonus=加分 | preference=优先 | procedural=流程 | qualitative=定性
 
+【展示板块 board（选一个，决定前端分区）】
+veto=一票否决 | base=基础门槛 | bonus=加分项 | other=不可量化·仅展示
+判定：
+- 挂科/不及格/受处分/作弊/学术不端/弄虚作假等"碰了即取消资格"的 → veto
+- 有明确数值门槛或需完成的资格（绩点排名、外语分数、身份、修完课程、提交材料） → base
+- 竞赛/科研/荣誉等"多多益善"用于算加分的 → bonus
+- 拥护党/社会主义核心价值观/品行优良/回避报备义务/身心健康达标 等无法上传核验的纯声明 → other
+
+【控件类型 input_kind（选一个）】
+yes_no=是/否开关 | number=数字输入 | range=区间选择 | select=下拉单选 | upload=上传佐证 | text=文本填写 | none=纯展示
+
+【requires_evidence】布尔值：该项是否需要用户上传佐证材料（成绩单/证书/证明等）
+
 【输出 JSON 格式，严格遵循】
-{"conditions":[{"id":"c001","category":"gpa","item":"GPA要求","description":"必修课加权平均成绩排名前50%","type":"hard","quantifiable":true,"requirement":"排名前50%","operator":"<=","value":50,"unit":"%","source_quote":"原文逐字引用","source_section":"第一章 第五条"}],"logic_groups":[{"group_id":"g1","description":"基本条件","logic":"AND","condition_ids":["c001"]}],"important_dates":[{"event":"申请截止","date":"2025-06-15","source_quote":"原文引用"}]}
+{"conditions":[{"id":"c001","category":"gpa","item":"GPA要求","description":"必修课加权平均成绩排名前50%","type":"hard","board":"base","input_kind":"number","requires_evidence":true,"quantifiable":true,"requirement":"排名前50%","operator":"<=","value":50,"unit":"%","source_quote":"原文逐字引用","source_section":"第一章 第五条"}],"logic_groups":[{"group_id":"g1","description":"基本条件","logic":"AND","condition_ids":["c001"]}],"important_dates":[{"event":"申请截止","date":"2025-06-15","source_quote":"原文引用"}]}
 
 【规则】
-1. 每个条件必须填 category 和 type，从上面选项中选
+1. 每个条件必须填 category、type、board、input_kind、requires_evidence，从上面选项中选
 2. source_quote 必须逐字引用原文，不可改写
 3. 不可量化时 value 填 null，operator 填 "none"，unit 填 "none"
-4. 没有条件的块返回 {"conditions":[],"logic_groups":[],"important_dates":[]}
-5. 只返回 JSON，不要任何解释文字"""
+4. board=veto 的条件 input_kind 用 yes_no；board=other 的条件 input_kind 用 none
+5. 没有条件的块返回 {"conditions":[],"logic_groups":[],"important_dates":[]}
+6. 只返回 JSON，不要任何解释文字"""
 
         condition_counter = 1
         failed_chunks = []
@@ -812,5 +827,9 @@ hard=硬性门槛 | scoring=评分项 | ranking=排名 | bonus=加分 | preferen
             "logic_groups": extracted["logic_groups"],
             "important_dates": extracted["important_dates"],
         }
+
+        # 7. 归一化清单展示字段：LLM 给的全部保留，缺失/非法的用规则兜底补齐
+        board_stat = annotate_policy(policy_data, force=False)
+        logger.info(f"清单板块分布: {board_stat}")
 
         return policy_data
