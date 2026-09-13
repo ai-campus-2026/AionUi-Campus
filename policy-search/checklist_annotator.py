@@ -68,8 +68,8 @@ def _text_of(c: Dict[str, Any]) -> str:
     return "".join(str(c.get(k, "") or "") for k in ("item", "description", "requirement"))
 
 
-def classify_condition(c: Dict[str, Any]) -> Tuple[str, str, bool, str]:
-    """返回 (board, input_kind, requires_evidence, rule)，rule 便于审计。"""
+def _decide_board(c: Dict[str, Any]) -> Tuple[str, str]:
+    """纯规则判定 board，返回 (board, rule)。rule 仅用于审计。"""
     cat = c.get("category")
     t = c.get("type")
     q = bool(c.get("quantifiable"))
@@ -89,58 +89,77 @@ def classify_condition(c: Dict[str, Any]) -> Tuple[str, str, bool, str]:
 
     # ---- board 判定（优先级：points > veto > upload > 量化门槛/加分 > 定性门槛 > 声明/信息 > 其他）----
     if points:
-        board, rule = "bonus", "量化扣分/加分(非否决)"
-    elif veto_hit:
-        board, rule = "veto", "一票否决(否决节/否决词)"
-    elif is_upload_only:
-        board, rule = "base", "待提交材料(上传)"
-    elif numeric_threshold and bonusish:
-        board, rule = "bonus", "可量化加分/评分项"
-    elif numeric_threshold:
-        board, rule = "base", "可量化门槛(带阈值)"
-    elif bonusish:
-        board, rule = "bonus", "加分/评分类目(未量化)"
-    elif INFO_PAT.search(text) or ADMIN_PAT.search(text):
-        board, rule = "other", "计分口径/行政信息(仅展示)"
-    elif cat == "health" and not q:
-        board, rule = "other", "入学健康声明(仅展示)"
-    elif OATH_PAT.search(text):
-        board, rule = "other", "宣誓/品行/义务声明(仅展示)"
-    elif cat in ("gpa", "foreign_language", "academic"):
-        board, rule = "base", "定性门槛(完成/通过/身份类)"
-    elif cat == "procedural":
-        board, rule = "other", "流程/承诺(仅展示)"
-    else:
-        board, rule = "other", "默认(仅展示)"
+        return "bonus", "量化扣分/加分(非否决)"
+    if veto_hit:
+        return "veto", "一票否决(否决节/否决词)"
+    if is_upload_only:
+        return "base", "待提交材料(上传)"
+    if numeric_threshold and bonusish:
+        return "bonus", "可量化加分/评分项"
+    if numeric_threshold:
+        return "base", "可量化门槛(带阈值)"
+    if bonusish:
+        return "bonus", "加分/评分类目(未量化)"
+    if INFO_PAT.search(text) or ADMIN_PAT.search(text):
+        return "other", "计分口径/行政信息(仅展示)"
+    if cat == "health" and not q:
+        return "other", "入学健康声明(仅展示)"
+    if OATH_PAT.search(text):
+        return "other", "宣誓/品行/义务声明(仅展示)"
+    if cat in ("gpa", "foreign_language", "academic"):
+        return "base", "定性门槛(完成/通过/身份类)"
+    if cat == "procedural":
+        return "other", "流程/承诺(仅展示)"
+    return "other", "默认(仅展示)"
 
-    # ---- input_kind 判定 ----
+
+def _decide_kind(board: str, c: Dict[str, Any]) -> str:
+    """按"最终采用的 board" + 条件自身字段判定 input_kind。"""
     if board == "veto":
-        kind = "yes_no"
-    elif board == "other":
-        kind = "none"
-    elif board == "base" and is_upload_only:
-        kind = "upload"
-    elif numeric_threshold and (unit in NUMERIC_UNITS or isinstance(val, (int, float))):
-        kind = "number"
-    elif board == "bonus":
-        if re.search(r"(等级|名次|排名|第一|主持|负责人|奖项|一等|二等|三等|等功)", text):
-            kind = "select"
-        else:
-            kind = "number" if q else "select"
-    else:
-        kind = "yes_no"
+        return "yes_no"
+    if board == "other":
+        return "none"
 
-    # ---- requires_evidence ----
-    evidence = bool(
-        has_material
-        or (board in ("base", "bonus") and q)
+    text = _text_of(c)
+    q = bool(c.get("quantifiable"))
+    op = c.get("operator")
+    val = c.get("value")
+    unit = str(c.get("unit") or "")
+    numeric_threshold = q and op not in (None, "none", "") and val is not None
+
+    if board == "base" and bool(MATERIAL_PAT.search(text)) and not numeric_threshold:
+        return "upload"
+    if numeric_threshold and (unit in NUMERIC_UNITS or isinstance(val, (int, float))):
+        return "number"
+    if board == "bonus":
+        if re.search(r"(等级|名次|排名|第一|主持|负责人|奖项|一等|二等|三等|等功)", text):
+            return "select"
+        return "number" if q else "select"
+    return "yes_no"
+
+
+def _needs_evidence(board: str, c: Dict[str, Any]) -> bool:
+    """是否需要上传佐证：材料类动词命中，或 base/bonus 的可量化项。"""
+    return bool(
+        MATERIAL_PAT.search(_text_of(c))
+        or (board in ("base", "bonus") and bool(c.get("quantifiable")))
     )
 
-    return board, kind, evidence, rule
+
+def classify_condition(c: Dict[str, Any]) -> Tuple[str, str, bool, str]:
+    """纯规则路径：返回 (board, input_kind, requires_evidence, rule)，rule 便于审计。"""
+    board, rule = _decide_board(c)
+    kind = _decide_kind(board, c)
+    return board, kind, _needs_evidence(board, c), rule
 
 
 def annotate_condition(c: Dict[str, Any], force: bool = False) -> None:
-    """就地给单条 condition 打字段。force=False 时保留合法的 LLM 值，仅补缺失/非法。"""
+    """就地给单条 condition 打字段。
+
+    force=False 时保留合法的 LLM 值，仅补缺失/非法；且当 LLM 只给了 board 而
+    input_kind 缺失/非法时，控件类型必须按"最终采用的 board"推导——避免出现
+    LLM 标 bonus/veto 而规则按 other 分支给出 none 的控件错配。
+    """
     llm_board = c.get("board")
     llm_kind = c.get("input_kind")
     if (
@@ -151,14 +170,14 @@ def annotate_condition(c: Dict[str, Any], force: bool = False) -> None:
     ):
         return  # LLM 已给全且合法，尊重之
 
-    board, kind, evidence, _ = classify_condition(c)
-    # 不覆盖合法的 LLM 单项值（缺失或非法才用规则填）
-    if llm_board not in VALID_BOARDS:
-        c["board"] = board
-    if llm_kind not in VALID_KINDS:
-        c["input_kind"] = kind
+    rule_board, _ = _decide_board(c)
+    board = rule_board if force or llm_board not in VALID_BOARDS else llm_board
+    kind = _decide_kind(board, c) if force or llm_kind not in VALID_KINDS else llm_kind
+
+    c["board"] = board
+    c["input_kind"] = kind
     if not isinstance(c.get("requires_evidence"), bool):
-        c["requires_evidence"] = evidence
+        c["requires_evidence"] = _needs_evidence(board, c)
 
 
 def _iter_conditions(policy: Dict[str, Any]):
