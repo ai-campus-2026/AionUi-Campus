@@ -48,25 +48,33 @@ const areEnvRecordsEqual = (a: Record<string, string>, b: Record<string, string>
 };
 
 /**
- * 校园规则解码器 MCP 的缺 Key 提示条。
+ * 校园规则解码器 MCP 的 DashScope Key 状态条 / 入口（常驻）。
  *
  * 检测不靠硬编码名字、也不靠 builtin 标记（校园 MCP 常是手动添加的，builtin 为
- * false，用它当闸门会让提示条永远不出现）：凡是 `python xxx/server.py` 形态的 stdio
+ * false，用它当闸门会让本条永远不出现）：凡是 `python xxx/server.py` 形态的 stdio
  * MCP 都纳入检查（policy_search、rag、contract-scan 合同审查，以及后续新增的）。
- * 任一条目 env 里没有 DASHSCOPE_API_KEY 就显示提示条（绿勾/enabled 都不可靠：
- * Python server 没 key 也能启动并通过连接测试）。点按钮通过事件总线打开全局
- * CampusApiKeyDialog；弹窗保存成功后发事件让本提示条立即刷新消失，不必重开设置页。
+ *
+ * 为什么常驻：填过 key 之后启动弹窗会按设计短路不再弹，如果本条只在「缺 key」时
+ * 出现，那么全部配好后入口就彻底消失、再也没法更换/重填 key。所以只要列表里存在
+ * Python MCP，本条就一直在——缺 key 时是告警态「填写 API Key」，已配好时是中性态
+ * 「修改 Key」。两种按钮都通过事件总线打开全局 CampusApiKeyDialog（手动打开会预填
+ * 当前已存的 key，方便更换）；弹窗保存成功后发事件让本条立即刷新，不必重开设置页。
+ *
+ * 仅当列表里一个 Python MCP 都没有时才隐藏（说明确实没有需要 key 的校园 MCP）。
  */
 const CampusApiKeyNotice: React.FC = () => {
+  const [total, setTotal] = useState(0);
   const [missingNames, setMissingNames] = useState<string[]>([]);
 
   const refresh = useCallback(async () => {
     try {
       const servers = (await mcpService.listServers.invoke()) || [];
       const targets = collectCampusPythonServers(servers);
+      setTotal(targets.length);
       setMissingNames(targets.filter((server) => !hasCampusEnvKey(server)).map((server) => server.name));
     } catch (error) {
       console.warn('[CampusApiKeyNotice] refresh failed', error);
+      setTotal(0);
       setMissingNames([]);
     }
   }, []);
@@ -78,19 +86,28 @@ const CampusApiKeyNotice: React.FC = () => {
     });
   }, [refresh]);
 
-  if (missingNames.length === 0) return null;
+  // 一个 Python MCP 都没有 → 没有需要 key 的校园 MCP，整条隐藏
+  if (total === 0) return null;
+
+  const allConfigured = missingNames.length === 0;
 
   return (
     <div className='flex items-center justify-between gap-12px px-12px py-8px rd-8px bg-fill-2 border border-solid border-[var(--bg-3)]'>
       <span className='text-12px text-t-secondary leading-18px'>
-        校园规则解码器 MCP（{missingNames.join(' / ')}）缺少 DASHSCOPE_API_KEY，相关工具调用会失败。
+        {allConfigured
+          ? `校园规则解码器 MCP 的 DashScope API Key 已配置（共 ${total} 个 MCP），如需更换或重填点右侧按钮。`
+          : `校园规则解码器 MCP（${missingNames.join(' / ')}）缺少 DASHSCOPE_API_KEY，相关工具调用会失败。`}
       </span>
       <button
         type='button'
         onClick={() => requestCampusApiKeyDialog()}
-        className='shrink-0 px-12px py-4px rd-6px border-0 bg-[var(--primary-6)] text-white text-12px cursor-pointer hover:bg-[var(--primary-5)]'
+        className={
+          allConfigured
+            ? 'shrink-0 px-12px py-4px rd-6px border border-solid border-[var(--bg-3)] bg-transparent text-t-secondary text-12px cursor-pointer hover:bg-2'
+            : 'shrink-0 px-12px py-4px rd-6px border-0 bg-[var(--primary-6)] text-white text-12px cursor-pointer hover:bg-[var(--primary-5)]'
+        }
       >
-        填写 API Key
+        {allConfigured ? '修改 Key' : '填写 API Key'}
       </button>
     </div>
   );
