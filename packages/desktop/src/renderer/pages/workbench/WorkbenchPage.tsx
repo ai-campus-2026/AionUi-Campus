@@ -26,14 +26,83 @@ type CreateConversationParams = Parameters<typeof ipcBridge.conversation.create.
 const RECENT_LIMIT = 5;
 
 // --- 规则动态：真实政策库索引（policy-search/knowledge_base/index.json）---
-// 队友 policy-search 解析文档后会自动生成该索引；上传新政策文档 → 重新解析 →
-// 索引更新 → 工作台"规则动态"自动跟随变化，无需改动代码。
-// 知识库根目录由 policy-search/config.py 的 KNOWLEDGE_BASE_DIR 决定，如路径变更请同步修改这里。
-const KNOWLEDGE_INDEX_PATH =
+// 知识库根目录由 policy-search/config.py 的 KNOWLEDGE_BASE_DIR 决定。
+// 路径优先从本机 AionUi 已配置的 policy-search MCP 动态解析（各成员机器路径不同也能用），
+// 解析失败时回退到本机默认路径。
+const FALLBACK_INDEX_PATH =
   'D:/AI-Campus-Workspace/AionUi-Campus-SSH/policy-search/knowledge_base/index.json';
-// fs.readFile 要求文件位于 workspace（当前项目根）内，这里同步传项目根。
-// 若后端以当前会话的项目根为准（非此路径），请改为工作台所在项目根目录。
-const KNOWLEDGE_WORKSPACE_ROOT = 'D:/AI-Campus-Workspace/AionUi-Campus-SSH';
+const FALLBACK_WORKSPACE_ROOT = 'D:/AI-Campus-Workspace/AionUi-Campus-SSH';
+
+interface KnowledgeIndexRef {
+  path: string;
+  workspace?: string;
+}
+
+function isAbsPath(p: string): boolean {
+  return /^[a-zA-Z]:[\\/]/.test(p) || p.startsWith('/');
+}
+
+function joinPath(base: string, rel: string): string {
+  const b = base.replace(/[\\/]+$/, '');
+  const r = rel.replace(/^[\\/]+/, '');
+  return `${b}/${r}`;
+}
+
+// 从 AionUi 已配置的 MCP server 中定位 policy-search，解析知识库索引的绝对路径。
+async function resolveKnowledgeIndex(): Promise<KnowledgeIndexRef | null> {
+  try {
+    const servers = await ipcBridge.mcpService.listServers.invoke();
+    const candidates = (servers || []).filter((s) => {
+      if (!s.transport || s.transport.type !== 'stdio') return false;
+      const name = (s.name || '').toLowerCase();
+      const argsStr = (s.transport.args || []).join(' ').toLowerCase();
+      const hasKb = !!s.transport.env?.KNOWLEDGE_BASE_DIR;
+      const isPolicy = name.includes('policy') || argsStr.includes('policy-search') || hasKb;
+      const isRag = name.includes('rag') || argsStr.includes('rag-mcp');
+      return isPolicy && !isRag;
+    });
+    for (const s of candidates) {
+      const t = s.transport;
+      if (!t || t.type !== 'stdio') continue;
+      const envDir = t.env?.KNOWLEDGE_BASE_DIR;
+      const serverFile = (t.args || []).find(
+        (a) => /server\.py$/i.test(a) || a.toLowerCase().includes('policy-search'),
+      );
+      const serverDir = serverFile ? serverFile.replace(/[\\/]+[^\\/]+$/, '') : '';
+      // ① env 直接给出绝对知识库目录
+      if (envDir && isAbsPath(envDir)) {
+        return { path: joinPath(envDir, 'index.json'), workspace: serverDir || envDir };
+      }
+      // ② 由 server.py 所在目录推导（env 相对路径或默认 knowledge_base）
+      if (serverDir) {
+        const kbDir =
+          envDir && !isAbsPath(envDir) ? joinPath(serverDir, envDir) : joinPath(serverDir, 'knowledge_base');
+        const repoRoot = serverDir.replace(/[\\/]+[^\\/]+$/, ''); // policy-search 的父目录 = 仓库根
+        return { path: joinPath(kbDir, 'index.json'), workspace: repoRoot };
+      }
+    }
+  } catch (err) {
+    console.warn('[workbench] MCP 配置解析失败，回退默认路径:', err);
+  }
+  return null;
+}
+
+// 读取知识库索引：优先带 workspace 读取，失败时尝试不带 workspace 的绝对路径。
+async function readKnowledgeIndex(ref: KnowledgeIndexRef): Promise<string | null> {
+  if (ref.workspace) {
+    try {
+      const content = await ipcBridge.fs.readFile.invoke({ path: ref.path, workspace: ref.workspace });
+      if (content) return content;
+    } catch {
+      /* 尝试不带 workspace */
+    }
+  }
+  try {
+    return await ipcBridge.fs.readFile.invoke({ path: ref.path });
+  } catch {
+    return null;
+  }
+}
 
 interface KnowledgeDocEntry {
   doc_id?: string;
@@ -123,21 +192,23 @@ const WorkbenchPage: React.FC = () => {
   const [ruleDynamics, setRuleDynamics] = useState<RuleDynamicsItem[]>([]);
   useEffect(() => {
     let disposed = false;
-    ipcBridge.fs.readFile
-      .invoke({ path: KNOWLEDGE_INDEX_PATH, workspace: KNOWLEDGE_WORKSPACE_ROOT })
-      .then((content) => {
-        if (disposed || !content) return;
+    void (async () => {
+      const ref =
+        (await resolveKnowledgeIndex()) ?? { path: FALLBACK_INDEX_PATH, workspace: FALLBACK_WORKSPACE_ROOT };
+      const content = await readKnowledgeIndex(ref);
+      if (disposed) return;
+      if (content) {
         try {
           setRuleDynamics(toRuleDynamics(JSON.parse(content) as KnowledgeIndex));
         } catch {
           // 索引内容异常时保持空态（显示"政策库暂无文档"）
-          console.warn('[workbench] 知识库索引解析失败:', KNOWLEDGE_INDEX_PATH);
+          console.warn('[workbench] 知识库索引解析失败:', ref.path);
         }
-      })
-      .catch((err) => {
+      } else {
         // 索引不存在 / 后端未就绪 / 不在 workspace 内 → 空态，不阻塞工作台其余部分
-        console.warn('[workbench] 知识库索引读取失败:', KNOWLEDGE_INDEX_PATH, err);
-      });
+        console.warn('[workbench] 知识库索引读取失败:', ref.path);
+      }
+    })();
     return () => {
       disposed = true;
     };
