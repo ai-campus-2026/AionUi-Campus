@@ -1,0 +1,1 @@
+﻿packages/desktop/src/renderer/pages/workbench/ReportPage.tsx(362,28): error TS2304: Cannot find name 'CheckCircle'.

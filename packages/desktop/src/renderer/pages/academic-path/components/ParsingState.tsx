@@ -1,0 +1,63 @@
+import React, { useEffect, useState } from 'react';
+import { parsingSteps } from '../mockData';
+
+interface Props {
+  onDone: () => void;
+  /** 解析失败信息（有值时显示失败界面，不播动画） */
+  error?: { code: string; message: string } | null;
+  /** 点击"重新上传"时回调 */
+  onReupload?: () => void;
+}
+
+const ParsingState: React.FC<Props> = ({ onDone, error, onReupload }) => {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (step >= parsingSteps.length) {
+      const t = setTimeout(onDone, 600);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setStep((s) => s + 1), 700);
+    return () => clearTimeout(t);
+  }, [step, onDone]);
+
+  // 解析失败界面
+  if (error) {
+    return (
+      <div className="ap-parsing">
+        <div className="ap-parsing__card ap-parsing__card--failed">
+          <div className="ap-parsing__failed-icon">✕</div>
+          <h2 className="ap-parsing__title">解析失败</h2>
+          <p className="ap-parsing__failed-msg">{error.message}</p>
+          {error.code && <p className="ap-parsing__failed-code">错误代码：{error.code}</p>}
+          <div className="ap-parsing__failed-actions">
+            <button type="button" className="ap-btn ap-btn--primary ap-btn--large" onClick={onReupload}>
+              重新上传
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ap-parsing">
+      <div className="ap-parsing__card">
+        <div className="ap-parsing__spinner" />
+        <h2 className="ap-parsing__title">正在理解你的培养方案……</h2>
+        <div className="ap-parsing__steps">
+          {parsingSteps.map((s, i) => (
+            <div key={s} className={`ap-parsing__step ${i < step ? 'ap-parsing__step--done' : i === step ? 'ap-parsing__step--active' : ''}`}>
+              <span className="ap-parsing__step-icon">
+                {i < step ? '✓' : i === step ? '●' : '○'}
+              </span>
+              <span className="ap-parsing__step-text">{s}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ParsingState;

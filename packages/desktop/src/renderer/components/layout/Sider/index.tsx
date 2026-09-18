@@ -12,7 +12,6 @@ import SiderFooter from './SiderFooter';
 import TeamSiderSection from './TeamSiderSection';
 import siderStyles from './Sider.module.css';
 
-const WorkspaceGroupedHistory = React.lazy(() => import('@renderer/pages/conversation/GroupedHistory'));
 const SettingsSider = React.lazy(() => import('@renderer/pages/settings/components/SettingsSider'));
 
 // 校园规则解码器定制：隐藏"助手"和"定时任务"导航入口。
@@ -219,14 +218,6 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
                 onSessionClick={onSessionClick}
               />
             )}
-            {/* Workbench nav entry - campus rule decoder home */}
-            <SiderWorkbenchEntry
-              isMobile={isMobile}
-              isActive={pathname === '/workbench'}
-              collapsed={collapsed}
-              siderTooltipProps={siderTooltipProps}
-              onClick={handleWorkbenchClick}
-            />
             {/* Assistant nav entry - fixed above Scheduled */}
             {!HIDE_ASSISTANT_ENTRY && (
               <SiderAssistantEntry
@@ -254,21 +245,14 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
                 collapsed ? 'mx-6px' : 'mx-10px'
               )}
             />
-            {/* Scrollable content: pinned → team (slot) → projects → conversations */}
+            {/* Scrollable content: team (slot) */}
             <div className={classNames('flex-1 min-h-0 overflow-y-auto', siderStyles.scrollArea)}>
               <Suspense fallback={<div className='min-h-200px' />}>
-                <WorkspaceGroupedHistory
-                  {...workspaceHistoryProps}
-                  afterPinnedContent={
-                    <>
-                      <TeamSiderSection
-                        collapsed={collapsed}
-                        pathname={pathname}
-                        siderTooltipProps={siderTooltipProps}
-                        onSessionClick={onSessionClick}
-                      />
-                    </>
-                  }
+                <TeamSiderSection
+                  collapsed={collapsed}
+                  pathname={pathname}
+                  siderTooltipProps={siderTooltipProps}
+                  onSessionClick={onSessionClick}
                 />
               </Suspense>
             </div>

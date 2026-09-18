@@ -83,6 +83,8 @@ export interface CampusRuleToolResult {
   policyHits?: PolicyHit[];      // 政策检索工具专属：命中条款
   conditionTable?: ConditionRow[]; // 逐条条件比对（policy 判定器专属）
   conditionGroups?: ConditionGroup[]; // 条件比对（按类别分组，policy 判定器专属）
+  policyVersionId?: string;  // 政策文件唯一标识（用于区分不同查询文件，MCP 返回）
+  policyFileName?: string;   // 政策文件名（如《国家奖学金评定办法》2026版）
 }
 
 // 演示用：用户问题样例清单

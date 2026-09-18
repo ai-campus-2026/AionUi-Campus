@@ -129,7 +129,7 @@ function toRuleDynamics(index: KnowledgeIndex): RuleDynamicsItem[] {
   const docs = Object.entries(categories).flatMap(([, list]) => list ?? []);
   return docs
     .filter((doc) => doc?.title || doc?.doc_id)
-    .sort((a, b) => String(b?.effective_date ?? '').localeCompare(String(a?.effective_date ?? '')))
+    .toSorted((a, b) => String(b?.effective_date ?? '').localeCompare(String(a?.effective_date ?? '')))
     .map((doc) => ({
       id: doc.doc_id ?? doc.file ?? `${doc.title}-${doc.year}`,
       title: doc.title ?? doc.doc_id ?? '',

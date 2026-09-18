@@ -23,7 +23,9 @@ import {
   calcLayoutMetrics,
 } from '@/renderer/pages/conversation/utils/layoutCalc';
 import { Layout as ArcoLayout } from '@arco-design/web-react';
+import { ArrowLeft } from '@icon-park/react';
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import './chat-layout.css';
 
@@ -76,6 +78,7 @@ const ChatLayout: React.FC<{
   /** Optional override for the leading icon shown before the title (e.g. team Peoples icon) */
   headerLeading?: React.ReactNode;
 }> = (props) => {
+  const navigate = useNavigate();
   const { conversation_id, workspacePath, isTemporaryWorkspace } = props;
   const { backend, presetAssistant, agent_name, workspaceEnabled = true, workspacePreferenceKey } = props;
   const workspacePanelDisabled = Boolean(props.workspacePanelDisabled);
@@ -218,16 +221,17 @@ const ChatLayout: React.FC<{
           title={props.title}
           conversation_id={conversation_id}
           leading={
-            props.headerLeading ??
-            ((backend || presetAssistant) && (
-              <AgentLogoIcon
-                backend={backend}
-                agent_name={display_name}
-                agentLogo={presetAssistant?.logo}
-                agentLogoIsEmoji={presetAssistant?.isEmoji}
-                agentLogoIsFallback={presetAssistant?.isFallback}
-              />
-            ))
+            props.headerLeading ?? (
+              <button
+                type='button'
+                onClick={() => navigate(-1)}
+                className='flex items-center gap-4px rounded-8px px-8px py-4px text-[var(--color-text-2)] transition-all duration-180 hover:bg-fill-2 hover:text-[var(--color-text-1)]'
+                aria-label='返回'
+              >
+                <ArrowLeft size={16} theme='outline' fill='currentColor' />
+                <span className='text-[13px]'>返回</span>
+              </button>
+            )
           }
         />
       </FlexFullContainer>

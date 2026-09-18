@@ -1,0 +1,590 @@
+/* 首页 · 校园规则解码器 —— 暖米灰浅色背景 + 三色主题气泡 Liquid Glass 版 */
+
+.newHomePage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+  color: #3c5140;
+  font-family: 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+  /* 暖米灰浅色背景：纵向渐变 + 青/暖低饱和氛围光晕 + 顶部高光，与气泡主题色协调 */
+  background:
+    radial-gradient(760px 440px at 18% 62%, rgba(204, 228, 226, 0.42) 0%, rgba(204, 228, 226, 0) 60%),
+    radial-gradient(760px 440px at 82% 58%, rgba(231, 211, 196, 0.5) 0%, rgba(231, 211, 196, 0) 60%),
+    radial-gradient(1100px 620px at 8% -8%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 55%),
+    radial-gradient(900px 540px at 94% -6%, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 52%),
+    linear-gradient(168deg, #f4efea 0%, #e4dfd9 45%, #d5d0c8 80%, #cfc8bf 100%);
+}
+
+/* ===== 顶部导航 ===== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brandMark {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #96a78d;
+  box-shadow: 0 0 0 4px rgba(150, 167, 141, 0.25);
+}
+
+.brandText {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.headerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(240, 240, 240, 0.45);
+  color: #3c5140;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.headerBtn:hover {
+  background: rgba(240, 240, 240, 0.8);
+}
+
+.activeIcon {
+  background: rgba(150, 167, 141, 0.35);
+}
+
+/* ===== 主体 ===== */
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px 8px;
+  text-align: center;
+}
+
+.heroSection {
+  margin-bottom: 28px;
+}
+
+.heroTitle {
+  margin: 0 0 10px;
+  font-size: 34px;
+  font-weight: 700;
+  color: #3c5140;
+  letter-spacing: 1px;
+}
+
+.heroSub {
+  margin: 0;
+  font-size: 16px;
+  color: #5f7362;
+}
+
+/* ===== 磁吸玻璃气泡 ===== */
+.bubbleStage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(44px, 9vw, 96px);
+  padding: 28px 12px 20px;
+  min-height: 200px;
+}
+
+.glassBubble {
+  --acc: #8ba67c;
+  position: relative;
+  width: 158px;
+  height: 158px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.24) 42%,
+    color-mix(in srgb, var(--acc) 28%, rgba(217, 233, 207, 0.4)) 100%
+  );
+  backdrop-filter: blur(14px) saturate(1.25);
+  -webkit-backdrop-filter: blur(14px) saturate(1.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -16px 30px color-mix(in srgb, var(--acc) 30%, transparent),
+    inset 2px 2px 8px rgba(255, 255, 255, 0.35),
+    0 12px 32px color-mix(in srgb, var(--acc) 22%, rgba(60, 81, 64, 0.16)),
+    0 3px 10px rgba(60, 81, 64, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #3c5140;
+  cursor: pointer;
+  will-change: transform;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+.glassBubble:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -16px 30px color-mix(in srgb, var(--acc) 42%, transparent),
+    inset 2px 2px 8px rgba(255, 255, 255, 0.4),
+    0 16px 40px color-mix(in srgb, var(--acc) 32%, rgba(60, 81, 64, 0.18)),
+    0 4px 12px rgba(60, 81, 64, 0.12);
+  filter: brightness(1.04);
+}
+
+.glassBubble:focus-visible {
+  outline: 2px solid rgba(60, 81, 64, 0.65);
+  outline-offset: 4px;
+}
+
+.bubbleIcon {
+  display: flex;
+  font-size: 30px;
+  color: var(--acc);
+  margin-bottom: 2px;
+}
+
+.bubbleName {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.bubbleDesc {
+  font-size: 12px;
+  color: #5f7362;
+}
+
+/* ===== 底部对话框 ===== */
+.dialogSection {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 12px 20px 20px;
+  box-sizing: border-box;
+}
+
+.messageContainer {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 12px 0 16px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  background: rgba(240, 240, 240, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 4px 12px rgba(60, 81, 64, 0.08);
+}
+
+/* Scrollbar styling */
+.messageContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messageContainer::-webkit-scrollbar-track {
+  background: rgba(240, 240, 240, 0.3);
+  border-radius: 3px;
+}
+
+.messageContainer::-webkit-scrollbar-thumb {
+  background: rgba(150, 167, 141, 0.4);
+  border-radius: 3px;
+}
+
+.messageContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(150, 167, 141, 0.6);
+}
+
+.messagesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 12px;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  max-width: 80%;
+  word-break: break-word;
+}
+
+.message.user {
+  align-self: flex-end;
+  background: rgba(150, 167, 141, 0.25);
+  border: 1px solid rgba(150, 167, 141, 0.3);
+  color: #2f4232;
+}
+
+.message.assistant {
+  align-self: flex-start;
+  background: rgba(240, 240, 240, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #3c5140;
+}
+
+.messageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #5f7362;
+}
+
+.messageRole {
+  font-weight: 600;
+}
+
+.messageTime {
+  color: #7d9180;
+}
+
+.messageContent {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.typingIndicator {
+  display: flex;
+  gap: 4px;
+}
+
+.typingIndicator span {
+  width: 8px;
+  height: 8px;
+  background: #96a78d;
+  border-radius: 50%;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typingIndicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typingIndicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: #96a78d;
+}
+
+.emptyTitle {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #3c5140;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: 14px;
+  color: #5f7362;
+}
+
+/* Ensure proper spacing for message container */
+.messageContainer {
+  margin-bottom: 12px;
+}
+
+.suggestionRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.suggestionChip {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(240, 240, 240, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #47604c;
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.suggestionChip:hover {
+  background: rgba(240, 240, 240, 0.85);
+  transform: translateY(-1px);
+}
+
+.aiInputBox {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 14px 14px 14px 18px;
+  border-radius: 22px;
+  background: rgba(240, 240, 240, 0.72);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -10px 24px rgba(150, 167, 141, 0.12),
+    0 14px 36px rgba(60, 81, 64, 0.14),
+    0 4px 12px rgba(60, 81, 64, 0.08);
+}
+
+.aiInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: #2f4232;
+  font-size: 15px;
+  line-height: 1.6;
+  font-family: inherit;
+  padding: 4px 0;
+}
+
+.aiInput::placeholder {
+  color: #7d9180;
+}
+
+.sendButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  font-size: 18px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  color: #f0f0f0;
+  background: #96a78d;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 16px rgba(60, 81, 64, 0.25);
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sendButton:hover {
+  background: #7f927f;
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px rgba(60, 81, 64, 0.3);
+}
+
+.sendButton:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.sendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Model selector pill sits between the textarea and the send button.
+   GuidModelSelector renders an Arco round Button; cap its width so long
+   model names truncate instead of squeezing the input. */
+.modelSelectorSlot {
+  flex: none;
+  max-width: 200px;
+  overflow: hidden;
+  align-self: center;
+}
+
+.modelSelectorSlot :global(.arco-btn) {
+  max-width: 200px;
+}
+
+.modelSelectorSlot :global(.arco-btn-content) {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.modelSelectorSlot :global(.guid-model-label) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== 对话历史浮层 ===== */
+.historyPopover {
+  position: fixed;
+  top: 76px;
+  right: 28px;
+  width: 320px;
+  background: rgba(240, 240, 240, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(60, 81, 64, 0.18);
+  overflow: hidden;
+  z-index: 1000;
+  animation: popIn 0.25s ease-out;
+}
+
+.historyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(60, 81, 64, 0.08);
+}
+
+.historyTitle {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.historyClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #3c5140;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.historyClose:hover {
+  background: rgba(150, 167, 141, 0.2);
+}
+
+.historyList {
+  padding: 6px 0;
+}
+
+.historyItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 10px 16px;
+  transition: background 0.15s ease;
+}
+
+.historyItem:hover {
+  background: rgba(150, 167, 141, 0.15);
+}
+
+.historyItemTitle {
+  font-size: 14px;
+  color: #3c5140;
+}
+
+.historyItemTime {
+  font-size: 12px;
+  color: #7d9180;
+}
+
+/* ===== 页脚 ===== */
+.footer {
+  text-align: center;
+  padding: 18px;
+  font-size: 12px;
+  color: #5f7362;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+  .header {
+    padding: 16px 20px;
+  }
+
+  .heroTitle {
+    font-size: 28px;
+  }
+
+  .heroSub {
+    font-size: 14px;
+  }
+
+  .bubbleStage {
+    gap: 20px;
+    padding-top: 20px;
+  }
+
+  .glassBubble {
+    width: 126px;
+    height: 126px;
+  }
+
+  .bubbleIcon {
+    font-size: 26px;
+  }
+
+  .bubbleName {
+    font-size: 13px;
+  }
+
+  .bubbleDesc {
+    font-size: 11px;
+  }
+
+  .historyPopover {
+    right: 16px;
+    width: 288px;
+  }
+}

@@ -12,6 +12,7 @@ import { setCurrentConversation } from '@/renderer/pages/conversation/explorer/c
 import { useAutoTitle } from '@/renderer/hooks/chat/useAutoTitle';
 import { getConversationOrNull } from '@/renderer/pages/conversation/utils/conversationCache';
 import { getSnapshotConversationProjectId } from '@/renderer/pages/conversation/GroupedHistory/hooks/useConversationListSync';
+import './conversation-theme.css';
 
 const ChatConversationIndex: React.FC = () => {
   const { id } = useParams();
@@ -107,7 +108,11 @@ const ChatConversationIndex: React.FC = () => {
   }, [id, isLoading, data, navigate, t]);
 
   if (isLoading) return <Spin loading></Spin>;
-  return <ChatConversation conversation={data ?? undefined}></ChatConversation>;
+  return (
+    <div className='conversation-page-shell'>
+      <ChatConversation conversation={data ?? undefined}></ChatConversation>
+    </div>
+  );
 };
 
 export default ChatConversationIndex;

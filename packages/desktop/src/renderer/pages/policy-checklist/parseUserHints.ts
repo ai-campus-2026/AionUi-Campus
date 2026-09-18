@@ -11,7 +11,7 @@ const num = (s: string): number | null => {
 
 /** 百分数/分数 → 数值（前10% → 10；前1/3 → 33.33） */
 const percentValue = (s: string): number | null => {
-  if (/%$/.test(s)) {
+  if (s.endsWith('%')) {
     return num(s.replace(/%/g, '').trim());
   }
   const frac = s.match(/^1\s*\/\s*(\d+)$/);
