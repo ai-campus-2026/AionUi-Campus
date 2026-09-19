@@ -1,0 +1,9 @@
+﻿packages/desktop/src/renderer/pages/workbench/ReportPage.tsx(13,10): error TS2305: Module '"@renderer/components/campus-rule"' has no exported member 'tryParseCampusRuleResult'.
+packages/desktop/src/renderer/pages/workbench/ReportPage.tsx(15,21): error TS2305: Module '"@icon-park/react"' has no exported member 'CheckCircle'.
+packages/desktop/src/renderer/pages/workbench/ReportPage.tsx(15,34): error TS2305: Module '"@icon-park/react"' has no exported member 'CloseCircle'.
+packages/desktop/src/renderer/pages/workbench/ReportPage.tsx(15,47): error TS2305: Module '"@icon-park/react"' has no exported member 'ExclamationCircle'.
+packages/desktop/src/renderer/pages/workbench/ReportPage.tsx(15,78): error TS2724: '"@icon-park/react"' has no exported member named 'ThumbUp'. Did you mean 'ThumbsUp'?
+packages/desktop/src/renderer/pages/workbench/ReportPage.tsx(243,25): error TS2322: Type '{ title: string; value: number; groupSeparator: false; valueStyle: { color: string; }; }' is not assignable to type 'IntrinsicAttributes & StatisticProps & RefAttributes<unknown>'.
+  Property 'valueStyle' does not exist on type 'IntrinsicAttributes & StatisticProps & RefAttributes<unknown>'.
+packages/desktop/src/renderer/pages/workbench/ReportPage.tsx(253,25): error TS2322: Type '{ title: string; value: number; groupSeparator: false; valueStyle: { color: string; }; }' is not assignable to type 'IntrinsicAttributes & StatisticProps & RefAttributes<unknown>'.
+  Property 'valueStyle' does not exist on type 'IntrinsicAttributes & StatisticProps & RefAttributes<unknown>'.

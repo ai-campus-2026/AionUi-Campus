@@ -9,7 +9,7 @@
 | `load_policy_document` | 加载 PDF/文本政策文档，LLM 自动提取元数据和结构化条件    |
 | `query_policy`         | 根据用户个人信息逐条匹配政策条件，返回匹配结果和原文引用 |
 | `list_policies`        | 列出知识库中的政策文件，支持按学校/分类/年份筛选         |
-| `clear_knowledge_base` | 清空知识库                                               |
+| `clear_policy_knowledge_base` | 清空政策知识库（仅结构化政策，不影响通用/RAG 知识库） |
 
 ## 架构
 

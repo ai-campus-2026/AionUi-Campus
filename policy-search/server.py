@@ -28,6 +28,7 @@ from config import Config
 from policy_store import PolicyStore
 from policy_parser import PolicyParser
 from policy_matcher import PolicyMatcher
+from checklist_annotator import annotate_policy
 
 
 # ============================================================
@@ -157,8 +158,10 @@ TOOLS = [
             "- 帮我看看、帮我查一下、匹配一下\n"
             "适用场景：用户提供了个人信息，想知道自己符合哪些政策条件。\n"
             "返回结果包含：\n"
-            "- overall_verdict：总体判定（likely_eligible/not_eligible/needs_review等）\n"
-            "- condition_matches：逐条匹配结果\n"
+            "- overall_verdict：总体判定（disqualified/not_eligible/needs_more_info/needs_review/likely_eligible）\n"
+            "- veto_blocked / triggered_vetoes：是否被一票否决及命中项（附带原文引用）\n"
+            "- board_matches：按 veto/base/bonus/other 分组的精简索引（含 id/item/match）\n"
+            "- condition_matches：逐条匹配全量明细（含 board/input_kind/requires_evidence 与逐条对比）\n"
             "- source_quote：原文引用（必须展示给用户）\n"
             "- missing_info：缺失信息\n"
             "示例：用户说'我的GPA3.7，有1篇SCI论文，符合哪些保研政策？'时调用此工具。"
@@ -267,14 +270,22 @@ TOOLS = [
         },
     ),
     Tool(
-        name="clear_knowledge_base",
+        name="clear_policy_knowledge_base",
         description=(
-            "【清空知识库工具】\n"
-            "功能：清空知识库中的所有政策数据。此操作不可恢复，请谨慎使用。\n"
-            "触发条件：当用户明确要求清空或删除所有政策时使用此工具：\n"
-            "- 清空知识库、删除所有政策、重置知识库\n"
-            "- 清除所有数据、清空政策库\n"
-            "注意：此操作会删除所有已加载的政策文档，执行前建议确认用户意图。"
+            "【清空政策知识库工具】\n"
+            "功能：仅清空「政策知识库」中所有结构化政策数据"
+            "（policy-search：推免/奖学金/助学金等按条款结构化的 JSON 与 index.json）。此操作不可恢复。\n"
+            "\n"
+            "=== 重要区分 ===\n"
+            "- 本工具只作用于「政策知识库」（结构化政策），绝不会清空「通用知识库」（RAG 向量库）。\n"
+            "- 若用户想清空的是通用知识库/向量库/上传的文档问答库，"
+            "请改用 rag-mcp-server 的 clear_general_knowledge_base 工具，不要用本工具。\n"
+            "\n"
+            "触发条件：仅当用户明确要清空政策/结构化政策库时使用：\n"
+            "- 清空政策知识库、清空政策库、删除所有政策、重置政策库\n"
+            "- 删除所有推免/奖学金/助学金政策、清空结构化政策\n"
+            "示例：用户说'把政策知识库清空' → 调用本工具；"
+            "用户说'清空通用知识库/清空RAG向量库' → 不要调用本工具，改用 clear_general_knowledge_base。"
         ),
         inputSchema={
             "type": "object",
@@ -306,7 +317,7 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[TextCon
             return await _handle_query_policy(arguments)
         elif name == "list_policies":
             return await _handle_list_policies(arguments)
-        elif name == "clear_knowledge_base":
+        elif name == "clear_policy_knowledge_base":
             return await _handle_clear(arguments)
         else:
             return [TextContent(type="text", text=json.dumps({"error": f"未知工具: {name}"}, ensure_ascii=False))]
@@ -433,10 +444,15 @@ async def _handle_query_policy(arguments: Dict[str, Any]) -> List[TextContent]:
                 )
             ]
 
-        # 2. 逐条匹配
+        # 2. 出数据前统一兜底：展示字段缺失/非法时用规则补齐（合法 LLM 值原样保留）
+        #    使 board/input_kind/requires_evidence 永不为空，前端分组始终生效
+        for policy in policies:
+            annotate_policy(policy, force=False)
+
+        # 3. 逐条匹配
         results = matcher.match_all_policies(user_info, policies)
 
-        # 3. 按 verdict 排序
+        # 4. 按 verdict 排序
         verdict_order = {"likely_eligible": 0, "needs_review": 1, "needs_more_info": 2, "not_eligible": 3}
         results.sort(key=lambda x: verdict_order.get(x["overall_verdict"], 99))
 
@@ -444,7 +460,8 @@ async def _handle_query_policy(arguments: Dict[str, Any]) -> List[TextContent]:
             "total_policies": len(results),
             "results": results,
         }
-        return [TextContent(type="text", text=json.dumps(output, ensure_ascii=False, indent=2))]
+        # 响应体积敏感：紧凑 JSON（无缩进空白），避免大响应在管线中被截断
+        return [TextContent(type="text", text=json.dumps(output, ensure_ascii=False, separators=(",", ":")))]
 
     except Exception as e:
         return [TextContent(type="text", text=json.dumps({"error": f"查询失败: {str(e)}"}, ensure_ascii=False))]
@@ -477,10 +494,10 @@ async def _handle_list_policies(arguments: Dict[str, Any]) -> List[TextContent]:
 
 
 async def _handle_clear(arguments: Dict[str, Any]) -> List[TextContent]:
-    """清空知识库"""
+    """清空政策知识库（仅结构化政策，不影响通用/RAG 知识库）"""
     try:
         result = store.clear()
-        return [TextContent(type="text", text=json.dumps({"success": True, "message": result}, ensure_ascii=False))]
+        return [TextContent(type="text", text=json.dumps({"success": True, "message": "政策知识库已清空", "detail": result}, ensure_ascii=False))]
     except Exception as e:
         return [TextContent(type="text", text=json.dumps({"error": f"清空失败: {str(e)}"}, ensure_ascii=False))]
 

@@ -19,12 +19,76 @@ UNIT_FIELD_MAP = {
 }
 
 
+# 学生口语申报 → 条文用词的同义扩展表：
+# 条文里可能写"不及格/补考"，但用户（或 agent）申报时说的是"挂科"。
+# 仅用于"一票否决申报"的宽松匹配，命中即视为申报了该否决项。
+VETO_SYNONYMS = {
+    "挂科": ("不及格", "补考", "不合格"),
+    "不及格": ("挂科", "补考"),
+    "补考": ("不及格", "挂科"),
+    "处分": ("记过", "违纪", "留校察看", "通报批评"),
+    "违纪": ("处分", "违规"),
+    "作弊": ("学术不端", "弄虚作假", "造假", "抄袭"),
+    "学术不端": ("作弊", "抄袭", "造假", "弄虚作假", "冒名"),
+    "抄袭": ("学术不端", "作弊", "造假", "弄虚作假", "冒名"),
+    "弄虚作假": ("造假", "作弊", "学术不端", "抄袭"),
+    "造假": ("弄虚作假", "作弊", "学术不端", "抄袭"),
+}
+
+
 class PolicyMatcher:
     """政策条件匹配器"""
 
     def __init__(self):
         """初始化匹配器"""
         logger.info("PolicyMatcher 初始化完成")
+
+    def _veto_declared(self, condition: Dict[str, Any], user_info: Dict[str, Any]) -> bool:
+        """判断某条一票否决是否被用户申报触发。
+        兼容两种入参：
+          user_info['declared_vetoes']: List[str] (条件 id、item 关键词或口语说法) 或 Dict{id/item: bool}
+          user_info['answers']: List[{id, value}]，value 为真值视为触发
+        关键词匹配覆盖 item/description/requirement/source_quote，并做口语同义扩展
+        （挂科≈不及格/补考），避免条文措辞变化导致申报失效。
+        """
+        cid = condition.get("id")
+        item = condition.get("item", "") or ""
+        text = "".join(
+            str(condition.get(k, "") or "")
+            for k in ("item", "description", "requirement", "source_quote")
+        )
+
+        def truthy(v):
+            return v is True or str(v).strip() in ("是", "有", "true", "True", "violated", "1")
+
+        def hit(tk: str) -> bool:
+            if not tk:
+                return False
+            if tk == cid:
+                return True
+            if len(tk) < 2:  # 单字符不做子串匹配，防误伤
+                return False
+            if item and (tk in item or item in tk):
+                return True
+            candidates = (tk, *VETO_SYNONYMS.get(tk, ()))
+            return any(cd in text for cd in candidates)
+
+        declared = user_info.get("declared_vetoes") or []
+        if isinstance(declared, dict):
+            if declared.get(cid) or declared.get(item):
+                return True
+            tokens = {str(k) for k, v in declared.items() if truthy(v)}
+        else:
+            tokens = {str(x) for x in declared}
+        for tk in tokens:
+            if hit(tk):
+                return True
+
+        for ans in user_info.get("answers", []) or []:
+            if isinstance(ans, dict) and ans.get("id") == cid and truthy(ans.get("value")):
+                return True
+
+        return False
 
     def _get_user_value(self, user_info: Dict[str, Any], unit: str, item: str) -> Optional[float]:
         """
@@ -165,7 +229,30 @@ class PolicyMatcher:
             "item": item,
             "requirement": requirement,
             "source_quote": source_quote,
+            "id": condition.get("id"),
+            "board": condition.get("board"),
+            "input_kind": condition.get("input_kind"),
+            "requires_evidence": condition.get("requires_evidence"),
         }
+
+        # === 一票否决：短路语义，由用户申报决定，不走数值比较 ===
+        if condition.get("board") == "veto":
+            violated = self._veto_declared(condition, user_info)
+            result.update({
+                "match": "violated" if violated else "clear",
+                "user_value": "已触发" if violated else "未触发",
+                "detail": (f"触发一票否决：{requirement or item}" if violated else "未触发否决项"),
+            })
+            return result
+
+        # === 其他·须知：仅展示，不参与合格判定 ===
+        if condition.get("board") == "other":
+            result.update({
+                "match": "informational",
+                "user_value": "—",
+                "detail": "不可量化条款，仅供知悉",
+            })
+            return result
 
         # === 硬性门槛 ===
         if cond_type == "hard":
@@ -310,9 +397,15 @@ class PolicyMatcher:
             elif match_result["match"] == "needs_manual_review":
                 manual_review.append(match_result["item"])
 
-        # 综合判定
+        # 一票否决短路
+        triggered = [
+            {"id": m.get("id"), "item": m["item"], "source_quote": m.get("source_quote", "")}
+            for m in matches if m.get("match") == "violated"
+        ]
         not_met_count = sum(1 for m in matches if m["match"] == "not_met")
-        if not_met_count > 0:
+        if triggered:
+            verdict = "disqualified"
+        elif not_met_count > 0:
             verdict = "not_eligible"
         elif missing:
             verdict = "needs_more_info"
@@ -321,22 +414,37 @@ class PolicyMatcher:
         else:
             verdict = "likely_eligible"
 
-        # 按类别汇总匹配结果
+        # 按板块分组（前端直接消费）：只放精简索引 {id,item,match}，
+        # 全量明细统一见 condition_matches，前端按 id 关联——
+        # 避免同一批条件多处全量展开导致响应体过大被系统截断
+        board_matches = {"veto": [], "base": [], "bonus": [], "other": []}
+        for cond, m in zip(conditions, matches):
+            b = cond.get("board")
+            if b not in board_matches:
+                b = "other"
+            board_matches[b].append({
+                "id": m.get("id"),
+                "item": m.get("item"),
+                "match": m.get("match"),
+            })
+
+        # 按类别分组的精简索引（label + 条件 id 列表）
         category_matches = {}
-        requirements = policy.get("requirements", {})
         for cat_key, cat_data in requirements.items():
-            cat_conditions = cat_data.get("conditions", [])
-            cat_match_results = [m for m in matches if m.get("item") in [c.get("item") for c in cat_conditions]]
-            if cat_match_results:
+            ids = [c.get("id") for c in cat_data.get("conditions", []) if isinstance(c, dict)]
+            if ids:
                 category_matches[cat_key] = {
                     "label": cat_data.get("label", cat_key),
-                    "matches": cat_match_results,
+                    "ids": ids,
                 }
 
         return {
             "policy_title": policy.get("meta", {}).get("title", "未知政策"),
             "policy_category": policy.get("meta", {}).get("category", "other"),
             "overall_verdict": verdict,
+            "veto_blocked": bool(triggered),
+            "triggered_vetoes": triggered,
+            "board_matches": board_matches,        # 按 veto/base/bonus/other 分组
             "category_matches": category_matches,  # 按类别分组的匹配结果
             "condition_matches": matches,
             "missing_info": missing,

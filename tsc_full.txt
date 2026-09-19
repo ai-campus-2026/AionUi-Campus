@@ -1,0 +1,2 @@
+﻿packages/desktop/src/renderer/pages/conversation/Messages/components/MessageToolGroupSummary.tsx(229,25): error TS2322: Type '{ content: string; }' is not assignable to type 'IntrinsicAttributes & MarkdownViewProps'.
+  Property 'content' does not exist on type 'IntrinsicAttributes & MarkdownViewProps'.

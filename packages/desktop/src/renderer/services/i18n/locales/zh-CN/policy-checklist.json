@@ -1,0 +1,85 @@
+{
+  "navTitle": "申请自评",
+  "pageTag": "申请条件自评",
+  "panel": {
+    "close": "关闭清单"
+  },
+  "doc": {
+    "pg": "推免研究生",
+    "scholarship": "奖学金",
+    "scholarshipCqu": "重庆大学奖学金"
+  },
+  "docPickerPlaceholder": "选择要查询的政策文件",
+  "docPickerNoneHint": "向校园规则助手提问后，这里会根据你的问题与政策文件实时生成申请清单",
+  "emptyBeforeAsk": "还没有提问记录。在对话框里问一个校园规则问题，申请清单会自动生成",
+  "multiDocs": "已选 {{count}} 份文件",
+  "allDocs": "返回 {{count}} 份政策",
+  "filterBySelected": "已按你选择的查询文件过滤后端真实返回",
+  "followQuestion": "按本次问题实时返回（未过滤）",
+  "metaEffective": "生效日期：{{date}}",
+  "metaSource": "来源文件",
+  "liveTag": "实时",
+  "verdict": {
+    "disqualified": "不符合申请资格",
+    "incomplete": "基础门槛尚未全部达标",
+    "incompleteDesc": "基础门槛已达标 {{met}}/{{total}} 项，仍有 {{gaps}} 项未满足",
+    "qualified": "基础门槛全部达标",
+    "qualifiedDesc": "已提供 {{bonus}} 项加分材料，最终判定与加分合计由审核端返回"
+  },
+  "veto": {
+    "title": "一票否决项",
+    "desc": "逐项确认以下情形是否存在（默认全部为“否”）。任一命中将直接判定为不符合资格，下方门槛自动收起。",
+    "hit": "已命中",
+    "none": "无命中",
+    "cleared": "已确认无此情形"
+  },
+  "base": {
+    "title": "基础门槛",
+    "progress": "已达标 {{met}}/{{total}}"
+  },
+  "bonus": {
+    "title": "加分项",
+    "provided": "已提供 {{provided}}/{{total}} 项材料",
+    "hint": "分值由细则计算",
+    "providedTag": "已提供",
+    "notProvidedTag": "未提供",
+    "variants": "另有 {{count}} 档要求："
+  },
+  "other": {
+    "title": "其他须知"
+  },
+  "tag": {
+    "scoring": "计分项",
+    "procedural": "流程项",
+    "needEvidence": "需佐证"
+  },
+  "sourceSection": "条款",
+  "field": {
+    "enterValue": "请输入",
+    "requirement": "要求",
+    "yes": "是",
+    "no": "否",
+    "vetoHint": "是否存在此情形",
+    "baseConfirmHint": "我满足此项",
+    "uploadButton": "上传材料",
+    "selectPlaceholder": "请选择",
+    "uploaded": "已上传",
+    "uploadedUnit": "个文件"
+  },
+  "status": {
+    "met": "已达标",
+    "notMet": "未达标",
+    "confirmed": "已确认",
+    "pending": "待确认"
+  },
+  "reset": "重置",
+  "submit": "提交自评",
+  "submitted": "已提交",
+  "submitDone": "自评已提交（基础门槛达标 {{met}}/{{total}} 项），最终资格以学院审核为准",
+  "submittedSummary": "提交成功：{{pending}} 项待确认，{{confirmed}} 项已确认",
+  "submittedAllDone": "全部条件已确认，无待补充项",
+  "submittedPendingTitle": "待确认 · 需补充以下 {{count}} 项",
+  "submittedConfirmedTitle": "已确认 · 以下 {{count}} 项已满足",
+  "footerHint": "自评结果仅作参考，最终资格以学院审核为准",
+  "debug": "调试信息（临时）"
+}

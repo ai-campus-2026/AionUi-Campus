@@ -1,4 +1,4 @@
-/**
+﻿/**
  * en-US locale module index
  * Exports all translation modules for English (US)
  */
@@ -22,6 +22,9 @@ import guid from './guid.json';
 import agent from './agent.json';
 import team from './team.json';
 import pet from './pet.json';
+import workbench from './workbench.json';
+import report from './report.json';
+import policyChecklist from './policy-checklist.json';
 
 export default {
   common,
@@ -43,4 +46,7 @@ export default {
   agent,
   team,
   pet,
+  workbench,
+  report,
+  policyChecklist,
 };

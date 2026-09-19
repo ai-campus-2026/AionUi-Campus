@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "contract-scan": {
+      "command": "python",
+      "args": ["D:/contract-guard/server.py"],
+      "cwd": "D:/contract-guard"
+    }
+  }
+}

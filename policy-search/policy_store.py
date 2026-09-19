@@ -187,6 +187,7 @@ class PolicyStore:
                 policies.append(policy)
         return policies
 
+
     def clear(self) -> str:
         """清空知识库"""
         for category in Config.CATEGORIES:

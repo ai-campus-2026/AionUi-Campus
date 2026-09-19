@@ -4,6 +4,10 @@ import AppLoader from '@renderer/components/layout/AppLoader';
 import { useAuth } from '@renderer/hooks/context/AuthContext';
 import { TEAM_MODE_ENABLED } from '@/common/config/constants';
 const Conversation = React.lazy(() => import('@renderer/pages/conversation'));
+const HomePage = React.lazy(() => import('@renderer/pages/home'));
+const Workbench = React.lazy(() => import('@renderer/pages/workbench'));
+const WorkbenchReport = React.lazy(() => import('@renderer/pages/workbench/ReportPage'));
+const PolicyChecklist = React.lazy(() => import('@renderer/pages/policy-checklist'));
 const Guid = React.lazy(() => import('@renderer/pages/guid'));
 const AgentSettings = React.lazy(() => import('@renderer/pages/settings/AgentSettings'));
 const AgentRepairPage = React.lazy(() => import('@renderer/pages/settings/AgentSettings/AgentRepairPage'));
@@ -22,6 +26,9 @@ const ComponentsShowcase = React.lazy(() => import('@renderer/pages/TestShowcase
 const ScheduledTasksPage = React.lazy(() => import('@renderer/pages/cron/ScheduledTasksPage'));
 const TaskDetailPage = React.lazy(() => import('@renderer/pages/cron/ScheduledTasksPage/TaskDetailPage'));
 const TeamIndex = React.lazy(() => import('@renderer/pages/team'));
+const AcademicPathPage = React.lazy(() => import('@renderer/pages/academic-path'));
+const RuleAnalysisPage = React.lazy(() => import('@renderer/pages/rule-analysis'));
+const PolicyComparisonPage = React.lazy(() => import('@renderer/pages/policy-comparison'));
 
 const withRouteFallback = (Component: React.LazyExoticComponent<React.ComponentType>) => (
   <Suspense fallback={<AppLoader />}>
@@ -61,15 +68,19 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
       <Routes>
         <Route
           path='/login'
-          element={status === 'authenticated' ? <Navigate to='/guid' replace /> : withRouteFallback(LoginPage)}
+          element={status === 'authenticated' ? <Navigate to='/workbench' replace /> : withRouteFallback(LoginPage)}
         />
         <Route element={<ProtectedLayout layout={layout} />}>
-          <Route index element={<Navigate to='/guid' replace />} />
+          <Route index element={<Navigate to='/home' replace />} />
           <Route path='/guid' element={withRouteFallback(Guid)} />
+          <Route path='/home' element={withRouteFallback(HomePage)} />
+          <Route path='/workbench' element={withRouteFallback(Workbench)} />
+          <Route path='/workbench/report/:conversationId' element={withRouteFallback(WorkbenchReport)} />
+          <Route path='/policy-checklist' element={withRouteFallback(PolicyChecklist)} />
           <Route path='/conversation/:id' element={withRouteFallback(Conversation)} />
           <Route
             path='/team/:id'
-            element={TEAM_MODE_ENABLED ? withRouteFallback(TeamIndex) : <Navigate to='/guid' replace />}
+            element={TEAM_MODE_ENABLED ? withRouteFallback(TeamIndex) : <Navigate to='/home' replace />}
           />
           <Route path='/settings/model' element={withRouteFallback(ModeSettings)} />
           <Route path='/assistants' element={withRouteFallback(AssistantSettings)} />
@@ -101,8 +112,11 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           <Route path='/test/components' element={withRouteFallback(ComponentsShowcase)} />
           <Route path='/scheduled' element={withRouteFallback(ScheduledTasksPage)} />
           <Route path='/scheduled/:job_id' element={withRouteFallback(TaskDetailPage)} />
+          <Route path='/academic-path' element={withRouteFallback(AcademicPathPage)} />
+          <Route path='/rule-analysis' element={withRouteFallback(RuleAnalysisPage)} />
+          <Route path='/policy-comparison' element={withRouteFallback(PolicyComparisonPage)} />
         </Route>
-        <Route path='*' element={<Navigate to={status === 'authenticated' ? '/guid' : '/login'} replace />} />
+        <Route path='*' element={<Navigate to={status === 'authenticated' ? '/home' : '/login'} replace />} />
       </Routes>
     </HashRouter>
   );

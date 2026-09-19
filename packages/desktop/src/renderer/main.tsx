@@ -54,6 +54,7 @@ import { AuthProvider } from './hooks/context/AuthContext';
 import { FeedbackProvider } from './hooks/context/FeedbackContext';
 import { ThemeProvider } from './hooks/context/ThemeContext';
 import { PreviewProvider } from './pages/conversation/Preview/context/PreviewContext';
+import { PolicyChecklistPanelProvider } from './pages/policy-checklist/checklistPanelStore';
 
 // Arco Design
 import { ConfigProvider, Modal, Typography } from '@arco-design/web-react';
@@ -72,6 +73,7 @@ import 'uno.css';
 import './styles/arco-override.css';
 import './styles/themes/index.css';
 import './styles/markdown.css';
+import './styles/liquid-glass.css';
 
 // Config service — kick off initialization before i18n / theme modules load,
 // so their startup paths (which await configService.whenReady()) observe the
@@ -282,14 +284,18 @@ const AppProviders: React.FC<PropsWithChildren> = ({ children }) =>
           PreviewProvider,
           null,
           React.createElement(
-            FeedbackProvider,
+            PolicyChecklistPanelProvider,
             null,
             React.createElement(
-              React.Fragment,
+              FeedbackProvider,
               null,
-              React.createElement(RuntimeFailureDialogs, null),
-              React.createElement(GpuAutoDisableNotice, null),
-              children
+              React.createElement(
+                React.Fragment,
+                null,
+                React.createElement(RuntimeFailureDialogs, null),
+                React.createElement(GpuAutoDisableNotice, null),
+                children
+              )
             )
           )
         )
