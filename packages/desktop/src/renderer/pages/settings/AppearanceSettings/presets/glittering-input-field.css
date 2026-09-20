@@ -216,7 +216,7 @@
 
 /* ===== Typography ===== */
 body {
-  font-family: 'Georgia', 'Palatino Linotype', 'Book Antiqua', 'Source Han Serif', serif;
+  font-family: 'Georgia', 'Palatino Linotype', 'Book Antiqua', 'Noto Serif SC', serif;
   letter-spacing: 0.01em;
 }
 
