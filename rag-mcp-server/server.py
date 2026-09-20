@@ -70,15 +70,19 @@ async def load_document(file_path: str) -> str:
 
 @mcp.tool()
 async def search(question: str, top_k: int | None = None) -> str:
-    """在知识库中检索与问题最相关的文档块（向量语义检索）。
+    """在知识库中检索与问题最相关的文档块（混合检索：向量语义 + BM25 关键词，融合后精排）。
 
+    检索管线: 向量召回 + 关键词召回 → RRF 融合 → 精排模型按相关性打分 → 阈值过滤。
     返回 JSON: results 数组，每项含 text(文档块原文)、source(来源文件路径)、
-    page(页码, 1-based，仅 PDF 有，其他格式为 null)、similarity(相似度 0~1)、chunk_index。
+    page(页码, 1-based，仅 PDF 有，其他格式为 null)、similarity(向量相似度 0~1，
+    仅 BM25 命中的块相似度可能为 null)、rerank_score(精排相关性分数，仅精排可用时提供)、
+    chunk_index。顶层 retrieval 字段给出各阶段候选数量与所用阈值，供排查参考。
 
-    相似度低于阈值的结果已被过滤。若 results 为空且响应含 best_similarity 与 hint 字段，
-    说明知识库非空但没有与问题相关的内容（hint 中给出了最高候选相似度），
-    此时请直接告知用户未找到相关内容，不要凭空编造，也不要盲目重试相同问题。
-    请基于返回的文档块原文回答用户问题，并注明来源文件与页码。
+    相关性不足的块已被阈值过滤。若 results 为空且响应含 best_similarity / best_rerank_score
+    与 hint 字段，说明知识库非空但没有与问题相关的内容（hint 给出最高候选分数）——
+    此时必须直接告知用户"知识库中未找到相关内容"，绝对不要凭经验、常识或模型内部知识
+    补出一个答案，也不要盲目重试相同问题（换措辞重试最多一次，仍为空则如实告知）。
+    在 results 非空时：只依据返回的文档块原文回答，注明来源文件与页码，不添加文档中没有的内容。
     """
     try:
         payload = await asyncio.to_thread(engine.search, question, top_k)
