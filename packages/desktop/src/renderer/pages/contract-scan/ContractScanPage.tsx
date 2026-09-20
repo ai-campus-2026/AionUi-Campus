@@ -44,7 +44,7 @@ const ContractScanPage: React.FC = () => {
 
       // 2. 发送扫描请求
       console.log('[合同扫描] 发送扫描请求...');
-      const convId = await sendScanRequest(contractText, contractType);
+      const { id: convId } = await sendScanRequest(contractText, contractType);
       console.log('[合同扫描] 会话 ID:', convId);
 
       // 3. 轮询获取结果
