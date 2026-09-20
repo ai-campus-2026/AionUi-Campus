@@ -41,7 +41,7 @@ RAG MCP Server (Python, FastMCP)
   ├─ search               → 向量检索，返回文档块 + 分数 + 来源页码
   ├─ list_documents       → 列出知识库中的文档
   ├─ delete_document      → 删除单个文档
-  └─ clear_knowledge_base → 清空知识库
+  └─ clear_general_knowledge_base → 清空通用知识库
         │
    ┌────┴─────────┐
    │  ChromaDB    │  向量数据库（本地持久化）
@@ -58,7 +58,7 @@ RAG MCP Server (Python, FastMCP)
 | `search`               | `question` (string, 必填)；`top_k` (integer, 可选) | 语义检索，返回 JSON：`results[]`（含 `text`/`source`/`page`/`similarity`），低于相似度阈值的结果被过滤                  |
 | `list_documents`       | -                                                  | 列出所有文档的来源路径、块数、页码范围                                                                                  |
 | `delete_document`      | `source` (string, 必填)                            | 按 `list_documents` 返回的完整路径删除单个文档                                                                          |
-| `clear_knowledge_base` | -                                                  | 清空知识库（不可恢复）                                                                                                  |
+| `clear_general_knowledge_base` | -                              | 清空通用知识库（RAG 向量库，不可恢复；不影响结构化政策知识库）                                                        |
 
 `search` 返回示例：
 
