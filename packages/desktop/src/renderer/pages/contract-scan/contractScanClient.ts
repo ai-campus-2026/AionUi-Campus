@@ -75,58 +75,97 @@ async function loadEnabledMcpServers(): Promise<{
   userServerIds: string[];
   sessionServers: ISessionMcpServer[];
 }> {
+  const all: IMcpServer[] = [];
   try {
-    await ensureBackendMcpCatalog();
-    const all = (await ipcBridge.mcp.listServers.invoke()) ?? [];
-    const enabled = all.filter((s: IMcpServer) => s.enabled !== false);
-    const userServerIds = enabled.map((s: IMcpServer) => s.id);
-    const sessionServers = enabled.map((s: IMcpServer) => toSessionMcpServer(s));
-    return { userServerIds, sessionServers };
+    const { allServers } = await ensureBackendMcpCatalog();
+    all.push(...allServers);
   } catch {
-    return { userServerIds: [], sessionServers: [] };
+    // ignore
   }
+  try {
+    const extServers = await ipcBridge.extensions.getMcpServers.invoke();
+    if (extServers && extServers.length > 0) {
+      for (const server of extServers) {
+        all.push({
+          id: String(server.id || ''),
+          name: String(server.name || ''),
+          description: server.description as string | undefined,
+          enabled: server.enabled !== false,
+          transport: server.transport as IMcpServer['transport'],
+          created_at: (server.created_at as number) || Date.now(),
+          updated_at: (server.updated_at as number) || Date.now(),
+          original_json: String(server.original_json || '{}'),
+          builtin: false,
+        });
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  const enabled = all.filter((s) => s.enabled !== false && s.id);
+  console.log('[合同扫描] 加载到的 MCP 服务器:', enabled.map((s) => ({ id: s.id, name: s.name, builtin: s.builtin })));
+  // 不过滤 builtin 了，全部挂载
+  const userServerIds = enabled.map((s) => s.id);
+  console.log('[合同扫描] 挂载到会话的 MCP IDs:', userServerIds);
+  const sessionServers = enabled.map((s) => toSessionMcpServer(s));
+  return { userServerIds, sessionServers };
 }
 
 /** 确保对话存在 */
 export async function ensureConversation(): Promise<string> {
   if (convId) return convId;
 
-  const [assistants, model, { userServerIds, sessionServers }] = await Promise.all([
-    ipcBridge.assistant.list.invoke(),
-    pickDefaultModel(),
-    loadEnabledMcpServers(),
-  ]);
+  let assistant: { id: string; locale: string; conversation_overrides: { model?: string } } | undefined;
+  const model = await pickDefaultModel();
+  try {
+    const list = await ipcBridge.assistants.list.invoke();
+    const picked = pickDefaultAssistant(list);
+    if (picked?.id) {
+      assistant = {
+        id: picked.id,
+        locale: 'zh-CN',
+        conversation_overrides: model ? { model: model.use_model } : {},
+      };
+    }
+  } catch {
+    // ignore
+  }
 
-  const assistant = pickDefaultAssistant(assistants ?? []);
-  if (!assistant) throw new Error('未找到可用的 AI 助手，请先在设置中配置。');
+  const { userServerIds, sessionServers } = await loadEnabledMcpServers();
+  if (userServerIds.length === 0) {
+    throw new Error('未配置 MCP，请先在设置中启用');
+  }
 
-  const result = await ipcBridge.conversation.create.invoke({
-    assistant_id: assistant.id,
-    title: '合同扫描',
-    model: model ?? null,
-    mcp_server_ids: userServerIds,
-    mcp_servers: sessionServers,
+  const conv = await ipcBridge.conversation.create.invoke({
+    name: '合同扫描',
+    model: model,
+    assistant,
+    extra: {
+      selected_mcp_server_ids: userServerIds,
+      selected_session_mcp_servers: sessionServers,
+    },
   });
 
-  save(result.id);
-  return result.id;
+  if (conv && conv.id) {
+    save(conv.id);
+    ipcBridge.conversation.ensureRuntime.invoke({ conversation_id: conv.id }).catch(() => {});
+    return conv.id;
+  }
+  throw new Error('创建对话失败');
 }
 
 /** 检查 contract_scan MCP 是否可用 */
 export async function checkMcpAvailable(): Promise<boolean> {
-  try {
-    const all = (await ipcBridge.mcp.listServers.invoke()) ?? [];
-    return all.some((s: IMcpServer) => s.enabled !== false && s.name?.includes('contract'));
-  } catch {
-    return false;
-  }
+  // 临时先返回 true，直接试
+  return true;
 }
 
 /** 发送扫描请求 */
 export async function sendScanRequest(
   contractText: string,
   contractType: string,
-): Promise<void> {
+): Promise<string> {
   const id = await ensureConversation();
 
   const typeLabel = contractType === 'auto' ? '自动识别' : contractType;
@@ -139,26 +178,66 @@ ${contractText}
 
   await ipcBridge.conversation.sendMessage.invoke({
     conversation_id: id,
-    content: prompt,
-    stream: false,
+    input: prompt,
   });
+
+  return id;
 }
 
 /** 从消息中提取合同扫描结果 */
-function extractResultFromMessages(messages: unknown[]): ContractReport | null {
-  const toolMsgs = normalizeToolMessages(messages as ToolMessage[]);
-  for (const msg of toolMsgs) {
-    const name = msg.tool_name || '';
-    if (!name.toLowerCase().includes('contract_scan') && !name.toLowerCase().includes('contract')) continue;
-    try {
-      const parsed = typeof msg.tool_output === 'string' ? JSON.parse(msg.tool_output) : msg.tool_output;
-      const report = tryParseContractScanResult(parsed);
-      if (report) return report;
-    } catch {
-      // try next message
+async function extractResultFromMessages(conversationId: string): Promise<ContractReport | null> {
+  try {
+    const page = await loadLatestConversationMessages(conversationId, { limit: 100, contentMode: 'full' });
+    const toolMsgs = (page.items ?? []).filter(
+      (m): m is ToolMessage =>
+        m.type === 'tool_call' || m.type === 'tool_group' || m.type === 'acp_tool_call',
+    );
+    if (toolMsgs.length === 0) return null;
+
+    const normalized = normalizeToolMessages(toolMsgs);
+    for (let i = normalized.length - 1; i >= 0; i--) {
+      const tool = normalized[i];
+      if (!tool?.output) continue;
+      // 不过滤工具名字了，只要有 output 就试试解析
+
+      // 先试分页里的 output
+      try {
+        const parsed = typeof tool.output === 'string' ? JSON.parse(tool.output) : tool.output;
+        const report = tryParseContractScanResult(parsed);
+        if (report) return report;
+      } catch {
+        // continue
+      }
+
+      // 截断了，从数据库加载完整消息
+      if (tool.conversationId && tool.messageId) {
+        try {
+          const fullMsg = await ipcBridge.database.getConversationMessage.invoke({
+            conversation_id: tool.conversationId,
+            message_id: tool.messageId,
+          });
+          if (fullMsg) {
+            const fullNormalized = normalizeToolMessages([fullMsg as ToolMessage]);
+            const fullTool = fullNormalized.find((t) => t.key === tool.key) ?? fullNormalized[0];
+            if (fullTool?.output) {
+              try {
+                const parsed = typeof fullTool.output === 'string' ? JSON.parse(fullTool.output) : fullTool.output;
+                const report = tryParseContractScanResult(parsed);
+                if (report) return report;
+              } catch {
+                // continue
+              }
+            }
+          }
+        } catch {
+          // continue
+        }
+      }
     }
+    return null;
+  } catch {
+    return null;
   }
-  return null;
 }
 
 /** 轮询获取扫描结果 */
@@ -172,18 +251,37 @@ export async function pollScanResult(
 
   onStatusChange?.('scanning');
 
+  let pollCount = 0;
   while (Date.now() - startTime < timeoutMs) {
     await new Promise((r) => setTimeout(r, pollInterval));
+    pollCount++;
+    console.log(`[合同扫描] 第 ${pollCount} 次轮询...`);
 
     try {
-      const msgs = await loadLatestConversationMessages(conversationId, 50);
-      const result = extractResultFromMessages(msgs);
+      const page = await loadLatestConversationMessages(conversationId, { limit: 20, contentMode: 'full' });
+      console.log(`[合同扫描] 拿到 ${page.items?.length ?? 0} 条消息`);
+      const items = page.items ?? [];
+      console.log('[合同扫描] 消息类型列表:', items.map((m: any) => m.type));
+      
+      // 打印 tool_call 的详细信息
+      const toolMsgs = items.filter((m: any) => m.type === 'tool_call' || m.type === 'tool_group' || m.type === 'acp_tool_call');
+      console.log(`[合同扫描] 找到 ${toolMsgs.length} 个工具消息`);
+      toolMsgs.forEach((t: any, i: number) => {
+        console.log(`[合同扫描] 工具消息 ${i}:`, {
+          name: t.name || t.tool_name,
+          status: t.status,
+          output: t.output?.toString().slice(0, 200),
+        });
+      });
+      
+      const result = await extractResultFromMessages(conversationId);
       if (result) {
+        console.log('[合同扫描] 提取到结果了！');
         onStatusChange?.('success');
         return result;
       }
-    } catch {
-      // continue polling
+    } catch (e) {
+      console.error('[合同扫描] 轮询出错:', e);
     }
   }
 

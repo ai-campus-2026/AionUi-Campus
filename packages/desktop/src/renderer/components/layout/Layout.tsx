@@ -156,18 +156,8 @@ const Layout: React.FC<{
   // "no-op outside settings" contract is enforced structurally — no internal
   // route guard needed (the chat-route wordmark is a plain, inert div).
   const handleBrandHome = useCallback(() => {
-    // Mirror Titlebar's handleBackToChat convention: return to the last non-settings path.
-    let target: string | null = null;
-    try {
-      target = sessionStorage.getItem('aion:last-non-settings-path');
-    } catch {
-      // ignore
-    }
-    if (target && !target.startsWith('/settings')) {
-      void navigate(target);
-      return;
-    }
-    void navigate('/guid');
+    // 直接返回校园工作台首页
+    void navigate('/home');
   }, [navigate]);
   // Close preview whenever the user leaves the conversation route entirely
   // (e.g. switches to a team, /guid, or settings). Within /conversation/:id
@@ -291,7 +281,7 @@ const Layout: React.FC<{
 
     // Navigate to guid page when requested from tray / 托盘请求导航到 guid 页面
     const handleNavigateToGuid = () => {
-      void navigate('/guid');
+      void navigate('/home');
     };
 
     // Navigate to conversation when requested from tray / 托盘请求导航到对话页面

@@ -224,7 +224,7 @@ const ChatLayout: React.FC<{
             props.headerLeading ?? (
               <button
                 type='button'
-                onClick={() => navigate(-1)}
+                onClick={() => navigate('/home')}
                 className='flex items-center gap-4px rounded-8px px-8px py-4px text-[var(--color-text-2)] transition-all duration-180 hover:bg-fill-2 hover:text-[var(--color-text-1)]'
                 aria-label='返回'
               >

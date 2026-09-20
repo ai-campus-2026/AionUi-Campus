@@ -18,24 +18,37 @@ const ContractScanPage: React.FC = () => {
   const isValid = contractText.trim().length >= 50;
 
   const handleStartScan = async () => {
-    if (!isValid || scanning) return;
+    console.log('[合同扫描] 点击开始扫描按钮');
+    console.log('[合同扫描] isValid:', isValid, 'scanning:', scanning);
+    if (!isValid || scanning) {
+      console.log('[合同扫描] 提前返回');
+      return;
+    }
     setScanError(null);
     setScanning(true);
+    console.log('[合同扫描] setScanning(true) 完成');
 
     try {
       // 1. 检查 MCP 是否可用
+      console.log('[合同扫描] 检查 MCP 是否可用...');
       const mcpAvailable = await checkMcpAvailable();
+      console.log('[合同扫描] MCP 可用:', mcpAvailable);
       if (!mcpAvailable) {
         setScanError('no_mcp');
         setScanning(false);
         return;
       }
 
+      // 每次扫描都重置会话，创建新的
+      resetConversation();
+
       // 2. 发送扫描请求
-      await sendScanRequest(contractText, contractType);
+      console.log('[合同扫描] 发送扫描请求...');
+      const convId = await sendScanRequest(contractText, contractType);
+      console.log('[合同扫描] 会话 ID:', convId);
 
       // 3. 轮询获取结果
-      const result = await pollScanResult(null, (status) => {
+      const result = await pollScanResult(convId, (status) => {
         if (status === 'timeout') {
           setScanError('timeout');
           setScanning(false);
@@ -47,6 +60,7 @@ const ContractScanPage: React.FC = () => {
       setReport(result);
       saveToHistory(result);
     } catch (e: any) {
+      console.error('[合同扫描] 出错了:', e);
       setScanning(false);
       if (e?.message?.includes('超时')) {
         setScanError('timeout');
