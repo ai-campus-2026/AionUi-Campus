@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 学业路径模块数据类型
  * 培养方案版本 与 学生学业状态 严格区分
  */
@@ -21,6 +21,8 @@ export interface Course {
   /** 先修课程 ID 列表 */
   prerequisites: string[];
   description?: string;
+  /** 绩点（未修读时为空） */
+  gpa?: number;
 }
 
 /** 培养方案（决定有哪些课、学分、先修关系） */
@@ -52,7 +54,7 @@ export interface StudentProgress {
 }
 
 /** 学业路径页面视图状态 */
-export type PathView = 'empty' | 'parsing' | 'confirm' | 'workbench' | 'history';
+export type PathView = 'empty' | 'parsing' | 'confirm' | 'workbench' | 'history' | 'profile';
 
 /** 筛选条件 */
 export type CourseFilter = 'all' | 'required' | 'elective' | 'core' | 'available' | 'locked';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, History, User, Home, Refresh, ArrowLeft } from '@icon-park/react';
+import { FileText, History, User, Home, Refresh, ArrowLeft, Code } from '@icon-park/react';
 import type { ViewName } from '../model';
 
 const TABS: { key: ViewName; label: string; icon: React.ComponentType<{ size?: number | string; theme?: string; fill?: string | string[] }> }[] = [
@@ -13,7 +13,8 @@ const TopNav: React.FC<{
   onTab: (v: ViewName) => void;
   onHome: () => void;
   onReset: () => void;
-}> = ({ view, onTab, onHome, onReset }) => (
+  onDebug?: () => void;
+}> = ({ view, onTab, onHome, onReset, onDebug }) => (
   <header className='ra-topnav'>
     <button type='button' className='ra-topnav__brand' onClick={onHome} aria-label='返回首页'>
       <ArrowLeft size={16} theme='outline' fill='currentColor' />
@@ -39,6 +40,11 @@ const TopNav: React.FC<{
     </nav>
 
     <div className='ra-topnav__side'>
+      {onDebug && (
+        <button type='button' className='ra-topnav__iconbtn' title='调试注入' aria-label='调试注入' onClick={onDebug}>
+          <Code size={15} theme='outline' fill='currentColor' />
+        </button>
+      )}
       <button type='button' className='ra-topnav__iconbtn' title='重置演示数据' aria-label='重置演示数据' onClick={onReset}>
         <Refresh size={15} theme='outline' fill='currentColor' />
       </button>

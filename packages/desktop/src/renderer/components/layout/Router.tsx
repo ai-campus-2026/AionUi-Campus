@@ -29,6 +29,7 @@ const TeamIndex = React.lazy(() => import('@renderer/pages/team'));
 const AcademicPathPage = React.lazy(() => import('@renderer/pages/academic-path'));
 const RuleAnalysisPage = React.lazy(() => import('@renderer/pages/rule-analysis'));
 const PolicyComparisonPage = React.lazy(() => import('@renderer/pages/policy-comparison'));
+const ContractScanPage = React.lazy(() => import('@renderer/pages/contract-scan'));
 
 const withRouteFallback = (Component: React.LazyExoticComponent<React.ComponentType>) => (
   <Suspense fallback={<AppLoader />}>
@@ -115,6 +116,7 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           <Route path='/academic-path' element={withRouteFallback(AcademicPathPage)} />
           <Route path='/rule-analysis' element={withRouteFallback(RuleAnalysisPage)} />
           <Route path='/policy-comparison' element={withRouteFallback(PolicyComparisonPage)} />
+          <Route path='/contract-scan' element={withRouteFallback(ContractScanPage)} />
         </Route>
         <Route path='*' element={<Navigate to={status === 'authenticated' ? '/home' : '/login'} replace />} />
       </Routes>

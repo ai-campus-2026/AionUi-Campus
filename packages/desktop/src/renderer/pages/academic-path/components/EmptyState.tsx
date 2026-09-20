@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home } from '@icon-park/react';
 import { ipcBridge } from '@/common';
@@ -6,6 +6,8 @@ import { parsingSteps } from '../mockData';
 
 interface Props {
   onUpload: (fileName: string) => void;
+  recentPlanName?: string;
+  onUseRecentPlan?: () => void;
   /** 调试注入：直接传入 MCP 格式 JSON，跳过真实调用 */
   onDebugInject: (json: object) => void;
   /** 解析失败信息 */
@@ -15,7 +17,7 @@ interface Props {
   onBack: () => void;
 }
 
-const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasHistory, onViewHistory, onBack }) => {
+const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasHistory, onViewHistory, onBack, recentPlanName, onUseRecentPlan }) => {
   const navigate = useNavigate();
   const [dragging, setDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -183,18 +185,12 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
   // 默认：上传状态
   return (
     <div className="ap-empty">
+      {/* 装饰性背景：淡灰色课程节点连线 */}
       <header className="ap-empty__header">
-        <button type="button" className="ap-back" onClick={onBack}>← 返回</button>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-<button type="button" className="ap-btn ap-btn--ghost ap-home-btn" onClick={() => navigate('/')} title="返回首页"><Home size={15} theme='outline' fill='currentColor' /></button>
           <button type="button" className="ap-btn ap-btn--ghost ap-debug-btn" onClick={() => setDebugOpen(true)} title="Ctrl+Shift+D">
             调试
           </button>
-          {hasHistory && (
-            <button type="button" className="ap-btn ap-btn--primary" onClick={onViewHistory}>
-              培养方案历史
-            </button>
-          )}
         </div>
       </header>
 
@@ -229,7 +225,10 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
           )}
         </div>
 
-        <div className="ap-empty__start-wrap">
+        <div className="ap-empty__start-wrap" style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
+            {selectedFile && (
+              <button type="button" className="ap-btn ap-btn--ghost" onClick={() => setSelectedFile(null)}>取消选择</button>
+            )}
           <button
             type="button"
             className={`ap-btn ap-btn--primary ap-btn--large ap-empty__start-btn ${!selectedFile ? 'ap-btn--disabled' : ''}`}
@@ -239,6 +238,8 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
             开始分析
           </button>
         </div>
+
+
       </div>
 
       {/* 调试：JSON 注入弹窗 */}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ComparisonHistoryRecord, PolicyDiffResult, SelectedPolicyFile } from './types';
 import { mockHistory } from './mockData';
@@ -47,6 +47,16 @@ const PolicyComparisonPage: React.FC = () => {
     setView('diff');
   };
 
+  const handleDeleteRecord = (recordId: string) => {
+    setHistory((prev) => prev.filter((r) => r.id !== recordId));
+  };
+
+  /** 批量删除历史记录 */
+  const handleBatchDeleteRecords = (recordIds: string[]) => {
+    const idSet = new Set(recordIds);
+    setHistory((prev) => prev.filter((r) => !idSet.has(r.id)));
+  };
+
   /** 保存历史记录（带完整 Diff 快照） */
   const handleSaveHistory = (record: ComparisonHistoryRecord) => {
     setHistory((prev) => [record, ...prev].slice(0, 50));
@@ -85,6 +95,8 @@ const PolicyComparisonPage: React.FC = () => {
         onBack={() => setView('entry')}
         onNewCompare={() => setView('entry')}
         onSelectRecord={handleSelectHistory}
+        onDelete={handleDeleteRecord}
+        onBatchDelete={handleBatchDeleteRecords}
       />
     );
   }

@@ -17,6 +17,7 @@ interface Props {
   selectedCourse: Course | null;
   plan: ProgramPlan;
   progress: StudentProgress;
+  userInfo?: Record<string, string>;
 }
 
 type ResizeDir = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
@@ -93,8 +94,16 @@ function calcPopupInitialPos(quadrant: string, width: number, height: number) {
   return { left, top };
 }
 
-const FloatingAIAssistant: React.FC<Props> = ({ selectedCourse, plan, progress }) => {
+const FloatingAIAssistant: React.FC<Props> = ({ selectedCourse, plan, progress, userInfo: userInfoProp }) => {
   const [open, setOpen] = useState(false);
+  // 读取"我的信息"数据（每次发送消息时重新读，保证最新）
+  const readMyInfo = (): Record<string, string> => {
+    try {
+      const raw = localStorage.getItem('academic-path:my-info');
+      if (raw) return JSON.parse(raw);
+    } catch { /* ignore */ }
+    return {};
+  };
   const [convId, setConvId] = useState<string | null>(null);
   const [thinking, setThinking] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -255,7 +264,7 @@ const FloatingAIAssistant: React.FC<Props> = ({ selectedCourse, plan, progress }
             .join('、');
           input = `我正在查看「${selectedCourse.name}」课程（${selectedCourse.credits}学分，${selectedCourse.categoryLabel}）。${prereqNames ? `先修课程：${prereqNames}。` : ''}当前修读状态：${progress.courseStatuses[selectedCourse.id] || '未修读'}。${question}`;
         }
-        const context = buildAcademicContext(plan, progress, selectedCourse);
+        const context = buildAcademicContext(plan, progress, selectedCourse, userInfoProp || readMyInfo());
         await ipcBridge.conversation.sendMessage.invoke({
           conversation_id: convId,
           input: context + input,

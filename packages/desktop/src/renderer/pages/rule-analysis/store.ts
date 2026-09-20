@@ -138,6 +138,10 @@ export interface WorkbenchApi {
   resetDemo: () => void;
   /** 调试：手动注入一条 MCP 结果 JSON，模拟真实返回（Ctrl+Shift+D 触发） */
   debugInjectResult: (taskId: string, result: import('@renderer/components/campus-rule/types').CampusRuleToolResult, question?: string) => void;
+  /** 删除单个分析任务（同时删除其所有报告快照和对话记录） */
+  deleteTask: (taskId: string) => void;
+  /** 批量删除多个分析任务 */
+  deleteTasks: (taskIds: string[]) => void;
 }
 
 export function useWorkbench(): WorkbenchApi {
@@ -380,6 +384,9 @@ export function useWorkbench(): WorkbenchApi {
   const openInterpret = useCallback(
     (taskId: string) => {
       setUi((u) => ({ ...u, view: 'analysis', interpretTaskId: taskId }));
+      // 种子 mock 任务（task-scholar / task-tuimian）没有真实对话，不去后端拉数据，避免 mock 被覆盖
+      const SEED_TASK_IDS = ['task-scholar', 'task-tuimian'];
+      if (SEED_TASK_IDS.includes(taskId)) return;
       const convId = getConvId(taskId);
       if (convId && !ruleResultsRef.current[taskId]) {
         void refreshRuleResult(taskId, convId);
@@ -769,6 +776,8 @@ export function useWorkbench(): WorkbenchApi {
       updatedAt: todayStr(),
       current: [],
     };
+    // 同步更新 stateRef，确保紧接着调用的 debugInjectResult 能找到新 task
+    stateRef.current = { ...stateRef.current, tasks: [...stateRef.current.tasks, newTask] };
     setState((s) => ({ ...s, tasks: [...s.tasks, newTask] }));
     return newTask.id;
   }, []);
@@ -805,7 +814,7 @@ export function useWorkbench(): WorkbenchApi {
         const summary = summaryFromGroups(groups);
         // 如果 MCP 结果里有 policyFileName / policyVersionId，自动创建 PolicyVersion 记录
         const mcpPvId = result.policyVersionId ?? task.policyVersionId;
-        const existingPv = stateRef.current.policyVersions.find((p) => p.id === mcpPvId);
+        let existingPv = stateRef.current.policyVersions.find((p) => p.id === mcpPvId);
         if (!existingPv && result.policyFileName) {
           // 从 policyFileName 解析标题和版本，如 "《优秀毕业生评选办法》2026版"
           const fn = result.policyFileName;
@@ -818,15 +827,32 @@ export function useWorkbench(): WorkbenchApi {
             publishedAt: todayStr(),
             latest: true,
           };
+          // 同步更新 stateRef，确保紧接着的 pushReport 能找到这个 PV
+          stateRef.current = { ...stateRef.current, policyVersions: [...stateRef.current.policyVersions, newPv] };
           setState((s) => ({ ...s, policyVersions: [...s.policyVersions, newPv] }));
+          existingPv = newPv;
         }
-        // 确保 task.policyVersionId 与 MCP 结果一致
+        // 确保 task.policyVersionId 与 MCP 结果一致（同步更新 stateRef）
+        let updatedTask = task;
         if (task.policyVersionId !== mcpPvId) {
+          updatedTask = { ...task, policyVersionId: mcpPvId };
+          stateRef.current = {
+            ...stateRef.current,
+            tasks: stateRef.current.tasks.map((t) => (t.id === taskId ? { ...t, policyVersionId: mcpPvId } : t)),
+          };
           setState((s) => ({
             ...s,
             tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, policyVersionId: mcpPvId } : t)),
           }));
         }
+        // 更新 task.current（同步更新 stateRef）
+        const taskWithCurrent = { ...updatedTask, current: groups, updatedAt: todayStr() };
+        stateRef.current = {
+          ...stateRef.current,
+          tasks: stateRef.current.tasks.map((t) =>
+            t.id === taskId ? { ...t, current: groups, updatedAt: todayStr() } : t,
+          ),
+        };
         setState((s) => ({
           ...s,
           tasks: s.tasks.map((t) =>
@@ -843,14 +869,42 @@ export function useWorkbench(): WorkbenchApi {
           : [
               { label: '首次分析', text: `完成首次政策匹配：${summary.met} 满足 · ${summary.missing + summary.review} 待确认 · ${summary.notMet} 未满足` },
             ];
+        // 传 mcpPvId 而不是旧的 task.policyVersionId，确保 pushReport 能找到正确的政策文件
         pushReportRef.current?.(
-          { ...task, current: groups, updatedAt: todayStr() },
+          taskWithCurrent,
           { groups, summary: { met: summary.met, missing: summary.missing + summary.review, notMet: summary.notMet } },
-          task.policyVersionId,
+          mcpPvId,
           changes,
         );
       }
       console.log('[debugInject] 已注入，分组:', groups.length, '汇总:', summaryFromGroups(groups));
+  },
+  [],
+);
+
+  /** 删除单个分析任务（同时删除其所有报告快照和对话记录） */
+  const deleteTask = useCallback(
+    (taskId: string) => {
+      setState((s) => ({
+        ...s,
+        tasks: s.tasks.filter((t) => t.id !== taskId),
+        reports: s.reports.filter((r) => r.analysisTaskId !== taskId),
+        conversations: s.conversations.filter((conv) => !s.tasks.find((t) => t.id === taskId && t.conversationId === conv.id)),
+      }));
+    },
+    [],
+  );
+
+  /** 批量删除多个分析任务 */
+  const deleteTasks = useCallback(
+    (taskIds: string[]) => {
+      const ids = new Set(taskIds);
+      setState((s) => ({
+        ...s,
+        tasks: s.tasks.filter((t) => !ids.has(t.id)),
+        reports: s.reports.filter((r) => !ids.has(r.analysisTaskId)),
+        conversations: s.conversations.filter((conv) => !s.tasks.find((t) => ids.has(t.id) && t.conversationId === conv.id)),
+      }));
     },
     [],
   );
@@ -878,5 +932,7 @@ export function useWorkbench(): WorkbenchApi {
     reanalyzeWithLatestPolicy,
     resetDemo,
     debugInjectResult,
+    deleteTask,
+    deleteTasks,
   };
 }

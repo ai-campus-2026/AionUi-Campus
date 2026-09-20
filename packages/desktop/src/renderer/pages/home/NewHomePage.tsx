@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tooltip } from '@arco-design/web-react';
-import { Help, Send, DegreeHat, RuleTwo, Contrast } from '@icon-park/react';
+import { Help, Send, DegreeHat, RuleTwo, Contrast, FileText } from '@icon-park/react';
 import GuidModelSelector from '@renderer/pages/guid/components/GuidModelSelector';
 import { useHomeChatSend } from './hooks/useHomeChatSend';
 import styles from './NewHomePage.module.css';
@@ -9,9 +9,9 @@ import styles from './NewHomePage.module.css';
 /* ============ 磁吸气泡可调参数 ============ */
 const MAGNETIC_RADIUS = 220; // 触发半径 px（建议 180–260）
 const MAGNETIC_STRENGTH = 0.55; // 磁吸强度 0–1
-const FLOAT_AMPLITUDE = 8; // 漂浮幅度 px
-const FLOAT_PERIOD_MIN = 6000; // 漂浮周期下限 ms
-const FLOAT_PERIOD_MAX = 10000; // 漂浮周期上限 ms
+const FLOAT_AMPLITUDE = 20; // 漂浮幅度 px
+const FLOAT_PERIOD_MIN = 3500; // 漂浮周期下限 ms
+const FLOAT_PERIOD_MAX = 6500; // 漂浮周期上限 ms
 const LERP_FACTOR = 0.16; // 每帧插值系数（0.15–0.2）
 
 interface ModuleDef {
@@ -20,14 +20,19 @@ interface ModuleDef {
   icon: typeof DegreeHat;
   route: string;
   phase: number;
-  /** 气泡主题色（由 96A78D 经 oklch 派生：固定 L/C 换 hue） */
   accent: string;
+  ox: number;
+  oy: number;
+  size: number;
+  speed: number;
+  dim: number;
 }
 
 const MODULES: ModuleDef[] = [
-  { name: '学业路径', desc: '规划您的学术旅程', icon: DegreeHat, route: '/academic-path', phase: 0, accent: '#8BA67C' },
-  { name: '规则分析', desc: '解读大学规章制度', icon: RuleTwo, route: '/rule-analysis', phase: (2 * Math.PI) / 3, accent: '#73AEA9' },
-  { name: '政策对比', desc: '比较不同政策差异', icon: Contrast, route: '/policy-comparison', phase: (4 * Math.PI) / 3, accent: '#B79D71' },
+  { name: '学业路径', desc: '规划你的课程与学业路径', icon: DegreeHat, route: '/academic-path', phase: 0, accent: '#8BA67C', ox: -260, oy: -120, size: 185, speed: 1.0, dim: 1.0 },
+  { name: '政策对比', desc: '快速看懂新旧政策变化', icon: Contrast, route: '/policy-comparison', phase: Math.PI / 2, accent: '#B79D71', ox: 255, oy: -160, size: 175, speed: 1.25, dim: 0.92 },
+  { name: '合同扫描', desc: '识别合同风险与注意条款', icon: FileText, route: '/contract-scan', phase: Math.PI, accent: '#7A9CC4', ox: 270, oy: 90, size: 180, speed: 0.85, dim: 0.96 },
+  { name: '规则分析', desc: '理解校园规则，判断资格', icon: RuleTwo, route: '/rule-analysis', phase: (3 * Math.PI) / 2, accent: '#73AEA9', ox: -230, oy: 130, size: 190, speed: 1.15, dim: 1.0 },
 ];
 
 const RECOMMENDATIONS = [
@@ -135,7 +140,7 @@ const NewHomePage: React.FC = () => {
     if (reducedMotionRef.current) return;
     for (let i = 0; i < MODULES.length; i++) {
       offsetRef.current[i] = { x: 0, y: 0 };
-      periodRef.current[i] = FLOAT_PERIOD_MIN + Math.random() * (FLOAT_PERIOD_MAX - FLOAT_PERIOD_MIN);
+      periodRef.current[i] = (FLOAT_PERIOD_MIN + Math.random() * (FLOAT_PERIOD_MAX - FLOAT_PERIOD_MIN)) * MODULES[i].speed;
     }
     let rafId = 0;
     const tick = () => {
@@ -192,14 +197,21 @@ const NewHomePage: React.FC = () => {
         </div>
       </header>
 
-      {/* ===== 主体：标题 + 磁吸玻璃气泡 ===== */}
+      {/* ===== 主体：中心 AI 工作台 + 环绕气泡 ===== */}
       <main className={styles.mainContent}>
-        <section className={styles.heroSection}>
-          <h1 className={styles.heroTitle}>校园规则解码器</h1>
-          <p className={styles.heroSub}>理解规则，从这里开始。</p>
-        </section>
-
         <section className={styles.bubbleStage} aria-label='功能模块入口'>
+          <div className={styles.aiCore} aria-hidden='true'>
+            <div className={styles.aiCoreHalo} />
+            <div className={styles.aiCoreRing} />
+            <div className={styles.aiCoreInner}>
+              <span className={styles.aiCoreSparkle} />
+            </div>
+            <div className={styles.aiCoreLabel}>
+              <span className={styles.aiCoreTitle}>校园工作台</span>
+              <span className={styles.aiCoreSub}>你的校园规则与学习助手</span>
+            </div>
+          </div>
+
           {MODULES.map((mod, i) => {
             const Icon = mod.icon;
             return (
@@ -210,7 +222,14 @@ const NewHomePage: React.FC = () => {
                 }}
                 type='button'
                 className={styles.glassBubble}
-                style={{ '--acc': mod.accent } as React.CSSProperties}
+                style={{
+                  '--acc': mod.accent,
+                  left: `calc(50% + ${mod.ox}px - ${mod.size / 2}px)`,
+                  top: `calc(50% + ${mod.oy}px - ${mod.size / 2}px)`,
+                  width: `${mod.size}px`,
+                  height: `${mod.size}px`,
+                  opacity: mod.dim,
+                } as React.CSSProperties}
                 onClick={() => navigate(mod.route)}
                 aria-label={`进入${mod.name}`}
               >
@@ -229,18 +248,12 @@ const NewHomePage: React.FC = () => {
       <section className={styles.dialogSection}>
         <div
           ref={messageContainerRef}
-          className={styles.messageContainer}
+          className={`${styles.messageContainer} ${messages.length === 0 ? styles.messageContainerEmpty : ''}`}
           role='log'
           aria-live='polite'
           aria-label='对话消息'
         >
-          {messages.length === 0 ? (
-            <div className={styles.emptyState}>
-              <div className={styles.emptyIcon}>💬</div>
-              <h3 className={styles.emptyTitle}>欢迎使用校园规则解码器</h3>
-              <p className={styles.emptyText}>在这里您可以咨询校园政策、规则和学业相关问题</p>
-            </div>
-          ) : (
+          {messages.length > 0 && (
             <div className={styles.messagesList}>
               {messages.map((message) => (
                 <div 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @license
  * Copyright 2025 AionUi (aionui.com)
  * SPDX-License-Identifier: Apache-2.0
@@ -70,6 +70,7 @@ import { useTranslation } from 'react-i18next';
 
 // Styles
 import 'uno.css';
+import './styles/fonts.css';
 import './styles/arco-override.css';
 import './styles/themes/index.css';
 import './styles/markdown.css';

@@ -21,6 +21,7 @@ export function buildAcademicContext(
   plan: ProgramPlan,
   progress: StudentProgress,
   selectedCourse: Course | null,
+  userInfo?: Record<string, string>,
 ): string {
   const totalCourses = plan.courses.length;
   const totalCredits = plan.courses.reduce((sum, c) => sum + c.credits, 0);
@@ -83,6 +84,17 @@ export function buildAcademicContext(
     if (followups) ctx += `，后续课程：${followups}`;
   }
 
-  ctx += '\n\n请基于以上学业路径数据回答用户问题。\n用户问题：';
+  // 我的信息（个人资料）—— 直接序列化所有非空字段
+  if (userInfo && typeof userInfo === 'object') {
+    const entries = Object.entries(userInfo).filter(([_, v]) => v && String(v).trim() !== '');
+    if (entries.length > 0) {
+      ctx += '\n我的信息：\n';
+      entries.forEach(([k, v]) => {
+        ctx += `  ${k}: ${v}\n`;
+      });
+    }
+  }
+
+  ctx += '\n\n请基于以上学业路径和个人信息回答用户问题。\n用户问题：';
   return ctx;
 }

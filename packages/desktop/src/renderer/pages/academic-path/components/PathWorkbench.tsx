@@ -1,7 +1,7 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 import { Home } from '@icon-park/react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Course, CourseFilter, CourseStatus, ProgramPlan, StudentProgress, SyncState } from '../types';
+import type { Course, CourseCategory, CourseFilter, CourseStatus, ProgramPlan, StudentProgress, SyncState } from '../types';
 import FloatingAIAssistant from './FloatingAIAssistant';
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
   onViewHistory: () => void;
   onReupload: () => void;
   onBack: () => void;
-  onCourseEdit: (courseId: string, updates: Partial<{ name: string; credits: number; category: string; categoryLabel: string; semester: number }>) => void;
+  onCourseEdit: (courseId: string, updates: Partial<{ name: string; credits: number; category: CourseCategory; categoryLabel: string; semester: number; gpa?: number }>) => void;
 }
 
 const SEMESTER_LABELS = ['大一上', '大一下', '大二上', '大二下', '大三上', '大三下', '大四上', '大四下'];
@@ -50,6 +50,8 @@ const PathWorkbench: React.FC<Props> = ({
   const [filter, setFilter] = useState<CourseFilter>('all');
   const [search, setSearch] = useState('');
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [gpaInput, setGpaInput] = useState('');
+  const [categoryInput, setCategoryInput] = useState('');
   const [syncState, setSyncState] = useState<SyncState>('idle');
   const [originalStatuses, setOriginalStatuses] = useState<Record<string, CourseStatus>>({});
   const dagRef = useRef<HTMLDivElement>(null);
@@ -61,15 +63,29 @@ const PathWorkbench: React.FC<Props> = ({
 
   const stats = useMemo(() => {
     let passed = 0, failed = 0, notTaken = 0, earnedCredits = 0;
+    let totalGpaPoints = 0;
+    let totalGpaCredits = 0;
+    let requiredGpaPoints = 0;
+    let requiredGpaCredits = 0;
     plan.courses.forEach((c) => {
       const s = statuses[c.id] ?? 'not_taken';
       if (s === 'passed') { passed++; earnedCredits += c.credits; }
       else if (s === 'failed') failed++;
       else notTaken++;
+      if (s === 'passed' && typeof c.gpa === 'number') {
+        totalGpaPoints += c.credits * c.gpa;
+        totalGpaCredits += c.credits;
+        const isRequired = c.category === 'required' || c.category === 'core' || c.category === 'general' || c.category === 'practice';
+        if (isRequired) {
+          requiredGpaPoints += c.credits * c.gpa;
+          requiredGpaCredits += c.credits;
+        }
+      }
     });
-    return { passed, failed, notTaken, earnedCredits, totalCredits: plan.totalCredits };
-  }, [plan.courses, statuses]);
-
+    const totalGpa = totalGpaCredits > 0 ? totalGpaPoints / totalGpaCredits : 0;
+    const requiredGpa = requiredGpaCredits > 0 ? requiredGpaPoints / requiredGpaCredits : 0;
+    return { passed, failed, notTaken, earnedCredits, totalCredits: plan.totalCredits, totalGpa, requiredGpa };
+  }, [plan, statuses]);
   const pendingCount = useMemo(() => {
     return Object.keys(statuses).filter((id) => statuses[id] !== originalStatuses[id]).length;
   }, [statuses, originalStatuses]);
@@ -102,6 +118,13 @@ const PathWorkbench: React.FC<Props> = ({
   }, [filteredCourses]);
 
   const selectedCourse = selectedCourseId ? plan.courses.find((c) => c.id === selectedCourseId) : null;
+
+  useEffect(() => {
+    if (selectedCourse) {
+      setGpaInput(selectedCourse.gpa !== undefined ? String(selectedCourse.gpa) : '');
+      setCategoryInput(selectedCourse.category);
+    }
+  }, [selectedCourseId, selectedCourse?.gpa, selectedCourse?.category]);
   const relatedIds = useMemo(() => {
     if (!selectedCourse) return new Set<string>();
     const ids = new Set<string>([selectedCourse.id]);
@@ -181,8 +204,6 @@ const PathWorkbench: React.FC<Props> = ({
           </div>
         </div>
         <div className="ap-workbench__header-actions">
-          <button type="button" className="ap-btn ap-btn--ghost ap-home-btn" onClick={() => navigate('/')} title="返回首页"><Home size={15} theme='outline' fill='currentColor' /></button>
-          <button type="button" className="ap-btn ap-btn--primary" onClick={onViewHistory}>培养方案历史</button>
           <button type="button" className="ap-btn ap-btn--primary" onClick={onReupload}>重新导入</button>
         </div>
       </header>
@@ -205,8 +226,15 @@ const PathWorkbench: React.FC<Props> = ({
           <div className="ap-stat__value">{stats.earnedCredits}<span className="ap-stat__total"> / {stats.totalCredits}</span></div>
           <div className="ap-stat__label">已获学分</div>
         </div>
+        <div className="ap-stat">
+          <div className="ap-stat__value">{stats.totalGpa.toFixed(2)}</div>
+          <div className="ap-stat__label">总绩点</div>
+        </div>
+        <div className="ap-stat">
+          <div className="ap-stat__value">{stats.requiredGpa.toFixed(2)}</div>
+          <div className="ap-stat__label">必修绩点</div>
+        </div>
       </div>
-
       {/* 筛选工具栏 */}
       <div className="ap-workbench__toolbar">
         <div className="ap-workbench__filters">
@@ -277,7 +305,7 @@ const PathWorkbench: React.FC<Props> = ({
                     >
                       <div className="ap-course-node__header">
                         <span className="ap-course-node__name">{course.name}</span>
-                        <span className="ap-course-node__credits">{course.credits}学分</span>
+                        <span className="ap-course-node__credits">{course.credits}学分{typeof course.gpa === 'number' && status === 'passed' ? ` · ${course.gpa.toFixed(1)}绩点` : ''}</span>
                       </div>
                       <div className="ap-course-node__category">{course.categoryLabel}</div>
                       <div className="ap-course-node__status" style={{ color: meta.color }}>
@@ -324,6 +352,32 @@ const PathWorkbench: React.FC<Props> = ({
                 className="ap-detail-input ap-detail-input--num"
                 value={selectedCourse.credits}
                 onChange={(e) => onCourseEdit(selectedCourse.id, { credits: Number(e.target.value) || 0 })}
+              />
+            </div>
+            {/* 绩点 - 可编辑 */}
+            <div className="ap-detail-panel__edit-row">
+              <span className="ap-detail-panel__label">绩点</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                className="ap-detail-input ap-detail-input--num"
+                value={gpaInput}
+                placeholder="未填写"
+                onChange={(e) => setGpaInput(e.target.value)}
+                onBlur={() => {
+                  const val = gpaInput.trim();
+                  if (val === '') {
+                    onCourseEdit(selectedCourse.id, { gpa: undefined });
+                  } else {
+                    const num = Number(val);
+                    if (!isNaN(num)) {
+                      onCourseEdit(selectedCourse.id, { gpa: num });
+                    }
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                }}
               />
             </div>
             {/* 课程类别 - 可编辑 */}

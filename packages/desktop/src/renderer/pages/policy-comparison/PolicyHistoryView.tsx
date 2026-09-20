@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { Home } from '@icon-park/react';
+﻿import { useNavigate } from 'react-router-dom';
+import { Home, Delete, Check } from '@icon-park/react';
 import React, { useMemo, useState } from 'react';
 import type { ComparisonHistoryRecord } from './types';
 
@@ -8,6 +8,8 @@ interface PolicyHistoryViewProps {
   onBack: () => void;
   onNewCompare: () => void;
   onSelectRecord: (record: ComparisonHistoryRecord) => void;
+  onDelete: (recordId: string) => void;
+  onBatchDelete: (recordIds: string[]) => void;
 }
 
 /** 格式化时间：今天 · HH:mm / 昨天 · HH:mm / MM月DD日 · HH:mm */
@@ -29,10 +31,51 @@ const PolicyHistoryView: React.FC<PolicyHistoryViewProps> = ({
   onBack,
   onNewCompare,
   onSelectRecord,
+  onDelete,
+  onBatchDelete,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [timeFilter, setTimeFilter] = useState<'all' | '7d' | '30d'>('all');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
   const navigate = useNavigate();
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selected.size === filtered.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map((r) => r.id)));
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('确定删除这条对照记录吗？删除后无法恢复。')) {
+      onDelete(id);
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  const handleBatchDelete = () => {
+    if (selected.size === 0) return;
+    if (window.confirm(`确定删除选中的 ${selected.size} 条对照记录吗？删除后无法恢复。`)) {
+      onBatchDelete(Array.from(selected));
+      setSelected(new Set());
+      setSelectMode(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     const now = Date.now();
@@ -62,10 +105,49 @@ const PolicyHistoryView: React.FC<PolicyHistoryViewProps> = ({
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button type="button" className="pc-btn pc-btn--ghost pc-home-btn" onClick={() => navigate('/')} title="返回首页"><Home size={15} theme='outline' fill='currentColor' /></button>
-          <button type="button" className="pc-btn pc-btn--primary pc-btn--large" onClick={onNewCompare}>
-            ＋ 新建对比
-          </button>
+          {selectMode ? (
+            <>
+              <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>已选 {selected.size} 条</span>
+              <button type="button" className="pc-btn pc-btn--ghost" onClick={selectAll}>
+                {selected.size === filtered.length ? '取消全选' : '全选'}
+              </button>
+              <button
+                type="button"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '4px 12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #e8a598, #d48b7a)',
+                  color: '#fff',
+                  fontSize: 12,
+                  cursor: selected.size === 0 ? 'not-allowed' : 'pointer',
+                  opacity: selected.size === 0 ? 0.5 : 1,
+                }}
+                onClick={handleBatchDelete}
+                disabled={selected.size === 0}
+              >
+                <Delete size={13} theme='outline' fill='currentColor' />
+                批量删除
+              </button>
+              <button type="button" className="pc-btn pc-btn--ghost" onClick={() => { setSelectMode(false); setSelected(new Set()); }}>
+                退出
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" className="pc-btn pc-btn--ghost pc-home-btn" onClick={() => navigate('/')} title="返回首页"><Home size={15} theme='outline' fill='currentColor' /></button>
+              <button type="button" className="pc-btn pc-btn--ghost" onClick={() => setSelectMode(true)}>
+                <Delete size={13} theme='outline' fill='currentColor' style={{ marginRight: 4 }} />
+                管理
+              </button>
+              <button type="button" className="pc-btn pc-btn--primary pc-btn--large" onClick={onNewCompare}>
+                ＋ 新建对比
+              </button>
+            </>
+          )}
         </div>
       </header>
 
@@ -100,15 +182,39 @@ const PolicyHistoryView: React.FC<PolicyHistoryViewProps> = ({
 
         {filtered.length > 0 ? (
           <div className="pc-history__list">
-            {filtered.map((record) => (
+            {filtered.map((record) => {
+              const isSelected = selected.has(record.id);
+              return (
               <div
                 key={record.id}
                 className="pc-history__item"
-                onClick={() => onSelectRecord(record)}
+                style={isSelected ? { borderColor: 'var(--color-primary-light-3)', boxShadow: '0 0 0 2px var(--color-primary-light-2)' } : undefined}
+                onClick={() => { if (!selectMode) onSelectRecord(record); }}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter') onSelectRecord(record); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !selectMode) onSelectRecord(record); }}
               >
+                {selectMode && (
+                  <button
+                    type="button"
+                    onClick={() => toggleSelect(record.id)}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 4,
+                      border: isSelected ? 'none' : '1.5px solid var(--color-border-2)',
+                      background: isSelected ? '#648b80' : 'transparent',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {isSelected && <Check size={12} theme='outline' fill='currentColor' />}
+                  </button>
+                )}
                 <div className="pc-history__item-time">{formatTime(record.createdAt)}</div>
                 <div className="pc-history__item-main">
                   <div className="pc-history__item-name">《{record.docName}》</div>
@@ -137,12 +243,33 @@ const PolicyHistoryView: React.FC<PolicyHistoryViewProps> = ({
                     </div>
                   </div>
                 )}
-                <div className="pc-history__item-action">
-                  查看对照
-                  <span className="pc-history__item-arrow-icon">→</span>
-                </div>
+                {!selectMode && (
+                  <>
+                    <div className="pc-history__item-action">
+                      查看对照
+                      <span className="pc-history__item-arrow-icon">→</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(record.id); }}
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--color-text-3)',
+                        cursor: 'pointer',
+                        fontSize: 12,
+                      }}
+                      title="删除这条对照记录"
+                    >
+                      <Delete size={14} theme='outline' fill='currentColor' />
+                    </button>
+                  </>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : history.length === 0 ? (
           <div className="pc-history__empty">

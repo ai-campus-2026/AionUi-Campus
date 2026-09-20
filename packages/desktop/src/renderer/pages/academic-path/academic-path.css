@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    学业路径模块样式
    视觉语言与政策对比/规则分析保持一致：Apple Liquid Glass
    ============================================================ */
@@ -29,7 +29,7 @@
   font-weight: 500;
 }
 .ap-btn--primary {
-  background: linear-gradient(135deg, #7f9d78, #648b80);
+  background: linear-gradient(135deg, #d4956a, #648b80);
   color: #fff;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 2px 8px rgba(70,100,84,0.22);
 }
@@ -43,7 +43,7 @@
   color: var(--color-text-2);
 }
 .ap-btn--outline:hover {
-  border-color: #7f9d78;
+  border-color: #d4956a;
   color: #5f8575;
 }
 .ap-btn--ghost {
@@ -95,7 +95,7 @@
   margin: 0 0 32px;
 }
 .ap-empty__dropzone {
-  border: 2px dashed color-mix(in srgb, #7f9d78 35%, transparent);
+  border: 2px dashed color-mix(in srgb, #d4956a 35%, transparent);
   border-radius: 16px;
   padding: 40px 32px;
   cursor: pointer;
@@ -106,8 +106,8 @@
 }
 .ap-empty__dropzone:hover,
 .ap-empty__dropzone--dragging {
-  border-color: #7f9d78;
-  background: color-mix(in srgb, #7f9d78 6%, var(--color-bg-1));
+  border-color: #d4956a;
+  background: color-mix(in srgb, #d4956a 6%, var(--color-bg-1));
   transform: translateY(-2px);
 }
 .ap-empty__dropzone-icon { font-size: 32px; margin-bottom: 12px; }
@@ -149,8 +149,8 @@
 .ap-parsing__spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid color-mix(in srgb, #7f9d78 20%, transparent);
-  border-top-color: #7f9d78;
+  border: 3px solid color-mix(in srgb, #d4956a 20%, transparent);
+  border-top-color: #d4956a;
   border-radius: 50%;
   animation: apSpin 0.8s linear infinite;
   margin: 0 auto 20px;
@@ -186,7 +186,7 @@
 }
 .ap-confirm__section-title::before {
   content: ''; width: 3px; height: 14px; border-radius: 2px;
-  background: linear-gradient(180deg, #7f9d78, #648b80);
+  background: linear-gradient(180deg, #d4956a, #648b80);
 }
 .ap-confirm__info-grid {
   display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
@@ -216,7 +216,7 @@
 }
 .ap-confirm__relation-node {
   font-size: 13px; font-weight: 500; padding: 6px 16px;
-  background: color-mix(in srgb, #7f9d78 10%, transparent);
+  background: color-mix(in srgb, #d4956a 10%, transparent);
   border-radius: 6px; color: var(--color-text-1);
 }
 .ap-confirm__relation-arrow { color: var(--color-text-4); font-size: 12px; }
@@ -283,7 +283,7 @@
 }
 .ap-filter-btn:hover { color: var(--color-text-1); background: var(--color-fill-2); }
 .ap-filter-btn--active {
-  background: color-mix(in srgb, #7f9d78 15%, transparent);
+  background: color-mix(in srgb, #d4956a 15%, transparent);
   color: #5f8575; font-weight: 600;
 }
 .ap-workbench__search {
@@ -293,8 +293,8 @@
   border-radius: 10px; padding: 0 12px; height: 36px; width: 200px;
 }
 .ap-workbench__search:focus-within {
-  border-color: color-mix(in srgb, #7f9d78 50%, var(--color-border-2));
-  box-shadow: 0 0 0 3px color-mix(in srgb, #7f9d78 12%, transparent);
+  border-color: color-mix(in srgb, #d4956a 50%, var(--color-border-2));
+  box-shadow: 0 0 0 3px color-mix(in srgb, #d4956a 12%, transparent);
 }
 .ap-workbench__search-icon { font-size: 14px; color: var(--color-text-4); }
 .ap-workbench__search input {
@@ -335,11 +335,11 @@
 .ap-course-node:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  border-color: color-mix(in srgb, #7f9d78 40%, var(--color-border-2));
+  border-color: color-mix(in srgb, #d4956a 40%, var(--color-border-2));
 }
 .ap-course-node--selected {
-  border-color: #7f9d78;
-  box-shadow: 0 0 0 2px color-mix(in srgb, #7f9d78 25%, transparent), 0 4px 16px rgba(0,0,0,0.1);
+  border-color: #d4956a;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #d4956a 25%, transparent), 0 4px 16px rgba(0,0,0,0.1);
   transform: translateY(-2px) scale(1.02);
 }
 .ap-course-node--dimmed { opacity: 0.35; }
@@ -425,15 +425,15 @@
   background: color-mix(in srgb, #f8f5f0 90%, transparent);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  border-top: 1px solid color-mix(in srgb, #7f9d78 30%, transparent);
+  border-top: 1px solid color-mix(in srgb, #d4956a 30%, transparent);
   z-index: 90;
 }
 .ap-sync-bar__text { font-size: 13.5px; font-weight: 500; color: #b5781a; }
 .ap-sync-bar__actions { display: flex; gap: 10px; }
 .ap-sync-bar--syncing { justify-content: center; gap: 12px; color: var(--color-text-2); font-size: 13.5px; }
 .ap-sync-bar__spinner {
-  width: 18px; height: 18px; border: 2px solid color-mix(in srgb, #7f9d78 20%, transparent);
-  border-top-color: #7f9d78; border-radius: 50%; animation: apSpin 0.8s linear infinite;
+  width: 18px; height: 18px; border: 2px solid color-mix(in srgb, #d4956a 20%, transparent);
+  border-top-color: #d4956a; border-radius: 50%; animation: apSpin 0.8s linear infinite;
 }
 .ap-sync-bar--success {
   justify-content: space-between;
@@ -521,8 +521,8 @@
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
 }
 .ap-history__item--current {
-  border-color: color-mix(in srgb, #7f9d78 50%, var(--color-border-2));
-  background: color-mix(in srgb, #7f9d78 6%, var(--color-bg-1));
+  border-color: color-mix(in srgb, #d4956a 50%, var(--color-border-2));
+  background: color-mix(in srgb, #d4956a 6%, var(--color-bg-1));
 }
 .ap-history__item-name { font-size: 15px; font-weight: 600; color: var(--color-text-1); margin-bottom: 6px; }
 .ap-history__item-meta {
@@ -532,7 +532,7 @@
 .ap-history__item-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .ap-history__item-badge {
   font-size: 12px; font-weight: 600; color: #5f8575;
-  background: color-mix(in srgb, #7f9d78 12%, transparent);
+  background: color-mix(in srgb, #d4956a 12%, transparent);
   padding: 4px 10px; border-radius: 6px;
 }
 .ap-history__empty { text-align: center; padding: 80px 20px; }
@@ -560,8 +560,8 @@
 
 /* 空状态 - 已选文件 */
 .ap-empty__dropzone--filled {
-  border-color: #7f9d78;
-  background: color-mix(in srgb, #7f9d78 8%, var(--color-bg-1));
+  border-color: #d4956a;
+  background: color-mix(in srgb, #d4956a 8%, var(--color-bg-1));
 }
 .ap-empty__dropzone--filled .ap-empty__dropzone-icon {
   color: #2f9e44;
@@ -618,7 +618,7 @@
   z-index: 5;
 }
 .ap-dag__scroll-btn:hover {
-  background: color-mix(in srgb, #7f9d78 15%, var(--color-bg-1));
+  background: color-mix(in srgb, #d4956a 15%, var(--color-bg-1));
   color: #4a7268;
   transform: scale(1.05);
 }
@@ -636,19 +636,19 @@
   padding-bottom: 20px;
   min-height: 0;
   scrollbar-width: thin;
-  scrollbar-color: #7f9d78 color-mix(in srgb, #7f9d78 12%, transparent);
+  scrollbar-color: #d4956a color-mix(in srgb, #d4956a 12%, transparent);
 }
 .ap-workbench__dag-container::-webkit-scrollbar {
   height: 10px;
   width: 10px;
 }
 .ap-workbench__dag-container::-webkit-scrollbar-track {
-  background: color-mix(in srgb, #7f9d78 8%, transparent);
+  background: color-mix(in srgb, #d4956a 8%, transparent);
   border-radius: 5px;
   margin: 4px 8px;
 }
 .ap-workbench__dag-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #7f9d78, #648b80);
+  background: linear-gradient(135deg, #d4956a, #648b80);
   border-radius: 5px;
   border: 2px solid transparent;
   background-clip: padding-box;
@@ -775,7 +775,7 @@
 }
 .ap-dag__scroll-btn:hover {
   opacity: 0.85;
-  background: color-mix(in srgb, #7f9d78 20%, var(--color-bg-1));
+  background: color-mix(in srgb, #d4956a 20%, var(--color-bg-1));
 }
 
 
@@ -810,12 +810,12 @@
   font-family: inherit;
 }
 .ap-detail-input:focus {
-  border-color: #7f9d78;
-  box-shadow: 0 0 0 3px color-mix(in srgb, #7f9d78 12%, transparent);
+  border-color: #d4956a;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #d4956a 12%, transparent);
   background: var(--color-bg-1);
 }
 .ap-detail-input:hover {
-  border-color: color-mix(in srgb, #7f9d78 40%, var(--color-border-2));
+  border-color: color-mix(in srgb, #d4956a 40%, var(--color-border-2));
 }
 .ap-detail-input--num {
   max-width: 80px;
@@ -846,8 +846,8 @@
 /* ========== AI 核心按钮 ========== */
 .ap-ai-fab {
   position: relative;
-  width: 72px;
-  height: 72px;
+  width: 96px;
+  height: 96px;
   border: none;
   background: transparent;
   cursor: grab;
@@ -878,16 +878,16 @@
 /* 光晕（双层呼吸） */
 .ap-ai-fab__halo {
   position: absolute;
-  inset: -8px;
+  inset: -10px;
   border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, #7f9d78 30%, transparent) 0%, transparent 65%);
+  background: radial-gradient(circle, color-mix(in srgb, #d4956a 30%, transparent) 0%, transparent 65%);
   animation: ap-halo-breath 3s ease-in-out infinite;
   pointer-events: none;
 }
 
 .ap-ai-fab__halo--outer {
-  inset: -18px;
-  background: radial-gradient(circle, color-mix(in srgb, #9dc4a8 18%, transparent) 0%, transparent 60%);
+  inset: -22px;
+  background: radial-gradient(circle, color-mix(in srgb, #e8b896 18%, transparent) 0%, transparent 60%);
   animation-delay: 0.5s;
 }
 
@@ -900,19 +900,19 @@
 .ap-ai-fab__ring {
   position: absolute;
   border-radius: 50%;
-  border: 1px dashed color-mix(in srgb, #7f9d78 35%, transparent);
+  border: 1px dashed color-mix(in srgb, #d4956a 35%, transparent);
   pointer-events: none;
 }
 
 .ap-ai-fab__ring--outer {
-  width: 64px;
-  height: 64px;
+  width: 76px;
+  height: 76px;
   animation: ap-ring-spin 12s linear infinite;
 }
 
 .ap-ai-fab__ring--inner {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   animation: ap-ring-spin-rev 8s linear infinite;
   border-style: dotted;
   border-color: color-mix(in srgb, #a8c4a0 40%, transparent);
@@ -931,11 +931,11 @@
 /* 环上的光点 */
 .ap-ai-fab__ring-dot {
   position: absolute;
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: radial-gradient(circle, #c8e6d0, #7f9d78);
-  box-shadow: 0 0 6px color-mix(in srgb, #7f9d78 60%, transparent);
+  background: radial-gradient(circle, #c8e6d0, #d4956a);
+  box-shadow: 0 0 6px color-mix(in srgb, #d4956a 60%, transparent);
 }
 
 .ap-ai-fab__ring-dot--1 {
@@ -965,17 +965,17 @@
 .ap-ai-fab__core {
   position: relative;
   z-index: 2;
-  width: 38px;
-  height: 38px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   background: linear-gradient(145deg, color-mix(in srgb, #f8f5f0 90%, transparent), color-mix(in srgb, #d9e9cf 70%, transparent));
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-  border: 1px solid color-mix(in srgb, #7f9d78 30%, transparent);
+  border: 1px solid color-mix(in srgb, #d4956a 30%, transparent);
   box-shadow:
-    0 4px 14px color-mix(in srgb, #7f9d78 25%, transparent),
+    0 4px 14px color-mix(in srgb, #d4956a 25%, transparent),
     inset 0 1px 0 color-mix(in srgb, #fff 70%, transparent),
-    inset 0 -2px 4px color-mix(in srgb, #7f9d78 10%, transparent);
+    inset 0 -2px 4px color-mix(in srgb, #d4956a 10%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -984,16 +984,16 @@
 }
 
 @keyframes ap-core-pulse {
-  0%, 100% { box-shadow: 0 4px 14px color-mix(in srgb, #7f9d78 25%, transparent), inset 0 1px 0 color-mix(in srgb, #fff 70%, transparent), inset 0 -2px 4px color-mix(in srgb, #7f9d78 10%, transparent); }
-  50% { box-shadow: 0 6px 20px color-mix(in srgb, #7f9d78 40%, transparent), inset 0 1px 0 color-mix(in srgb, #fff 80%, transparent), inset 0 -2px 4px color-mix(in srgb, #7f9d78 15%, transparent); }
+  0%, 100% { box-shadow: 0 4px 14px color-mix(in srgb, #d4956a 25%, transparent), inset 0 1px 0 color-mix(in srgb, #fff 70%, transparent), inset 0 -2px 4px color-mix(in srgb, #d4956a 10%, transparent); }
+  50% { box-shadow: 0 6px 20px color-mix(in srgb, #d4956a 40%, transparent), inset 0 1px 0 color-mix(in srgb, #fff 80%, transparent), inset 0 -2px 4px color-mix(in srgb, #d4956a 15%, transparent); }
 }
 
 .ap-ai-fab__core-inner {
-  width: 18px;
-  height: 18px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #b8e0c4, #5a9a70 60%, #3d7a56);
-  box-shadow: 0 0 12px color-mix(in srgb, #5a9a70 60%, transparent);
+  background: radial-gradient(circle at 35% 30%, #f0d0b0, #c47f52 60%, #a86638);
+  box-shadow: 0 0 12px color-mix(in srgb, #c47f52 60%, transparent);
   animation: ap-core-inner-pulse 2.5s ease-in-out infinite;
 }
 
@@ -1054,7 +1054,7 @@
   background: linear-gradient(160deg, color-mix(in srgb, #f8f5f0 95%, transparent), color-mix(in srgb, #e8ede4 90%, transparent));
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  border: 1px solid color-mix(in srgb, #7f9d78 20%, transparent);
+  border: 1px solid color-mix(in srgb, #d4956a 20%, transparent);
   box-shadow: 0 6px 20px color-mix(in srgb, #000 10%, transparent);
   animation: ap-hint-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
@@ -1075,8 +1075,8 @@
   width: 10px;
   height: 10px;
   background: inherit;
-  border-right: 1px solid color-mix(in srgb, #7f9d78 20%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, #7f9d78 20%, transparent);
+  border-right: 1px solid color-mix(in srgb, #d4956a 20%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, #d4956a 20%, transparent);
   transform: rotate(45deg);
 }
 
@@ -1087,16 +1087,16 @@
 
 /* 提示语四象限定位 */
 .ap-ai-hint--br { right: 80px; bottom: 12px; }
-.ap-ai-hint--br .ap-ai-hint__arrow { right: -6px; bottom: 16px; transform: rotate(-45deg); border-right: none; border-bottom: 1px solid color-mix(in srgb, #7f9d78 20%, transparent); border-left: 1px solid color-mix(in srgb, #7f9d78 20%, transparent); }
+.ap-ai-hint--br .ap-ai-hint__arrow { right: -6px; bottom: 16px; transform: rotate(-45deg); border-right: none; border-bottom: 1px solid color-mix(in srgb, #d4956a 20%, transparent); border-left: 1px solid color-mix(in srgb, #d4956a 20%, transparent); }
 
 .ap-ai-hint--bl { left: 80px; bottom: 12px; }
-.ap-ai-hint--bl .ap-ai-hint__arrow { left: -6px; bottom: 16px; transform: rotate(45deg); border-left: none; border-bottom: 1px solid color-mix(in srgb, #7f9d78 20%, transparent); border-right: 1px solid color-mix(in srgb, #7f9d78 20%, transparent); }
+.ap-ai-hint--bl .ap-ai-hint__arrow { left: -6px; bottom: 16px; transform: rotate(45deg); border-left: none; border-bottom: 1px solid color-mix(in srgb, #d4956a 20%, transparent); border-right: 1px solid color-mix(in srgb, #d4956a 20%, transparent); }
 
 .ap-ai-hint--tr { right: 80px; top: 12px; }
-.ap-ai-hint--tr .ap-ai-hint__arrow { right: -6px; top: 16px; transform: rotate(135deg); border-right: none; border-top: 1px solid color-mix(in srgb, #7f9d78 20%, transparent); border-left: 1px solid color-mix(in srgb, #7f9d78 20%, transparent); border-bottom: none; }
+.ap-ai-hint--tr .ap-ai-hint__arrow { right: -6px; top: 16px; transform: rotate(135deg); border-right: none; border-top: 1px solid color-mix(in srgb, #d4956a 20%, transparent); border-left: 1px solid color-mix(in srgb, #d4956a 20%, transparent); border-bottom: none; }
 
 .ap-ai-hint--tl { left: 80px; top: 12px; }
-.ap-ai-hint--tl .ap-ai-hint__arrow { left: -6px; top: 16px; transform: rotate(-135deg); border-left: none; border-top: 1px solid color-mix(in srgb, #7f9d78 20%, transparent); border-right: 1px solid color-mix(in srgb, #7f9d78 20%, transparent); border-bottom: none; }
+.ap-ai-hint--tl .ap-ai-hint__arrow { left: -6px; top: 16px; transform: rotate(-135deg); border-left: none; border-top: 1px solid color-mix(in srgb, #d4956a 20%, transparent); border-right: 1px solid color-mix(in srgb, #d4956a 20%, transparent); border-bottom: none; }
 
 /* ========== 聊天框（四象限智能定位） ========== */
 .ap-ai-popup {
@@ -1106,7 +1106,7 @@
   background: linear-gradient(160deg, color-mix(in srgb, #f8f5f0 92%, transparent), color-mix(in srgb, #e8ede4 85%, transparent));
   -webkit-backdrop-filter: blur(24px);
   backdrop-filter: blur(24px);
-  border: 1px solid color-mix(in srgb, #7f9d78 18%, transparent);
+  border: 1px solid color-mix(in srgb, #d4956a 18%, transparent);
   box-shadow:
     0 16px 48px color-mix(in srgb, #000 12%, transparent),
     0 4px 12px color-mix(in srgb, #000 6%, transparent),
@@ -1131,7 +1131,7 @@
   justify-content: space-between;
   padding: 16px 18px 12px;
   flex-shrink: 0;
-  border-bottom: 1px solid color-mix(in srgb, #7f9d78 10%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, #d4956a 10%, transparent);
 }
 
 .ap-ai-popup__header-info {
@@ -1156,7 +1156,7 @@
   height: 28px;
   border-radius: 50%;
   border: none;
-  background: color-mix(in srgb, #7f9d78 10%, transparent);
+  background: color-mix(in srgb, #d4956a 10%, transparent);
   color: #6b7f73;
   font-size: 12px;
   cursor: pointer;
@@ -1180,7 +1180,7 @@
   transition: background 0.15s ease;
 }
 .ap-ai-resize:hover {
-  background: color-mix(in srgb, #7f9d78 8%, transparent);
+  background: color-mix(in srgb, #d4956a 8%, transparent);
 }
 
 /* 四条边：细条 */
@@ -1203,8 +1203,8 @@
   bottom: 3px;
   width: 8px;
   height: 8px;
-  border-right: 2px solid color-mix(in srgb, #7f9d78 35%, transparent);
-  border-bottom: 2px solid color-mix(in srgb, #7f9d78 35%, transparent);
+  border-right: 2px solid color-mix(in srgb, #d4956a 35%, transparent);
+  border-bottom: 2px solid color-mix(in srgb, #d4956a 35%, transparent);
   border-radius: 0 0 2px 0;
   transition: border-color 0.15s ease;
 }
@@ -1218,7 +1218,7 @@
   gap: 6px;
   padding: 8px 18px;
   background: color-mix(in srgb, #d9e9cf 30%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, #7f9d78 8%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, #d4956a 8%, transparent);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -1245,14 +1245,14 @@
   gap: 6px;
   padding: 10px 18px;
   flex-shrink: 0;
-  border-bottom: 1px solid color-mix(in srgb, #7f9d78 8%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, #d4956a 8%, transparent);
 }
 
 .ap-ai-popup__quick-btn {
   font-size: 11px;
   padding: 5px 10px;
   border-radius: 14px;
-  border: 1px solid color-mix(in srgb, #7f9d78 20%, transparent);
+  border: 1px solid color-mix(in srgb, #d4956a 20%, transparent);
   background: color-mix(in srgb, #fff 60%, transparent);
   color: #5f8575;
   cursor: pointer;
@@ -1261,7 +1261,7 @@
 }
 
 .ap-ai-popup__quick-btn:hover {
-  background: linear-gradient(135deg, #7f9d78, #648b80);
+  background: linear-gradient(135deg, #d4956a, #648b80);
   color: #fff;
   border-color: transparent;
   transform: translateY(-1px);
@@ -1466,7 +1466,7 @@
   box-sizing: border-box;
 }
 .ap-debug__textarea:focus {
-  border-color: #7f9d78;
+  border-color: #d4956a;
 }
 .ap-debug__error {
   margin-top: 8px;
@@ -1511,4 +1511,234 @@
 }
 .ap-home-btn:active, .pc-home-btn:active {
   transform: scale(0.94) !important;
+}
+
+
+/* ============================================================
+   页面整体布局
+   ============================================================ */
+.ap-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: linear-gradient(180deg, #f8f5f0 0%, #f1ede7 100%);
+}
+
+.ap-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   顶部导航栏（对齐规则分析风格）
+   ============================================================ */
+.ap-topnav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 22px;
+  background: color-mix(in srgb, #ffffff 55%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.ap-topnav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 10px;
+  transition: background 0.18s ease;
+}
+
+.ap-topnav__brand:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.ap-topnav__tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.03);
+  border: none;
+}
+
+.ap-topnav__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  white-space: nowrap;
+}
+
+.ap-topnav__tab:hover {
+  color: #333;
+}
+
+.ap-topnav__tab--active {
+  color: #333;
+  background: white;
+  box-shadow: 0 1px 4px rgba(22, 24, 29, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.ap-topnav__home {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  color: #666;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.ap-topnav__home:hover {
+  color: #333;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* ============================================================
+   我的信息页面
+   ============================================================ */
+.ap-profile-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.ap-profile-head {
+  margin-bottom: 24px;
+}
+
+.ap-profile-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 6px 0;
+}
+
+.ap-profile-sub {
+  font-size: 13px;
+  color: #888;
+  margin: 0;
+}
+
+.ap-profile-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+
+.ap-profile-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+.ap-profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.ap-profile-stat {
+  text-align: center;
+  padding: 16px 12px;
+  background: rgba(245, 247, 245, 0.8);
+  border-radius: 12px;
+}
+
+.ap-profile-stat-value {
+  font-size: 26px;
+  font-weight: 600;
+  color: #648b80;
+  line-height: 1.2;
+}
+
+.ap-profile-stat-total {
+  font-size: 13px;
+  color: #999;
+  font-weight: 400;
+}
+
+.ap-profile-stat-label {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.ap-profile-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.ap-profile-field:last-child {
+  border-bottom: none;
+}
+
+.ap-profile-field-label {
+  font-size: 14px;
+  color: #555;
+}
+
+.ap-profile-field-input {
+  width: 220px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: white;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.ap-profile-field-input:focus {
+  border-color: #648b80;
+}
+
+@media (max-width: 768px) {
+  .ap-profile-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ap-profile-container {
+    padding: 16px;
+  }
+  .ap-profile-field-input {
+    width: 140px;
+  }
 }
