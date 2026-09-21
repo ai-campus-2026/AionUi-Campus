@@ -1,63 +1,109 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home } from '@icon-park/react';
+import { Button, Input } from '@arco-design/web-react';
+import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
+import type { CurriculumIngestRequest, CurriculumProbeResponse } from '@/common/adapter/ipcBridge';
 import { parsingSteps } from '../mockData';
 
 interface Props {
-  onUpload: (fileName: string) => void;
+  onUpload: (request: CurriculumIngestRequest) => void;
   /** 调试注入：直接传入 MCP 格式 JSON，跳过真实调用 */
   onDebugInject: (json: object) => void;
   /** 解析失败信息 */
   parseError?: { code: string; message: string } | null;
+  ingestStatus?: { documentId: string; created: boolean; extractionStatus?: string; ragStatus?: string } | null;
+  graphError?: {
+    code: string;
+    processingStatus?: string;
+    failedPage?: number;
+    failureCode?: string;
+    failureStage?: string;
+    failureReason?: string;
+  } | null;
+  isGraphLoading: boolean;
+  onGenerateGraph: () => void;
+  onClearStatus: () => void;
   hasHistory: boolean;
   onViewHistory: () => void;
   onBack: () => void;
 }
 
-const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasHistory, onViewHistory, onBack }) => {
+const EmptyState: React.FC<Props> = ({
+  onUpload,
+  onDebugInject,
+  parseError,
+  ingestStatus,
+  graphError,
+  isGraphLoading,
+  onGenerateGraph,
+  onClearStatus,
+  hasHistory,
+  onViewHistory,
+  onBack,
+}) => {
   const navigate = useNavigate();
-  const [dragging, setDragging] = useState(false);
+  const { t } = useTranslation();
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [major, setMajor] = useState('');
+  const [cohort, setCohort] = useState('');
+  const [version, setVersion] = useState('');
   const [parsing, setParsing] = useState(false);
   const [parseStep, setParseStep] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
   // ---- 调试：JSON 注入 ----
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugJson, setDebugJson] = useState('');
   const [debugError, setDebugError] = useState<string | null>(null);
+  const [probing, setProbing] = useState(false);
+  const [probeResult, setProbeResult] = useState<CurriculumProbeResponse | null>(null);
+
+  useEffect(() => {
+    setProbeResult(null);
+  }, [graphError?.failedPage, ingestStatus?.documentId]);
+
+  const handleProbe = useCallback(async () => {
+    if (!ingestStatus || !graphError?.failedPage || probing) return;
+    setProbing(true);
+    try {
+      setProbeResult(
+        await ipcBridge.curriculum.probeExtraction.invoke({
+          documentId: ingestStatus.documentId,
+          page: graphError.failedPage,
+        })
+      );
+    } catch {
+      setProbeResult({ ok: false, errorCode: 'COURSE_SERVER_UNAVAILABLE' });
+    } finally {
+      setProbing(false);
+    }
+  }, [graphError?.failedPage, ingestStatus, probing]);
 
   const handleFile = useCallback(async () => {
     try {
       const files = await ipcBridge.dialog.showOpen.invoke({
         properties: ['openFile'],
-        filters: [
-          { name: '培养方案', extensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'] },
-        ],
+        filters: [{ name: 'Curriculum', extensions: ['pdf', 'jpg', 'jpeg', 'png'] }],
       });
       if (files && files.length > 0) {
         const path = files[0];
         const name = path.split(/[\\/]/).pop() || path;
         setSelectedFile(name);
+        setSelectedPath(path);
       }
-    } catch { /* ignore */ }
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setSelectedFile(e.dataTransfer.files[0].name);
+    } catch {
+      /* ignore */
     }
   }, []);
 
-  // 开始分析 → 内联显示解析动画，同时通知父组件调用 MCP
+  // Start a real import; a filename alone is never treated as an attachment.
   const handleStart = useCallback(() => {
-    if (!selectedFile) return;
+    if (!selectedPath || !major.trim() || !cohort.trim() || !version.trim()) return;
     setParsing(true);
     setParseStep(0);
-    onUpload(selectedFile);
-  }, [selectedFile, onUpload]);
+    onUpload({ attachmentPath: selectedPath, major, cohort, version });
+  }, [selectedPath, major, cohort, version, onUpload]);
 
   // 解析步骤动画
   useEffect(() => {
@@ -65,8 +111,8 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
     if (parseStep >= parsingSteps.length) {
       return;
     }
-    const t = setTimeout(() => setParseStep((s) => s + 1), 700);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setParseStep((s) => s + 1), 700);
+    return () => clearTimeout(timer);
   }, [parsing, parseStep, parseError]);
 
   // 取消解析
@@ -74,7 +120,9 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
     setParsing(false);
     setParseStep(0);
     setSelectedFile(null);
-  }, []);
+    setSelectedPath(null);
+    onClearStatus();
+  }, [onClearStatus]);
 
   // ---- 调试：Ctrl+Shift+D 开关注入面板 ----
   useEffect(() => {
@@ -106,28 +154,111 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
     }
   }, [debugJson, onDebugInject]);
 
+  if (ingestStatus) {
+    return (
+      <div className='ap-empty'>
+        <header className='ap-empty__header'>
+          <Button onClick={onBack}>{t('common.back')}</Button>
+        </header>
+        <div className='ap-empty__inner'>
+          <div className='ap-empty__parse-card'>
+            <h2 className='ap-parsing__title'>{t('mcp.curriculumStoredTitle')}</h2>
+            <p>{t('mcp.curriculumStoredDescription')}</p>
+            <p>
+              {t('mcp.curriculumDocumentId')}: {ingestStatus.documentId}
+            </p>
+            <p>
+              {t('mcp.curriculumExtractionStatus')}: {ingestStatus.extractionStatus ?? 'EXTRACTION_PENDING'}
+            </p>
+            <p>
+              {t('mcp.curriculumIndexStatus')}: {ingestStatus.ragStatus ?? 'NOT_INDEXED'}
+            </p>
+            {graphError && (
+              <div role='alert'>
+                <p>
+                  {t('mcp.curriculumGraphUnavailable')} ({graphError.code})
+                  {graphError.processingStatus ? ` — ${graphError.processingStatus}` : ''}
+                </p>
+                {graphError.failedPage && (
+                  <p>
+                    {t('mcp.curriculumFailureDetail', {
+                      page: graphError.failedPage,
+                      stage: graphError.failureStage ?? graphError.failureCode ?? 'unknown',
+                      reason: graphError.failureReason ?? 'unknown',
+                    })}
+                  </p>
+                )}
+              </div>
+            )}
+            {graphError?.failedPage && graphError.failureStage === 'model_extract' && (
+              <div>
+                <Button loading={probing} disabled={isGraphLoading} onClick={handleProbe}>
+                  {t('mcp.curriculumProbeButton', { page: graphError.failedPage })}
+                </Button>
+                <p>{t('mcp.curriculumProbeCostNotice')}</p>
+                {probeResult &&
+                  (probeResult.ok ? (
+                    <div>
+                      <p>
+                        {t('mcp.curriculumProbeNonStream')}:{' '}
+                        {probeResult.nonStream?.reachable
+                          ? t('mcp.curriculumProbeReachable')
+                          : `${probeResult.nonStream?.errorCode ?? 'UNKNOWN'} / ${probeResult.nonStream?.reason ?? 'unknown'}`}
+                      </p>
+                      <p>
+                        {t('mcp.curriculumProbeStream')}:{' '}
+                        {probeResult.stream?.reachable
+                          ? t('mcp.curriculumProbeReachable')
+                          : `${probeResult.stream?.errorCode ?? 'UNKNOWN'} / ${probeResult.stream?.reason ?? 'unknown'}`}
+                      </p>
+                      <p>{t('mcp.curriculumProbeNotExtraction')}</p>
+                    </div>
+                  ) : (
+                    <p>
+                      {t('mcp.curriculumProbeFailed')}: {probeResult.errorCode}
+                    </p>
+                  ))}
+              </div>
+            )}
+            <p>{t('mcp.curriculumGraphMayTakeTime')}</p>
+            <div className='flex gap-8px'>
+              <Button type='primary' loading={isGraphLoading} onClick={onGenerateGraph}>
+                {t('mcp.curriculumGenerateGraph')}
+              </Button>
+              <Button disabled={isGraphLoading} onClick={handleCancel}>
+                {t('mcp.curriculumChooseAnother')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // 解析失败 → 显示失败状态
   if (parsing && parseError) {
     return (
-      <div className="ap-empty">
-        <header className="ap-empty__header">
-          <button type="button" className="ap-back" onClick={onBack}>← 返回</button>
+      <div className='ap-empty'>
+        <header className='ap-empty__header'>
+          <button type='button' className='ap-back' onClick={onBack}>
+            ← 返回
+          </button>
           {hasHistory && (
-            <button type="button" className="ap-btn ap-btn--primary" onClick={onViewHistory}>
+            <button type='button' className='ap-btn ap-btn--primary' onClick={onViewHistory}>
               培养方案历史
             </button>
           )}
         </header>
-        <div className="ap-empty__inner">
-          <div className="ap-empty__icon">🎓</div>
-          <h1 className="ap-empty__title">建立你的学业路径</h1>
-          <div className="ap-empty__parse-card ap-empty__parse-card--failed">
-            <div className="ap-parsing__failed-icon">✕</div>
-            <h2 className="ap-parsing__title">解析失败</h2>
-            <p className="ap-parsing__failed-msg">{parseError.message}</p>
-            {parseError.code && <p className="ap-parsing__failed-code">错误代码：{parseError.code}</p>}
-            <div className="ap-parsing__failed-actions">
-              <button type="button" className="ap-btn ap-btn--primary ap-btn--large" onClick={handleCancel}>
+        <div className='ap-empty__inner'>
+          <div className='ap-empty__icon'>🎓</div>
+          <h1 className='ap-empty__title'>建立你的学业路径</h1>
+          <div className='ap-empty__parse-card ap-empty__parse-card--failed'>
+            <div className='ap-parsing__failed-icon'>✕</div>
+            <h2 className='ap-parsing__title'>解析失败</h2>
+            <p className='ap-parsing__failed-msg'>{parseError.message}</p>
+            {parseError.code && <p className='ap-parsing__failed-code'>错误代码：{parseError.code}</p>}
+            <div className='ap-parsing__failed-actions'>
+              <button type='button' className='ap-btn ap-btn--primary ap-btn--large' onClick={handleCancel}>
                 重新上传
               </button>
             </div>
@@ -140,38 +271,46 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
   // 解析中 → 内联显示解析动画（替换上传卡片）
   if (parsing) {
     return (
-      <div className="ap-empty">
-        <header className="ap-empty__header">
-          <button type="button" className="ap-back" onClick={onBack}>← 返回</button>
+      <div className='ap-empty'>
+        <header className='ap-empty__header'>
+          <button type='button' className='ap-back' onClick={onBack}>
+            ← 返回
+          </button>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button type="button" className="ap-btn ap-btn--ghost ap-debug-btn" onClick={() => setDebugOpen(true)} title="Ctrl+Shift+D">
+            <button
+              type='button'
+              className='ap-btn ap-btn--ghost ap-debug-btn'
+              onClick={() => setDebugOpen(true)}
+              title='Ctrl+Shift+D'
+            >
               调试
             </button>
             {hasHistory && (
-              <button type="button" className="ap-btn ap-btn--primary" onClick={onViewHistory}>
+              <button type='button' className='ap-btn ap-btn--primary' onClick={onViewHistory}>
                 培养方案历史
               </button>
             )}
           </div>
         </header>
-        <div className="ap-empty__inner">
-          <div className="ap-empty__icon">🎓</div>
-          <h1 className="ap-empty__title">建立你的学业路径</h1>
-          <div className="ap-empty__parse-card">
-            <div className="ap-parsing__spinner" />
-            <h2 className="ap-parsing__title">正在理解你的培养方案……</h2>
-            <div className="ap-empty__parse-filename">{selectedFile}</div>
-            <div className="ap-parsing__steps">
+        <div className='ap-empty__inner'>
+          <div className='ap-empty__icon'>🎓</div>
+          <h1 className='ap-empty__title'>建立你的学业路径</h1>
+          <div className='ap-empty__parse-card'>
+            <div className='ap-parsing__spinner' />
+            <h2 className='ap-parsing__title'>正在理解你的培养方案……</h2>
+            <div className='ap-empty__parse-filename'>{selectedFile}</div>
+            <div className='ap-parsing__steps'>
               {parsingSteps.map((s, i) => (
-                <div key={s} className={`ap-parsing__step ${i < parseStep ? 'ap-parsing__step--done' : i === parseStep ? 'ap-parsing__step--active' : ''}`}>
-                  <span className="ap-parsing__step-icon">
-                    {i < parseStep ? '✓' : i === parseStep ? '●' : '○'}
-                  </span>
-                  <span className="ap-parsing__step-text">{s}</span>
+                <div
+                  key={s}
+                  className={`ap-parsing__step ${i < parseStep ? 'ap-parsing__step--done' : i === parseStep ? 'ap-parsing__step--active' : ''}`}
+                >
+                  <span className='ap-parsing__step-icon'>{i < parseStep ? '✓' : i === parseStep ? '●' : '○'}</span>
+                  <span className='ap-parsing__step-text'>{s}</span>
                 </div>
               ))}
             </div>
-            <button type="button" className="ap-btn ap-btn--ghost ap-empty__parse-cancel" onClick={handleCancel}>
+            <button type='button' className='ap-btn ap-btn--ghost ap-empty__parse-cancel' onClick={handleCancel}>
               取消
             </button>
           </div>
@@ -182,87 +321,116 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
 
   // 默认：上传状态
   return (
-    <div className="ap-empty">
-      <header className="ap-empty__header">
-        <button type="button" className="ap-back" onClick={onBack}>← 返回</button>
+    <div className='ap-empty'>
+      <header className='ap-empty__header'>
+        <button type='button' className='ap-back' onClick={onBack}>
+          ← 返回
+        </button>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-<button type="button" className="ap-btn ap-btn--ghost ap-home-btn" onClick={() => navigate('/')} title="返回首页"><Home size={15} theme='outline' fill='currentColor' /></button>
-          <button type="button" className="ap-btn ap-btn--ghost ap-debug-btn" onClick={() => setDebugOpen(true)} title="Ctrl+Shift+D">
+          <button
+            type='button'
+            className='ap-btn ap-btn--ghost ap-home-btn'
+            onClick={() => navigate('/')}
+            title='返回首页'
+          >
+            <Home size={15} theme='outline' fill='currentColor' />
+          </button>
+          <button
+            type='button'
+            className='ap-btn ap-btn--ghost ap-debug-btn'
+            onClick={() => setDebugOpen(true)}
+            title='Ctrl+Shift+D'
+          >
             调试
           </button>
           {hasHistory && (
-            <button type="button" className="ap-btn ap-btn--primary" onClick={onViewHistory}>
+            <button type='button' className='ap-btn ap-btn--primary' onClick={onViewHistory}>
               培养方案历史
             </button>
           )}
         </div>
       </header>
 
-      <div className="ap-empty__inner">
-        <div className="ap-empty__icon">🎓</div>
-        <h1 className="ap-empty__title">建立你的学业路径</h1>
-        <p className="ap-empty__desc">
-          上传你的专业培养方案，AI 将自动识别课程、学分、培养要求和课程先修关系，为你生成个人学业地图。
-        </p>
+      <div className='ap-empty__inner'>
+        <div className='ap-empty__icon'>🎓</div>
+        <h1 className='ap-empty__title'>建立你的学业路径</h1>
+        <p className='ap-empty__desc'>{t('mcp.curriculumUploadDescription')}</p>
 
-        <div
-          className={`ap-empty__dropzone ${dragging ? 'ap-empty__dropzone--dragging' : ''} ${selectedFile ? 'ap-empty__dropzone--filled' : ''}`}
-          onClick={handleFile}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
-        >
-          <input ref={inputRef} type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style={{ display: 'none' }} onChange={handleFile} />
+        <div className={`ap-empty__dropzone ${selectedFile ? 'ap-empty__dropzone--filled' : ''}`} onClick={handleFile}>
           {selectedFile ? (
             <>
-              <div className="ap-empty__dropzone-icon">✓</div>
-              <div className="ap-empty__dropzone-title">{selectedFile}</div>
-              <div className="ap-empty__dropzone-sub">已选择，点击可重新选择</div>
+              <div className='ap-empty__dropzone-icon'>✓</div>
+              <div className='ap-empty__dropzone-title'>{selectedFile}</div>
+              <div className='ap-empty__dropzone-sub'>{t('mcp.curriculumChooseAnother')}</div>
             </>
           ) : (
             <>
-              <div className="ap-empty__dropzone-icon">📄</div>
-              <div className="ap-empty__dropzone-title">上传培养方案</div>
-              <div className="ap-empty__dropzone-sub">点击或拖拽文件到此处</div>
-              <div className="ap-empty__dropzone-formats">支持 PDF / Word / 图片</div>
+              <div className='ap-empty__dropzone-icon'>📄</div>
+              <div className='ap-empty__dropzone-title'>{t('mcp.curriculumChooseFile')}</div>
+              <div className='ap-empty__dropzone-formats'>{t('mcp.curriculumSupportedFormats')}</div>
             </>
           )}
         </div>
 
-        <div className="ap-empty__start-wrap">
+        <div className='flex w-full max-w-600px flex-col gap-8px'>
+          <Input
+            value={major}
+            onChange={setMajor}
+            placeholder={t('mcp.curriculumMajorPlaceholder')}
+            aria-label={t('mcp.curriculumMajorPlaceholder')}
+          />
+          <Input
+            value={cohort}
+            onChange={setCohort}
+            placeholder={t('mcp.curriculumCohortPlaceholder')}
+            aria-label={t('mcp.curriculumCohortPlaceholder')}
+          />
+          <Input
+            value={version}
+            onChange={setVersion}
+            placeholder={t('mcp.curriculumVersionPlaceholder')}
+            aria-label={t('mcp.curriculumVersionPlaceholder')}
+          />
+        </div>
+
+        <div className='ap-empty__start-wrap'>
           <button
-            type="button"
+            type='button'
             className={`ap-btn ap-btn--primary ap-btn--large ap-empty__start-btn ${!selectedFile ? 'ap-btn--disabled' : ''}`}
-            disabled={!selectedFile}
+            disabled={!selectedPath || !major.trim() || !cohort.trim() || !version.trim()}
             onClick={handleStart}
           >
-            开始分析
+            {t('mcp.curriculumStoreButton')}
           </button>
         </div>
       </div>
 
       {/* 调试：JSON 注入弹窗 */}
       {debugOpen && (
-        <div className="ap-debug-overlay" onClick={() => setDebugOpen(false)}>
-          <div className="ap-debug-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ap-debug__head">
-              <span className="ap-debug__title">调试：注入培养方案 JSON</span>
-              <button type="button" className="ap-debug__close" onClick={() => setDebugOpen(false)}>×</button>
+        <div className='ap-debug-overlay' onClick={() => setDebugOpen(false)}>
+          <div className='ap-debug-modal' onClick={(e) => e.stopPropagation()}>
+            <div className='ap-debug__head'>
+              <span className='ap-debug__title'>调试：注入培养方案 JSON</span>
+              <button type='button' className='ap-debug__close' onClick={() => setDebugOpen(false)}>
+                ×
+              </button>
             </div>
-            <p className="ap-debug__desc">
-              粘贴 MCP 返回的培养方案 JSON，直接进入确认页（Ctrl+Shift+D 开关此面板）。
-            </p>
+            <p className='ap-debug__desc'>粘贴 MCP 返回的培养方案 JSON，直接进入确认页（Ctrl+Shift+D 开关此面板）。</p>
             <textarea
-              className="ap-debug__textarea"
+              className='ap-debug__textarea'
               placeholder='{"major": "软件工程", "grade": "2024", "courses": [...]}'
               value={debugJson}
               onChange={(e) => setDebugJson(e.target.value)}
               spellCheck={false}
             />
-            {debugError && <div className="ap-debug__error">{debugError}</div>}
-            <div className="ap-debug__actions">
-              <button type="button" className="ap-btn ap-btn--ghost" onClick={() => setDebugOpen(false)}>取消</button>
-              <button type="button" className="ap-btn ap-btn--primary" onClick={handleDebugInject}>注入并确认</button>
+            {debugError && <div className='ap-debug__error'>{debugError}</div>}
+            <div className='ap-debug__actions'>
+              <button type='button' className='ap-btn ap-btn--ghost' onClick={() => setDebugOpen(false)}>
+                取消
+              </button>
+              <button type='button' className='ap-btn ap-btn--primary' onClick={handleDebugInject}>
+                注入并确认
+              </button>
             </div>
           </div>
         </div>

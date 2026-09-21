@@ -184,3 +184,33 @@ def build_course_path_data(input_data: CoursePathInput, catalog: Mapping[str, An
             "version": catalog.get("version"),
         },
     }
+
+
+def build_curriculum_graph_data(document_id: str, catalog: Mapping[str, Any]) -> dict[str, Any]:
+    """Map validated catalog rules to graph nodes without inventing edges or credits."""
+    courses = catalog["courses"]
+    graduation_credits = catalog.get("graduation_credits")
+    if not isinstance(graduation_credits, (int, float)) or isinstance(graduation_credits, bool) or graduation_credits <= 0:
+        graduation_credits = None
+    return {
+        "document_id": document_id,
+        "catalog_id": catalog["catalog_id"],
+        "major": catalog["major"],
+        "cohort": catalog["cohort"],
+        "version": catalog["version"],
+        "document": catalog["document"],
+        "total_credits": graduation_credits,
+        "courses": [
+            {
+                "id": course["course_code"],
+                "name": course["course_name"],
+                "credits": course["credits"],
+                "category_label": course["category"],
+                "suggested_semester": course["semester"],
+                "prerequisites": list(course["prerequisites"]),
+                "page": course["page"],
+                "section": course["section"],
+            }
+            for course in courses
+        ],
+    }

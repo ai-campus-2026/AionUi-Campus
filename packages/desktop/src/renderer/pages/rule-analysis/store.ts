@@ -12,6 +12,7 @@ import type { AnalysisTask, Conversation, ProfileField, ReportSnapshot, ViewName
 import {
   createSeedState,
   detectGoal,
+  dynamicFieldKey,
   fieldLabel,
   findPolicy,
   goalPolicyPrefix,

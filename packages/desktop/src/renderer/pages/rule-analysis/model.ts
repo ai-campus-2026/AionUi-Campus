@@ -23,6 +23,7 @@ export interface RowControl {
 /** MCP 条件行（兼容后端可能返回的 control 字段和 sourceFile） */
 export type AnalysisConditionRow = McpConditionRow & {
   control?: RowControl;
+  category?: string;
   /** 来源政策文件（前端引擎转换时带入，MCP 原始数据可能没有） */
   sourceFile?: string;
 };

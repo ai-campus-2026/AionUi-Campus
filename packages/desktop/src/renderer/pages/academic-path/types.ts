@@ -4,7 +4,7 @@
  */
 
 /** 课程类别 */
-export type CourseCategory = 'required' | 'elective' | 'core' | 'general' | 'practice';
+export type CourseCategory = 'required' | 'elective' | 'core' | 'general' | 'practice' | 'other';
 
 /** 课程修读状态 */
 export type CourseStatus = 'not_taken' | 'passed' | 'failed';
@@ -30,8 +30,13 @@ export interface ProgramPlan {
   major: string;
   grade: string;
   version: string;
-  totalCredits: number;
+  /** Graduation requirement, null when the source has no verified total. */
+  totalCredits: number | null;
   courses: Course[];
+  /** Preview-only guidance; never used for enrollment eligibility. */
+  recommendedSequences?: { from: string; to: string; page: number }[];
+  /** False when imported from the unverified PDF preview. */
+  catalogVerified?: boolean;
   createdAt: string;
   confirmedAt?: string;
   isCurrent: boolean;
