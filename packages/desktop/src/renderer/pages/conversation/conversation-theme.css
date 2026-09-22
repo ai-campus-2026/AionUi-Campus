@@ -1,0 +1,33 @@
+/* 对话页 · 与首页一致的暖米灰 Liquid Glass 背景（仅浅色模式）
+   Conversation route shell — mirrors the warm beige liquid-glass background of
+   the home page (NewHomePage.module.css). Works by redefining the semantic
+   background tokens *within this scope*, so every `bg-1` / `bg-2` surface
+   inside ChatLayout turns translucent-warm and blends with the gradient.
+   Dark mode keeps the default tokens (the home theme is light-only). */
+
+.conversation-page-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+:root:not([data-theme='dark']) .conversation-page-shell {
+  /* 语义背景 token 的暖色作用域覆盖 / warm scoped overrides of the bg tokens */
+  --bg-base: rgba(247, 243, 238, 0.9);
+  --bg-1: rgba(244, 239, 234, 0.55);
+  --bg-2: rgba(235, 229, 221, 0.6);
+  --bg-3: rgba(60, 81, 64, 0.14);
+  --bg-hover: rgba(150, 167, 141, 0.14);
+  --bg-active: rgba(150, 167, 141, 0.22);
+  --message-user-bg: rgba(204, 228, 226, 0.55);
+  --message-tips-bg: rgba(240, 236, 228, 0.75);
+
+  /* 与首页 .newHomePage 完全一致的背景 / identical to the home page background */
+  background:
+    radial-gradient(760px 440px at 18% 62%, rgba(204, 228, 226, 0.42) 0%, rgba(204, 228, 226, 0) 60%),
+    radial-gradient(760px 440px at 82% 58%, rgba(231, 211, 196, 0.5) 0%, rgba(231, 211, 196, 0) 60%),
+    radial-gradient(1100px 620px at 8% -8%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 55%),
+    radial-gradient(900px 540px at 94% -6%, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 52%),
+    linear-gradient(168deg, #f4efea 0%, #e4dfd9 45%, #d5d0c8 80%, #cfc8bf 100%);
+}

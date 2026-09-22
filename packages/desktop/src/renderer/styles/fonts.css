@@ -1,0 +1,14 @@
+/* 全局字体配置 */
+
+/* 思源宋体（Noto Serif SC）—— 标题用衬线字体，CDN 引入 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap');
+
+/* 正文使用系统字体栈，无需打包 */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+/* 等宽字体使用系统字体栈 */
+code, pre, .monospace {
+  font-family: 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+}

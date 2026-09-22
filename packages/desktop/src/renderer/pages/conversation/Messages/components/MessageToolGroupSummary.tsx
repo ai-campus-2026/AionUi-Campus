@@ -2,7 +2,7 @@ import type { BadgeProps } from '@arco-design/web-react';
 import { Badge, Button, Message, Spin, Tooltip } from '@arco-design/web-react';
 import { IconDown, IconRight } from '@arco-design/web-react/icon';
 import { Checklist, Download, Right } from '@icon-park/react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
 import { getAcpImageFileName } from '@/common/chat/acpToolCallOutput';
@@ -10,7 +10,28 @@ import type { NormalizedToolCall, NormalizedToolStatus, ToolMessage } from '@/co
 import { normalizeToolMessages, hasRunningToolMessages } from '@/common/chat/normalizeToolCall';
 import LocalImageView from '@/renderer/components/media/LocalImageView';
 import { downloadFileFromPath } from '@/renderer/utils/file/download';
+import Markdown from '@renderer/components/Markdown';
+import { AnswerTemplate, mockCourseRuleSuccessResult } from '@renderer/components/campus-rule';
+import type { CampusRuleToolResult } from '@renderer/components/campus-rule';
+import { tryParseCampusRuleResult } from '@renderer/components/campus-rule/adaptPolicyResult';
+import RuleErrorBox from '@renderer/components/campus-rule/RuleErrorBox';
+import { usePolicyChecklistPanel, type ChecklistDocKey, type ChecklistHints } from '@renderer/pages/policy-checklist/checklistPanelStore';
+import type { BackendPolicyResult } from '@renderer/pages/policy-checklist/adaptQueryPolicyResult';
+import { parseUserHints, extractUserInfoHints } from '@renderer/pages/policy-checklist/parseUserHints';
 import './MessageToolGroupSummary.css';
+
+// 测试开关，验证完成务必改为 false
+const ENABLE_CAMPUS_RULE_TEST = false;
+
+// Mock测试数据：统一回答模板（①结论 ②依据 ③风险缺失 ④建议下一步）
+const mockCampusRuleResult: CampusRuleToolResult = mockCourseRuleSuccessResult;
+
+/** 判断是否为校园规则/政策检索工具返回数据 */
+const isCampusRuleResult = (data: unknown): data is CampusRuleToolResult => {
+  if (typeof data !== 'object' || data === null) return false;
+  const type = (data as Record<string, unknown>).type;
+  return type === 'campus_rule_analysis' || type === 'policy_retrieval';
+};
 
 const statusToBadge = (status: NormalizedToolStatus): BadgeProps['status'] => {
   switch (status) {
@@ -37,6 +58,7 @@ const ToolItemDetail: React.FC<{ item: NormalizedToolCall }> = ({ item }) => {
   const displayItem = fullItem ?? item;
   const hasDetail = displayItem.input || displayItem.output || item.truncated || item.imagePath;
   const [messageApi, messageContext] = Message.useMessage();
+
   const handleDownloadImage = useCallback(
     async (path: string) => {
       try {
@@ -74,6 +96,7 @@ const ToolItemDetail: React.FC<{ item: NormalizedToolCall }> = ({ item }) => {
     if (nextExpanded) void loadFullItem();
   };
 
+  // 普通工具，走原有渲染逻辑（校园规则结果已在折叠外层统一渲染，此处只展示工具调用过程）
   return (
     <div className='flex flex-col'>
       {messageContext}
@@ -150,8 +173,171 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
 
   const tools = useMemo(() => normalizeToolMessages(messages), [messages]);
 
+  // 政策清单右侧面板：AI 调用 query_policy（completed）时，按其 category 自动打开
+  // 对应清单文档（无需点击侧边栏入口）。category 未命中清单文档（如 academic）不触发。
+  // 同一会话会积累多条 query_policy（新旧问题各一条），取【最后一条】命中为准，
+  // 否则历史旧问题会覆盖新问题（如奖学金→推免切换失效）。
+  // 同时把该次调用的【原始返回 results[0]】传给清单面板，实现"每次问答实时更新"。
+  const { openChecklist } = usePolicyChecklistPanel();
+
+  // 同步解析失败（output 被截断/非 JSON）时，记录待回源的 key/hints，由 loadFull 兜底
+  const pendingChecklistRef = useRef<{ key: ChecklistDocKey; hints: ChecklistHints } | null>(null);
+
+  useEffect(() => {
+    let latestKey: ChecklistDocKey | null = null;
+    let latestHints: ChecklistHints = {};
+    let latestRaw: BackendPolicyResult[] | null = null;
+    for (const item of tools) {
+      if (item.status !== 'completed' || !item.name?.includes('query_policy') || !item.input) continue;
+      let parsed: Record<string, unknown> | null = null;
+      try {
+        parsed = JSON.parse(item.input.trim());
+      } catch {
+        continue;
+      }
+      const args = (parsed?.args as Record<string, unknown> | undefined) ?? {};
+      const category = parsed?.category ?? args.category;
+      if (category === 'scholarship' || category === 'postgraduate_recommendation') {
+        latestKey = category as ChecklistDocKey; // 不 return，持续往后找最新一条
+        // 对话预填：优先用 LLM 按 schema 提取的结构化 user_info
+        // （gpa/gpa_rank_percent/extra），问题原文正则兜底（年级等文本信息）
+        const userInfo = parsed?.user_info ?? args.user_info;
+        const q = parsed?.question ?? parsed?.query ?? parsed?.prompt ?? args.question ?? args.query;
+        latestHints = {
+          ...(typeof q === 'string' && q.trim() ? parseUserHints(q) : {}),
+          ...extractUserInfoHints(userInfo),
+        };
+        // 原始返回：query_policy output → 完整 results 数组（截断/非 JSON 时置 null，交给 loadFull 兜底）
+        try {
+          const out = item.output ? (JSON.parse(item.output) as { results?: BackendPolicyResult[] }) : null;
+          latestRaw = out && Array.isArray(out.results) && out.results.length > 0 ? out.results : null;
+        } catch {
+          latestRaw = null;
+        }
+      }
+    }
+    // 同步没解析出 raw 但确实调用了清单类工具：记录待回源，loadFull 拿到完整 output 后补齐
+    pendingChecklistRef.current = latestKey && !latestRaw ? { key: latestKey, hints: latestHints } : null;
+    if (latestKey) openChecklist(latestKey, latestHints, latestRaw);
+  }, [tools, openChecklist]);
+
+  // 提取校园规则/政策检索结果，在折叠面板外层直接渲染（默认可见，无需展开 View Steps）
+  // 兼容两种返回：1) 前端自己的结构化结果（type=campus_rule_analysis/policy_retrieval）
+  //              2) 队友 policy.query_policy 的返回（经适配层映射）
+  const campusRuleResult = useMemo<CampusRuleToolResult | null>(() => {
+    if (ENABLE_CAMPUS_RULE_TEST) return mockCampusRuleResult;
+    for (const item of tools) {
+      if (!item.output) continue;
+      const parsed = tryParseCampusRuleResult(item.output);
+      if (parsed) return parsed;
+    }
+    return null;
+  }, [tools]);
+
+  // 大结果截断兜底：query_policy 返回 JSON 可能因 _compact 截断导致上面的同步解析失败，
+  // 这里对所有带消息定位信息的工具消息从数据库加载完整 output 再解析一次
+  // （后端 compact 时可能不标 truncated 标记，所以不依赖 item.truncated，只要同步解析没结果就尝试回源）。
+  const [fullCampusResult, setFullCampusResult] = useState<CampusRuleToolResult | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (ENABLE_CAMPUS_RULE_TEST) return;
+    const loadFull = async () => {
+      for (const item of tools) {
+        if (!item.conversationId || !item.messageId) continue;
+        // 同步已解析成功的不需要回源
+        try {
+          const message = await ipcBridge.database.getConversationMessage.invoke({
+            conversation_id: item.conversationId,
+            message_id: item.messageId,
+          });
+          const next = normalizeToolMessages([message as ToolMessage]).find((candidate) => candidate.key === item.key);
+          if (next?.output) {
+            // 清单面板兜底：同步解析失败时，用完整 output 补齐实时数据
+            const pending = pendingChecklistRef.current;
+            if (pending) {
+              try {
+                const out = JSON.parse(next.output) as { results?: BackendPolicyResult[] };
+                if (Array.isArray(out?.results) && out.results.length > 0) {
+                  openChecklist(pending.key, pending.hints, out.results);
+                }
+              } catch {
+                // 完整 output 仍非 JSON：清单保持同步解析的结果（可能为固化数据）
+              }
+            }
+            const parsed = tryParseCampusRuleResult(next.output);
+            if (parsed) {
+              if (!cancelled) setFullCampusResult(parsed);
+              return;
+            }
+          }
+        } catch {
+          // 单条加载失败不影响其他条目，继续尝试
+        }
+      }
+    };
+    void loadFull();
+    return () => {
+      cancelled = true;
+    };
+  }, [tools, openChecklist]);
+
+  const effectiveCampusResult = campusRuleResult ?? fullCampusResult;
+
+  // 截断检测：工具输出过大被后端硬切（含截断标记或 truncated 字段）时，
+  // 模板必然解析失败——渲染明确提示，避免"没反应"的困惑。
+  const hasTruncatedOutput = useMemo(
+    () =>
+      tools.some(
+        (item) =>
+          item.truncated ||
+          (typeof item.output === 'string' && /\[truncated|…\[truncated/i.test(item.output))
+      ),
+    [tools]
+  );
+
+  // 提取用户问题原文（工具调用 input 里的 question/query/prompt，用于错误诊断的"现象"）
+  const campusQuestion = useMemo<string | undefined>(() => {
+    for (const item of tools) {
+      if (!item.input) continue;
+      const raw = item.input.trim();
+      try {
+        const parsed = JSON.parse(raw);
+        const q = parsed?.question ?? parsed?.query ?? parsed?.prompt;
+        if (typeof q === 'string' && q.trim()) return q.trim();
+      } catch {
+        // input 不是 JSON：可能就是问题原文
+      }
+      if (raw.length > 2 && raw.length < 200) return raw;
+    }
+    return undefined;
+  }, [tools]);
+
   return (
     <div className='tool-group-summary'>
+      {/* 工具返回过大被截断：明确提示（替代静默失败） */}
+      {!effectiveCampusResult && hasTruncatedOutput && (
+        <div className='campus-rule-inline-result' style={{ marginBottom: 12 }}>
+          <RuleErrorBox
+            info={{
+              type: 'warning',
+              title: '工具返回结果过大，已被系统截断',
+              description:
+                '本次查询匹配了多份政策，返回内容超出上限被截断，无法渲染规则模板。建议在提问中指明具体政策类型（如"保研政策""奖学金办法"），让系统只匹配一份政策文档后重试。',
+            }}
+          />
+        </div>
+      )}
+      {/* 校园规则/政策检索结果：直接显示在折叠外面，用户无需展开 View Steps 即可看到 */}
+      {effectiveCampusResult && (
+        <div className='campus-rule-inline-result' style={{ marginBottom: 12 }}>
+          {effectiveCampusResult.summary && (
+            <div style={{ marginBottom: 12 }}>
+              <Markdown>{effectiveCampusResult.summary}</Markdown>
+            </div>
+          )}
+          <AnswerTemplate result={effectiveCampusResult} question={campusQuestion} />
+        </div>
+      )}
       <div className='tool-group-summary__header' onClick={() => setShowMore(!showMore)}>
         <span className='tool-group-summary__icon'>
           {hasRunning ? <Spin size={12} /> : <Checklist theme='outline' size='14' />}
@@ -173,3 +359,4 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
 };
 
 export default React.memo(MessageToolGroupSummary);
+
