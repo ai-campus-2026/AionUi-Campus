@@ -2,8 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { PathView, ProgramPlan, StudentProgress, CourseStatus, CourseCategory } from './types';
-import type { CurriculumIngestRequest } from '@/common/adapter/ipcBridge';
-import { parseProgramPlan, loadProgramPreview, adaptMcpPlan } from './programParser';
+import { parseProgramPlan, adaptMcpPlan } from './programParser';
 import { clearCourseStatuses, loadCourseStatuses, saveCourseStatuses } from './progressClient';
 import EmptyState from './components/EmptyState';
 import ConfirmPlan from './components/ConfirmPlan';
@@ -56,73 +55,33 @@ const AcademicPathPage: React.FC = () => {
   const [parseWarnings, setParseWarnings] = useState<string[]>([]);
   const [parseSource, setParseSource] = useState<'mock' | 'mcp'>('mock');
   const [parseError, setParseError] = useState<{ code: string; message: string } | null>(null);
-  const [ingestStatus, setIngestStatus] = useState<{
-    documentId: string;
-    filePath: string;
-    created: boolean;
-    extractionStatus?: string;
-    ragStatus?: string;
-  } | null>(null);
-  const [graphError, setGraphError] = useState<{
-    code: string;
-    processingStatus?: string;
-    failedPage?: number;
-    failureCode?: string;
-    failureStage?: string;
-    failureReason?: string;
-  } | null>(null);
-  const [isGraphLoading, setIsGraphLoading] = useState(false);
   const [returnView, setReturnView] = useState<'empty' | 'history'>('empty');
   const [isParsing, setIsParsing] = useState(false);
 
   // ---- 上传培养方案 → 后台调用 MCP 解析，UI 内联显示解析动画 ----
   const handleUpload = useCallback(
-    async (request: CurriculumIngestRequest) => {
+    async (attachmentPath: string) => {
       if (isParsing) return;
       setParseError(null);
-      setIngestStatus(null);
-      setGraphError(null);
       setIsParsing(true);
       try {
-        const result = await parseProgramPlan(request);
+        const result = await parseProgramPlan(attachmentPath);
         if (result.type === 'failed') {
           setParseError({ code: result.errorCode, message: t('mcp.curriculumImportFailed') });
-          setIsParsing(false);
           return;
         }
-        setIngestStatus({ ...result, filePath: request.attachmentPath });
-        setIsParsing(false);
+        setPendingPlan(result.plan);
+        setParseWarnings(result.warnings ?? []);
+        setParseSource('mcp');
+        setView('confirm');
       } catch {
-        setIsParsing(false);
         setParseError({ code: 'UNKNOWN', message: t('mcp.curriculumImportFailed') });
+      } finally {
+        setIsParsing(false);
       }
     },
     [isParsing, t]
   );
-
-  const handleGenerateGraph = useCallback(async () => {
-    if (!ingestStatus || isGraphLoading) return;
-    setGraphError(null);
-    setIsGraphLoading(true);
-    const result = await loadProgramPreview(ingestStatus.filePath, ingestStatus.documentId);
-    setIsGraphLoading(false);
-    if (result.type === 'failed') {
-      setGraphError({
-        code: result.errorCode,
-        processingStatus: result.processingStatus,
-        failedPage: result.failedPage,
-        failureCode: result.failureCode,
-        failureStage: result.failureStage,
-        failureReason: result.failureReason,
-      });
-      return;
-    }
-    setPendingPlan(result.plan);
-    setParseWarnings(result.warnings ?? []);
-    setParseSource('mcp');
-    setIngestStatus(null);
-    setView('confirm');
-  }, [ingestStatus, isGraphLoading, t]);
 
   // ---- 调试注入：直接传入 MCP 格式 JSON，跳过真实调用，进入确认页 ----
   const handleDebugInject = useCallback((json: object) => {
@@ -334,14 +293,6 @@ const AcademicPathPage: React.FC = () => {
         onUpload={handleUpload}
         onDebugInject={handleDebugInject}
         parseError={parseError}
-        ingestStatus={ingestStatus}
-        graphError={graphError}
-        isGraphLoading={isGraphLoading}
-        onGenerateGraph={handleGenerateGraph}
-        onClearStatus={() => {
-          setIngestStatus(null);
-          setGraphError(null);
-        }}
         hasHistory={history.length > 0}
         onViewHistory={handleViewHistory}
         onBack={() => navigate(-1)}
@@ -395,14 +346,6 @@ const AcademicPathPage: React.FC = () => {
       onUpload={handleUpload}
       onDebugInject={handleDebugInject}
       parseError={parseError}
-      ingestStatus={ingestStatus}
-      graphError={graphError}
-      isGraphLoading={isGraphLoading}
-      onGenerateGraph={handleGenerateGraph}
-      onClearStatus={() => {
-        setIngestStatus(null);
-        setGraphError(null);
-      }}
       hasHistory={history.length > 0}
       onViewHistory={handleViewHistory}
       onBack={() => navigate(-1)}

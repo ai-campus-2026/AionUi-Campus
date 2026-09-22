@@ -1,12 +1,12 @@
-/** Curriculum import and front-end graph adaptation. Importing does not imply extraction. */
+/** Curriculum import and front-end graph adaptation for the confirmation preview. */
 import { ipcBridge } from '@/common';
-import type { CurriculumGraph, CurriculumIngestRequest, CurriculumPlanPreview } from '@/common/adapter/ipcBridge';
+import type { CurriculumGraph, CurriculumPlanPreview } from '@/common/adapter/ipcBridge';
 import type { Course, CourseCategory, ProgramPlan } from './types';
 
 export type McpProgramPlanResult = CurriculumPlanPreview;
 
 export type ParseResult =
-  | { type: 'stored'; documentId: string; created: boolean; extractionStatus?: string; ragStatus?: string }
+  | { type: 'ready'; plan: ProgramPlan; warnings?: string[] }
   | { type: 'failed'; errorCode: string };
 
 export type GraphLoadResult =
@@ -21,19 +21,17 @@ export type GraphLoadResult =
       failureReason?: string;
     };
 
-/** Store the selected source. Graph generation is a separate, explicit next stage. */
-export async function parseProgramPlan(request: CurriculumIngestRequest): Promise<ParseResult> {
+/** Parse metadata and course nodes, store the source, then return one confirmation-ready plan. */
+export async function parseProgramPlan(attachmentPath: string): Promise<ParseResult> {
   try {
-    const result = await ipcBridge.curriculum.ingestAttachment.invoke(request);
-    if (!result.ok || !result.documentId) {
+    const result = await ipcBridge.curriculum.ingestAttachment.invoke({ attachmentPath });
+    if (!result.ok || !result.documentId || !result.plan) {
       return { type: 'failed', errorCode: result.errorCode ?? 'INGEST_FAILED' };
     }
     return {
-      type: 'stored',
-      documentId: result.documentId,
-      created: result.created === true,
-      extractionStatus: result.extractionStatus,
-      ragStatus: result.ragStatus,
+      type: 'ready',
+      plan: adaptMcpPlan(result.plan, attachmentPath.split(/[\\/]/).pop(), result.documentId),
+      warnings: result.plan.warnings ?? [],
     };
   } catch {
     return { type: 'failed', errorCode: 'COURSE_SERVER_UNAVAILABLE' };

@@ -39,13 +39,13 @@
   "curriculumExtractionStatus": "擷取狀態",
   "curriculumIndexStatus": "索引狀態",
   "curriculumChooseAnother": "選擇其他檔案",
-  "curriculumUploadDescription": "選擇培養方案 PDF 或圖片並存入培養方案庫。擷取及驗證通過後才能產生課程圖。",
+  "curriculumUploadDescription": "選擇培養方案 PDF，系統將自動辨識培養方案資訊、存入知識庫並產生課程圖預覽。",
   "curriculumChooseFile": "選擇培養方案檔案",
-  "curriculumSupportedFormats": "支援 PDF、JPG、JPEG、PNG；點擊選擇檔案",
+  "curriculumSupportedFormats": "支援可複製文字的 PDF；點擊選擇檔案",
   "curriculumMajorPlaceholder": "專業代碼，例如 computer-science",
   "curriculumCohortPlaceholder": "入學年級，例如 2026",
   "curriculumVersionPlaceholder": "版本，例如 2026.1",
-  "curriculumStoreButton": "存入培養方案庫",
+  "curriculumStoreButton": "解析並產生課程圖",
   "integration": {
     "title": "MCP 整合",
     "description": "管理模型上下文協議伺服器和工具"

@@ -117,7 +117,7 @@ export function summarizeCurriculumPlanPreview(value: unknown): CurriculumPlanPr
   if (value.success !== true) return { ok: false, errorCode: field(value, 'errorCode') ?? 'PARSE_FAILED' };
   if (
     !field(value, 'major') ||
-    !/^20\d{2}$/.test(field(value, 'grade') ?? '') ||
+    !/^(?:20\d{2}|未注明)$/.test(field(value, 'grade') ?? '') ||
     typeof value.totalCredits !== 'number' ||
     !Number.isFinite(value.totalCredits) ||
     value.totalCredits < 0 ||
@@ -184,6 +184,19 @@ export function summarizeCurriculumPlanPreview(value: unknown): CurriculumPlanPr
     return { ok: false, errorCode: 'INVALID_RESPONSE' };
   }
   return { ok: true, plan: value as CurriculumPlanPreview };
+}
+
+/** Derive stable storage metadata from a parsed plan without inventing a cohort or version. */
+export function resolveCurriculumMetadata(plan: CurriculumPlanPreview): {
+  major: string;
+  cohort: string;
+  version: string;
+} {
+  return {
+    major: plan.major.trim(),
+    cohort: /^20\d{2}$/.test(plan.grade.trim()) ? plan.grade.trim() : 'unspecified',
+    version: plan.version?.trim() || 'auto',
+  };
 }
 
 /** Parse the user's selected PDF without publishing rules or invoking a full-document model review. */
@@ -254,18 +267,32 @@ export async function ingestCurriculumAttachment(request: CurriculumIngestReques
   if (!path.isAbsolute(attachmentPath) || !ALLOWED_EXTENSIONS.has(path.extname(attachmentPath).toLowerCase())) {
     return { ok: false, errorCode: 'INVALID_ATTACHMENT' };
   }
-  const major = request.major.trim();
-  const cohort = request.cohort.trim();
-  const version = request.version.trim();
+  let preview: CurriculumPlanPreview | undefined;
+  if (!request.major?.trim() || !request.cohort?.trim() || !request.version?.trim()) {
+    const previewResult = await previewCurriculumPlan(attachmentPath);
+    if (!previewResult.ok || !previewResult.plan) {
+      return { ok: false, errorCode: previewResult.errorCode ?? 'PARSE_FAILED' };
+    }
+    preview = previewResult.plan;
+  }
+  const metadata = preview
+    ? resolveCurriculumMetadata(preview)
+    : {
+        major: request.major?.trim() ?? '',
+        cohort: request.cohort?.trim() ?? '',
+        version: request.version?.trim() ?? '',
+      };
+  const { major, cohort, version } = metadata;
   if (!major || !cohort || !version) return { ok: false, errorCode: 'INVALID_ARGUMENT' };
   try {
-    return summarizeCurriculumIngest(
+    const result = summarizeCurriculumIngest(
       await invokeCourseTool(
         'curriculum_ingest_from_attachment',
         { attachment_path: attachmentPath, major, cohort, version },
         30_000
       )
     );
+    return result.ok && preview ? { ...result, plan: preview } : result;
   } catch (error) {
     return {
       ok: false,

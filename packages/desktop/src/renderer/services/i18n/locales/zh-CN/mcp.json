@@ -39,13 +39,13 @@
   "curriculumExtractionStatus": "提取状态",
   "curriculumIndexStatus": "索引状态",
   "curriculumChooseAnother": "选择其他文件",
-  "curriculumUploadDescription": "选择培养方案 PDF 或图片并存入培养方案库。提取和校验通过后才能生成课程图。",
+  "curriculumUploadDescription": "选择培养方案 PDF，系统将自动识别培养方案信息、存入知识库并生成课程图预览。",
   "curriculumChooseFile": "选择培养方案文件",
-  "curriculumSupportedFormats": "支持 PDF、JPG、JPEG、PNG；点击选择文件",
+  "curriculumSupportedFormats": "支持可复制文字的 PDF；点击选择文件",
   "curriculumMajorPlaceholder": "专业代码，例如 computer-science",
   "curriculumCohortPlaceholder": "年级，例如 2026",
   "curriculumVersionPlaceholder": "版本，例如 2026.1",
-  "curriculumStoreButton": "存入培养方案库",
+  "curriculumStoreButton": "解析并生成课程图",
   "integration": {
     "title": "MCP 集成",
     "description": "管理模型上下文协议服务器和工具"

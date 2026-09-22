@@ -1,90 +1,38 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home } from '@icon-park/react';
-import { Button, Input } from '@arco-design/web-react';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
-import type { CurriculumIngestRequest, CurriculumProbeResponse } from '@/common/adapter/ipcBridge';
 import { parsingSteps } from '../mockData';
 
 interface Props {
-  onUpload: (request: CurriculumIngestRequest) => void;
+  onUpload: (attachmentPath: string) => void;
   /** 调试注入：直接传入 MCP 格式 JSON，跳过真实调用 */
   onDebugInject: (json: object) => void;
   /** 解析失败信息 */
   parseError?: { code: string; message: string } | null;
-  ingestStatus?: { documentId: string; created: boolean; extractionStatus?: string; ragStatus?: string } | null;
-  graphError?: {
-    code: string;
-    processingStatus?: string;
-    failedPage?: number;
-    failureCode?: string;
-    failureStage?: string;
-    failureReason?: string;
-  } | null;
-  isGraphLoading: boolean;
-  onGenerateGraph: () => void;
-  onClearStatus: () => void;
   hasHistory: boolean;
   onViewHistory: () => void;
   onBack: () => void;
 }
 
-const EmptyState: React.FC<Props> = ({
-  onUpload,
-  onDebugInject,
-  parseError,
-  ingestStatus,
-  graphError,
-  isGraphLoading,
-  onGenerateGraph,
-  onClearStatus,
-  hasHistory,
-  onViewHistory,
-  onBack,
-}) => {
+const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasHistory, onViewHistory, onBack }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const [major, setMajor] = useState('');
-  const [cohort, setCohort] = useState('');
-  const [version, setVersion] = useState('');
   const [parsing, setParsing] = useState(false);
   const [parseStep, setParseStep] = useState(0);
   // ---- 调试：JSON 注入 ----
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugJson, setDebugJson] = useState('');
   const [debugError, setDebugError] = useState<string | null>(null);
-  const [probing, setProbing] = useState(false);
-  const [probeResult, setProbeResult] = useState<CurriculumProbeResponse | null>(null);
-
-  useEffect(() => {
-    setProbeResult(null);
-  }, [graphError?.failedPage, ingestStatus?.documentId]);
-
-  const handleProbe = useCallback(async () => {
-    if (!ingestStatus || !graphError?.failedPage || probing) return;
-    setProbing(true);
-    try {
-      setProbeResult(
-        await ipcBridge.curriculum.probeExtraction.invoke({
-          documentId: ingestStatus.documentId,
-          page: graphError.failedPage,
-        })
-      );
-    } catch {
-      setProbeResult({ ok: false, errorCode: 'COURSE_SERVER_UNAVAILABLE' });
-    } finally {
-      setProbing(false);
-    }
-  }, [graphError?.failedPage, ingestStatus, probing]);
 
   const handleFile = useCallback(async () => {
     try {
       const files = await ipcBridge.dialog.showOpen.invoke({
         properties: ['openFile'],
-        filters: [{ name: 'Curriculum', extensions: ['pdf', 'jpg', 'jpeg', 'png'] }],
+        filters: [{ name: 'Curriculum', extensions: ['pdf'] }],
       });
       if (files && files.length > 0) {
         const path = files[0];
@@ -99,11 +47,11 @@ const EmptyState: React.FC<Props> = ({
 
   // Start a real import; a filename alone is never treated as an attachment.
   const handleStart = useCallback(() => {
-    if (!selectedPath || !major.trim() || !cohort.trim() || !version.trim()) return;
+    if (!selectedPath) return;
     setParsing(true);
     setParseStep(0);
-    onUpload({ attachmentPath: selectedPath, major, cohort, version });
-  }, [selectedPath, major, cohort, version, onUpload]);
+    onUpload(selectedPath);
+  }, [selectedPath, onUpload]);
 
   // 解析步骤动画
   useEffect(() => {
@@ -121,8 +69,7 @@ const EmptyState: React.FC<Props> = ({
     setParseStep(0);
     setSelectedFile(null);
     setSelectedPath(null);
-    onClearStatus();
-  }, [onClearStatus]);
+  }, []);
 
   // ---- 调试：Ctrl+Shift+D 开关注入面板 ----
   useEffect(() => {
@@ -153,87 +100,6 @@ const EmptyState: React.FC<Props> = ({
       setDebugError(err instanceof Error ? err.message : 'JSON 解析失败');
     }
   }, [debugJson, onDebugInject]);
-
-  if (ingestStatus) {
-    return (
-      <div className='ap-empty'>
-        <header className='ap-empty__header'>
-          <Button onClick={onBack}>{t('common.back')}</Button>
-        </header>
-        <div className='ap-empty__inner'>
-          <div className='ap-empty__parse-card'>
-            <h2 className='ap-parsing__title'>{t('mcp.curriculumStoredTitle')}</h2>
-            <p>{t('mcp.curriculumStoredDescription')}</p>
-            <p>
-              {t('mcp.curriculumDocumentId')}: {ingestStatus.documentId}
-            </p>
-            <p>
-              {t('mcp.curriculumExtractionStatus')}: {ingestStatus.extractionStatus ?? 'EXTRACTION_PENDING'}
-            </p>
-            <p>
-              {t('mcp.curriculumIndexStatus')}: {ingestStatus.ragStatus ?? 'NOT_INDEXED'}
-            </p>
-            {graphError && (
-              <div role='alert'>
-                <p>
-                  {t('mcp.curriculumGraphUnavailable')} ({graphError.code})
-                  {graphError.processingStatus ? ` — ${graphError.processingStatus}` : ''}
-                </p>
-                {graphError.failedPage && (
-                  <p>
-                    {t('mcp.curriculumFailureDetail', {
-                      page: graphError.failedPage,
-                      stage: graphError.failureStage ?? graphError.failureCode ?? 'unknown',
-                      reason: graphError.failureReason ?? 'unknown',
-                    })}
-                  </p>
-                )}
-              </div>
-            )}
-            {graphError?.failedPage && graphError.failureStage === 'model_extract' && (
-              <div>
-                <Button loading={probing} disabled={isGraphLoading} onClick={handleProbe}>
-                  {t('mcp.curriculumProbeButton', { page: graphError.failedPage })}
-                </Button>
-                <p>{t('mcp.curriculumProbeCostNotice')}</p>
-                {probeResult &&
-                  (probeResult.ok ? (
-                    <div>
-                      <p>
-                        {t('mcp.curriculumProbeNonStream')}:{' '}
-                        {probeResult.nonStream?.reachable
-                          ? t('mcp.curriculumProbeReachable')
-                          : `${probeResult.nonStream?.errorCode ?? 'UNKNOWN'} / ${probeResult.nonStream?.reason ?? 'unknown'}`}
-                      </p>
-                      <p>
-                        {t('mcp.curriculumProbeStream')}:{' '}
-                        {probeResult.stream?.reachable
-                          ? t('mcp.curriculumProbeReachable')
-                          : `${probeResult.stream?.errorCode ?? 'UNKNOWN'} / ${probeResult.stream?.reason ?? 'unknown'}`}
-                      </p>
-                      <p>{t('mcp.curriculumProbeNotExtraction')}</p>
-                    </div>
-                  ) : (
-                    <p>
-                      {t('mcp.curriculumProbeFailed')}: {probeResult.errorCode}
-                    </p>
-                  ))}
-              </div>
-            )}
-            <p>{t('mcp.curriculumGraphMayTakeTime')}</p>
-            <div className='flex gap-8px'>
-              <Button type='primary' loading={isGraphLoading} onClick={onGenerateGraph}>
-                {t('mcp.curriculumGenerateGraph')}
-              </Button>
-              <Button disabled={isGraphLoading} onClick={handleCancel}>
-                {t('mcp.curriculumChooseAnother')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // 解析失败 → 显示失败状态
   if (parsing && parseError) {
@@ -372,32 +238,11 @@ const EmptyState: React.FC<Props> = ({
           )}
         </div>
 
-        <div className='flex w-full max-w-600px flex-col gap-8px'>
-          <Input
-            value={major}
-            onChange={setMajor}
-            placeholder={t('mcp.curriculumMajorPlaceholder')}
-            aria-label={t('mcp.curriculumMajorPlaceholder')}
-          />
-          <Input
-            value={cohort}
-            onChange={setCohort}
-            placeholder={t('mcp.curriculumCohortPlaceholder')}
-            aria-label={t('mcp.curriculumCohortPlaceholder')}
-          />
-          <Input
-            value={version}
-            onChange={setVersion}
-            placeholder={t('mcp.curriculumVersionPlaceholder')}
-            aria-label={t('mcp.curriculumVersionPlaceholder')}
-          />
-        </div>
-
         <div className='ap-empty__start-wrap'>
           <button
             type='button'
             className={`ap-btn ap-btn--primary ap-btn--large ap-empty__start-btn ${!selectedFile ? 'ap-btn--disabled' : ''}`}
-            disabled={!selectedPath || !major.trim() || !cohort.trim() || !version.trim()}
+            disabled={!selectedPath}
             onClick={handleStart}
           >
             {t('mcp.curriculumStoreButton')}

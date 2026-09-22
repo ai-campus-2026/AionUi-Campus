@@ -85,8 +85,8 @@ def parse_program_plan_pages(pages: list[str], *, grade: str, version: str | Non
     not proof that the course has no prerequisite.
     This preview must not be published as a verified planning catalog.
     """
-    if not pages or not grade or not re.fullmatch(r"20\d{2}", grade):
-        raise ProgramPlanParseError("PARSE_FAILED", "无法确定培养方案年级，请先登记文件的适用年级")
+    if not pages or (grade and not re.fullmatch(r"20\d{2}", grade)):
+        raise ProgramPlanParseError("PARSE_FAILED", "培养方案年级格式无效")
     title = _PLAN_TITLE.search(pages[0])
     if title is None or "指导性教学计划" not in "\n".join(pages):
         raise ProgramPlanParseError("NOT_A_PROGRAM_PLAN", "无法识别该文件为培养方案，请上传包含课程信息的培养方案文件")
@@ -245,7 +245,7 @@ def parse_program_plan_pages(pages: list[str], *, grade: str, version: str | Non
     result: dict[str, Any] = {
         "success": True,
         "major": major,
-        "grade": grade,
+        "grade": grade or "未注明",
         "totalCredits": total_credits,
         "courses": courses,
         "warnings": warnings,

@@ -8,6 +8,7 @@ import {
   summarizeCurriculumProbe,
   summarizeExtractionOutcome,
   summarizeProgressClear,
+  resolveCurriculumMetadata,
 } from '@process/services/CurriculumIngestService';
 
 describe('unverified curriculum preview', () => {
@@ -74,6 +75,20 @@ describe('unverified curriculum preview', () => {
     expect(summarizeCurriculumPlanPreview({ success: false, errorCode: 'PARSE_FAILED' })).toEqual({
       ok: false,
       errorCode: 'PARSE_FAILED',
+    });
+  });
+
+  it('accepts an explicitly unknown cohort without guessing a year', () => {
+    const result = summarizeCurriculumPlanPreview({ ...preview, grade: '未注明' });
+    expect(result.ok).toBe(true);
+    expect(result.plan?.grade).toBe('未注明');
+  });
+
+  it('uses stable storage placeholders when metadata is absent from the source', () => {
+    expect(resolveCurriculumMetadata({ ...preview, grade: '未注明' })).toEqual({
+      major: '计算机科学与技术',
+      cohort: 'unspecified',
+      version: 'auto',
     });
   });
 });
