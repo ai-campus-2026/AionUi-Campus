@@ -5,13 +5,13 @@ import type { CourseItem } from './types';
 const statusColorMap: Record<CourseItem['status'], string> = {
   completed: 'green',
   studying: 'blue',
-  planned: 'gray'
+  planned: 'gray',
 };
 
 const statusTextMap: Record<CourseItem['status'], string> = {
   completed: '已修完',
   studying: '修读中',
-  planned: '待修读'
+  planned: '待修读',
 };
 
 // 学业进度一览（课程规则工具专属，②依据的可视化展开）
@@ -20,30 +20,28 @@ const CoursePlanPanel: React.FC<{ data: CourseItem[] }> = ({ data }) => {
     {
       title: '课程名称',
       dataIndex: 'courseName',
-      width: 160
+      width: 160,
     },
     {
       title: '学分',
       dataIndex: 'credit',
-      width: 80
+      width: 80,
     },
     {
       title: '学期',
       dataIndex: 'semester',
-      width: 100
+      width: 100,
     },
     {
       title: '状态',
       dataIndex: 'status',
-      render: (status: CourseItem['status']) => (
-        <Tag color={statusColorMap[status]}>{statusTextMap[status]}</Tag>
-      )
+      render: (status: CourseItem['status']) => <Tag color={statusColorMap[status]}>{statusTextMap[status]}</Tag>,
     },
     {
       title: '成绩',
       dataIndex: 'score',
-      render: (score?: number) => score ?? '—'
-    }
+      render: (score?: number) => score ?? '—',
+    },
   ];
 
   return (

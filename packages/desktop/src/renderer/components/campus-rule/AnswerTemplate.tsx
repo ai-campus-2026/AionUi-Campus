@@ -28,16 +28,13 @@ const stripMd = (s: string): string => s.replace(/\*\*/g, '').trim();
 const ConclusionBlock: React.FC<{ content: string; hasRisks: boolean }> = ({ content, hasRisks }) => (
   <div className='cr-block cr-block--first'>
     <div className='cr-block-title'>
-      <span className='cr-dot' />
-      ① 结论
+      <span className='cr-dot' />① 结论
     </div>
     <div className='cr-conclusion'>
       <div className='cr-conclusion__verdict'>{stripMd(content)}</div>
       <span
         className={
-          hasRisks
-            ? 'cr-conclusion__chip cr-conclusion__chip--warn'
-            : 'cr-conclusion__chip cr-conclusion__chip--ok'
+          hasRisks ? 'cr-conclusion__chip cr-conclusion__chip--warn' : 'cr-conclusion__chip cr-conclusion__chip--ok'
         }
       >
         {hasRisks ? '⚠ 需进一步确认' : '✓ 基本符合'}
@@ -50,8 +47,7 @@ const ConclusionBlock: React.FC<{ content: string; hasRisks: boolean }> = ({ con
 const SuggestionBlock: React.FC<{ suggestions: string[] }> = ({ suggestions }) => (
   <div className='cr-block'>
     <div className='cr-block-title'>
-      <span className='cr-dot' />
-      ③ 建议
+      <span className='cr-dot' />③ 建议
     </div>
     <ul className='cr-suggest'>
       {suggestions.map((s, i) => (
@@ -90,26 +86,22 @@ const AnswerTemplate: React.FC<{ result: CampusRuleToolResult; question?: string
       {(result.conditionGroups && result.conditionGroups.length > 0 && (
         <ConditionTable groups={result.conditionGroups} />
       )) ||
-        (result.conditionTable && result.conditionTable.length > 0 && (
-          <ConditionTable data={result.conditionTable} />
-        ))}
+        (result.conditionTable && result.conditionTable.length > 0 && <ConditionTable data={result.conditionTable} />)}
 
       {/* ② 依据：引用证据来源（四块模板固定结构，policy / rag 均展示） */}
       {result.evidences && result.evidences.length > 0 && <EvidenceCard data={result.evidences} />}
 
       {/* 政策条款命中：与②依据同源于 source_quote，内容重复时不再重复展示；
           仅在无证据卡时兜底（正常 policy 结果均含 evidences，此块基本不出现） */}
-      {!(result.evidences && result.evidences.length > 0) &&
-        result.policyHits &&
-        result.policyHits.length > 0 && <PolicyPanel data={result.policyHits} />}
+      {!(result.evidences && result.evidences.length > 0) && result.policyHits && result.policyHits.length > 0 && (
+        <PolicyPanel data={result.policyHits} />
+      )}
 
       {/* 学业进度（课程规则工具专属） */}
       {result.coursePlan && result.coursePlan.length > 0 && <CoursePlanPanel data={result.coursePlan} />}
 
       {/* ③ 建议下一步（风险信息已并入条件比对表状态列 + 解读诊断，不再单列） */}
-      {result.suggestions && result.suggestions.length > 0 && (
-        <SuggestionBlock suggestions={result.suggestions} />
-      )}
+      {result.suggestions && result.suggestions.length > 0 && <SuggestionBlock suggestions={result.suggestions} />}
 
       {/* ★ 解读诊断：risks 非空且非错误状态时展示（rag 纯检索不触发） */}
       {hasRisks && result.status !== 'error' && <DiagnosisPanel result={result} question={question} />}

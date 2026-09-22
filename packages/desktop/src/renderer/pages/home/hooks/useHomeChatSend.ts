@@ -104,10 +104,7 @@ export const useHomeChatSend = (): HomeChatSendResult => {
         await swrMutate('assistants.list');
         emitter.emit('chat.history.refresh');
 
-        sessionStorage.setItem(
-          `aionrs_initial_message_${conversation.id}`,
-          JSON.stringify({ input: text })
-        );
+        sessionStorage.setItem(`aionrs_initial_message_${conversation.id}`, JSON.stringify({ input: text }));
 
         await navigate(`/conversation/${conversation.id}`);
       } catch (error) {

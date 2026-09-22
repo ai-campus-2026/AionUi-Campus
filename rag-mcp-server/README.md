@@ -51,14 +51,14 @@ RAG MCP Server (Python, FastMCP)
 
 ## MCP 工具
 
-| 工具                   | 参数                                               | 说明                                                                                                                    |
-| ---------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `load_document`        | `file_path` (string, 必填)                         | 加载文档，按扩展名识别格式（PDF / TXT / MD / DOCX）。幂等：同一文件重复加载自动跳过；文件内容更新后重新加载会替换旧版本 |
-| `load_pdf`             | `pdf_path` (string, 必填)                          | `load_document` 的 PDF 专用版（兼容保留）                                                                               |
-| `search`               | `question` (string, 必填)；`top_k` (integer, 可选) | 语义检索，返回 JSON：`results[]`（含 `text`/`source`/`page`/`similarity`），低于相似度阈值的结果被过滤                  |
-| `list_documents`       | -                                                  | 列出所有文档的来源路径、块数、页码范围                                                                                  |
-| `delete_document`      | `source` (string, 必填)                            | 按 `list_documents` 返回的完整路径删除单个文档                                                                          |
-| `clear_general_knowledge_base` | -                              | 清空通用知识库（RAG 向量库，不可恢复；不影响结构化政策知识库）                                                        |
+| 工具                           | 参数                                               | 说明                                                                                                                    |
+| ------------------------------ | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `load_document`                | `file_path` (string, 必填)                         | 加载文档，按扩展名识别格式（PDF / TXT / MD / DOCX）。幂等：同一文件重复加载自动跳过；文件内容更新后重新加载会替换旧版本 |
+| `load_pdf`                     | `pdf_path` (string, 必填)                          | `load_document` 的 PDF 专用版（兼容保留）                                                                               |
+| `search`                       | `question` (string, 必填)；`top_k` (integer, 可选) | 语义检索，返回 JSON：`results[]`（含 `text`/`source`/`page`/`similarity`），低于相似度阈值的结果被过滤                  |
+| `list_documents`               | -                                                  | 列出所有文档的来源路径、块数、页码范围                                                                                  |
+| `delete_document`              | `source` (string, 必填)                            | 按 `list_documents` 返回的完整路径删除单个文档                                                                          |
+| `clear_general_knowledge_base` | -                                                  | 清空通用知识库（RAG 向量库，不可恢复；不影响结构化政策知识库）                                                          |
 
 `search` 返回示例：
 

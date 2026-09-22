@@ -16,7 +16,15 @@ interface GateBoardProps {
   submitted?: boolean;
 }
 
-const GateBoard: React.FC<GateBoardProps> = ({ conditions, answers, evidence, onAnswer, onEvidence, metMap, submitted }) => {
+const GateBoard: React.FC<GateBoardProps> = ({
+  conditions,
+  answers,
+  evidence,
+  onAnswer,
+  onEvidence,
+  metMap,
+  submitted,
+}) => {
   const { t } = useTranslation();
   const metCount = conditions.filter((c) => metMap[c.id]).length;
   const percent = conditions.length === 0 ? 0 : Math.round((metCount / conditions.length) * 100);
@@ -62,9 +70,7 @@ const GateBoard: React.FC<GateBoardProps> = ({ conditions, answers, evidence, on
               }}
             >
               <div className='flex items-center gap-8px flex-wrap'>
-                <Typography.Text style={{ fontSize: 14, fontWeight: 500 }}>
-                  {condition.item}
-                </Typography.Text>
+                <Typography.Text style={{ fontSize: 14, fontWeight: 500 }}>{condition.item}</Typography.Text>
                 {confirmed && (
                   <span
                     className='px-6px py-1px rd-6px'
@@ -86,7 +92,9 @@ const GateBoard: React.FC<GateBoardProps> = ({ conditions, answers, evidence, on
                     className='px-6px py-1px rd-6px'
                     style={{ fontSize: 11, color: 'var(--color-text-3)', background: 'var(--color-fill-3)' }}
                   >
-                    {condition.type === 'scoring' ? t('policyChecklist.tag.scoring') : t('policyChecklist.tag.procedural')}
+                    {condition.type === 'scoring'
+                      ? t('policyChecklist.tag.scoring')
+                      : t('policyChecklist.tag.procedural')}
                   </span>
                 )}
                 {condition.requires_evidence && (

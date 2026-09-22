@@ -421,7 +421,8 @@
 }
 
 @keyframes cs-scan-pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.6;
   }
@@ -432,7 +433,8 @@
 }
 
 @keyframes cs-scan-breathe {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(107, 158, 120, 0.2);
   }
   50% {
@@ -619,11 +621,9 @@
   }
 }
 
-
 /* ============================================================
    合同扫描 · 报告总览页样式
    ============================================================ */
-
 
 /* ============================================================
    合同扫描 · 报告总览页样式（重构版）
@@ -1277,7 +1277,6 @@
   color: #999;
 }
 
-
 /* ============================================================
    合同扫描 · 异常状态样式
    ============================================================ */
@@ -1358,7 +1357,6 @@
   font-size: 13px;
   color: #8a8f8a;
 }
-
 
 /* ============================================================
    合同扫描 · 历史扫描页样式
@@ -1620,7 +1618,6 @@
   color: #c06c5a;
 }
 
-
 /* ============================================================
    合同扫描 · 统一按钮样式（与政策对比页一致）
    ============================================================ */
@@ -1658,7 +1655,9 @@
   color: #fff;
   background: linear-gradient(135deg, #7f9d78, #648b80);
   border-color: transparent;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 8px rgba(70, 100, 84, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 8px rgba(70, 100, 84, 0.22);
 }
 
 .cs-btn--primary:hover:not(:disabled) {
@@ -1666,7 +1665,9 @@
   background: linear-gradient(135deg, #8aa67e, #6d9389);
   border-color: transparent;
   transform: translateY(-1px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 3px 12px rgba(70, 100, 84, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 3px 12px rgba(70, 100, 84, 0.28);
 }
 
 .cs-btn--primary:disabled {
@@ -1708,7 +1709,6 @@
   background: rgba(192, 108, 90, 0.15);
   color: #af5b4a;
 }
-
 
 /* ============================================================
    合同扫描 · 所有按钮统一样式（与政策对比页一致）
@@ -1764,7 +1764,9 @@
   color: #fff;
   background: linear-gradient(135deg, #7f9d78, #648b80);
   border-color: transparent;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 8px rgba(70, 100, 84, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 8px rgba(70, 100, 84, 0.22);
 }
 
 .cs-entry__scan-btn:hover:not(:disabled),
@@ -1775,7 +1777,9 @@
   background: linear-gradient(135deg, #8aa67e, #6d9389);
   border-color: transparent;
   transform: translateY(-1px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 3px 12px rgba(70, 100, 84, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 3px 12px rgba(70, 100, 84, 0.28);
 }
 
 .cs-entry__scan-btn:disabled {
@@ -1851,7 +1855,6 @@
   border-color: transparent;
 }
 
-
 /* 报告页历史报告按钮 */
 .cs-report__header-actions .cs-entry__history-btn {
   display: inline-flex;
@@ -1875,7 +1878,6 @@
   border-color: rgba(107, 158, 120, 0.3);
   background: rgba(255, 255, 255, 0.9);
 }
-
 
 /* 完整的 pc-btn 样式（和政策对比页一致） */
 .pc-btn {
@@ -1904,7 +1906,6 @@
 .pc-btn:active {
   transform: scale(0.96);
 }
-
 
 /* ===== 调试弹窗 ===== */
 .cs-debug-overlay {

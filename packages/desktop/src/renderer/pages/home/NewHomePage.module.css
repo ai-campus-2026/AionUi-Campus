@@ -7,7 +7,13 @@
   position: relative;
   overflow-x: hidden;
   color: #3c5140;
-  font-family: 'ProjectYaHei', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+  font-family:
+    'ProjectYaHei',
+    'PingFang SC',
+    'Microsoft YaHei',
+    system-ui,
+    -apple-system,
+    sans-serif;
   /* 暖米灰浅色背景：纵向渐变 + 青/暖低饱和氛围光晕 + 顶部高光，与气泡主题色协调 */
   background:
     radial-gradient(760px 440px at 18% 62%, rgba(204, 228, 226, 0.42) 0%, rgba(204, 228, 226, 0) 60%),
@@ -127,7 +133,7 @@
   position: absolute;
   inset: -40px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(150,167,141,0.32) 0%, rgba(150,167,141,0) 65%);
+  background: radial-gradient(circle, rgba(150, 167, 141, 0.32) 0%, rgba(150, 167, 141, 0) 65%);
   animation: aiCoreBreath 4s ease-in-out infinite;
 }
 
@@ -136,8 +142,8 @@
   width: 200px;
   height: 200px;
   border-radius: 50%;
-  border: 1.5px solid rgba(150,167,141,0.4);
-  box-shadow: 0 0 20px rgba(150,167,141,0.2);
+  border: 1.5px solid rgba(150, 167, 141, 0.4);
+  box-shadow: 0 0 20px rgba(150, 167, 141, 0.2);
   transform: rotateX(72deg) rotateZ(0deg);
   animation: aiCoreRingSpin 18s linear infinite;
 }
@@ -147,7 +153,7 @@
   position: absolute;
   inset: 12px;
   border-radius: 50%;
-  border: 1px dashed rgba(183,157,113,0.35);
+  border: 1px dashed rgba(183, 157, 113, 0.35);
 }
 
 .aiCoreInner {
@@ -156,17 +162,22 @@
   height: 110px;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 32% 28%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.2) 18%, transparent 40%),
-    radial-gradient(circle at 50% 50%, rgba(217,233,207,0.8) 0%, rgba(150,167,141,0.5) 60%, rgba(90,122,88,0.3) 100%);
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.2) 18%, transparent 40%),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(217, 233, 207, 0.8) 0%,
+      rgba(150, 167, 141, 0.5) 60%,
+      rgba(90, 122, 88, 0.3) 100%
+    );
   backdrop-filter: blur(12px) saturate(1.3);
   -webkit-backdrop-filter: blur(12px) saturate(1.3);
-  border: 1px solid rgba(255,255,255,0.7);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow:
-    inset 0 2px 8px rgba(255,255,255,0.8),
-    inset 0 -16px 32px rgba(90,122,88,0.3),
-    inset 4px 4px 16px rgba(255,255,255,0.3),
-    0 20px 50px rgba(127,157,120,0.35),
-    0 4px 16px rgba(60,81,64,0.15);
+    inset 0 2px 8px rgba(255, 255, 255, 0.8),
+    inset 0 -16px 32px rgba(90, 122, 88, 0.3),
+    inset 4px 4px 16px rgba(255, 255, 255, 0.3),
+    0 20px 50px rgba(127, 157, 120, 0.35),
+    0 4px 16px rgba(60, 81, 64, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -179,8 +190,8 @@
   background: radial-gradient(circle at 35% 30%, #e8f0e0, #7f9d78 55%, #3d5a3d);
   border-radius: 50%;
   box-shadow:
-    0 0 24px rgba(127,157,120,0.8),
-    inset 0 1px 2px rgba(255,255,255,0.6);
+    0 0 24px rgba(127, 157, 120, 0.8),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6);
   animation: aiCoreSparkle 3s ease-in-out infinite;
 }
 
@@ -209,23 +220,46 @@
 }
 
 @keyframes aiCoreBreath {
-  0%, 100% { opacity: 0.5; transform: scale(0.95); }
-  50% { opacity: 0.9; transform: scale(1.15); }
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.15);
+  }
 }
 
 @keyframes aiCoreRingSpin {
-  from { transform: rotateX(72deg) rotateZ(0deg); }
-  to { transform: rotateX(72deg) rotateZ(360deg); }
+  from {
+    transform: rotateX(72deg) rotateZ(0deg);
+  }
+  to {
+    transform: rotateX(72deg) rotateZ(360deg);
+  }
 }
 
 @keyframes aiCoreFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 @keyframes aiCoreSparkle {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(0.82); opacity: 0.75; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.82);
+    opacity: 0.75;
+  }
 }
 
 .glassBubble {
@@ -256,7 +290,9 @@
   cursor: pointer;
   will-change: transform;
   -webkit-tap-highlight-color: transparent;
-  transition: box-shadow 0.25s ease, filter 0.25s ease;
+  transition:
+    box-shadow 0.25s ease,
+    filter 0.25s ease;
 }
 
 .glassBubble:hover {
@@ -310,7 +346,9 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 4px 12px rgba(60, 81, 64, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 4px 12px rgba(60, 81, 64, 0.08);
 }
 
 .messageContainerEmpty {
@@ -416,8 +454,13 @@
 }
 
 @keyframes typing {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .emptyState {
@@ -471,7 +514,9 @@
   padding: 7px 14px;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .suggestionChip:hover {
@@ -526,14 +571,21 @@
   cursor: pointer;
   color: #f0f0f0;
   background: #96a78d;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 16px rgba(60, 81, 64, 0.25);
-  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 6px 16px rgba(60, 81, 64, 0.25);
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .sendButton:hover {
   background: #7f927f;
   transform: translateY(-1px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px rgba(60, 81, 64, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 8px 20px rgba(60, 81, 64, 0.3);
 }
 
 .sendButton:active {

@@ -101,14 +101,20 @@ const ReportDetailView: React.FC<{
             {g.rows.map((row) => {
               const isMet = row.match === 'met';
               const isMissing = row.match === 'missing_info' || row.match === 'needs_manual_review';
-              const badgeCls = isMet ? 'ra-cond__badge--met' : isMissing ? 'ra-cond__badge--missing' : 'ra-cond__badge--notmet';
+              const badgeCls = isMet
+                ? 'ra-cond__badge--met'
+                : isMissing
+                  ? 'ra-cond__badge--missing'
+                  : 'ra-cond__badge--notmet';
               const badgeText = isMet ? '已满足' : isMissing ? '待确认' : '未满足';
-              const iconCls = isMet ? 'ra-cond__icon--met' : isMissing ? 'ra-cond__icon--missing' : 'ra-cond__icon--notmet';
+              const iconCls = isMet
+                ? 'ra-cond__icon--met'
+                : isMissing
+                  ? 'ra-cond__icon--missing'
+                  : 'ra-cond__icon--notmet';
               return (
                 <div key={row.id} className='ra-cond'>
-                  <span className={`ra-cond__icon ${iconCls}`}>
-                    {isMet ? '✓' : isMissing ? '!' : '×'}
-                  </span>
+                  <span className={`ra-cond__icon ${iconCls}`}>{isMet ? '✓' : isMissing ? '!' : '×'}</span>
                   <div className='ra-cond__body'>
                     <div className='ra-cond__row1'>
                       <span className='ra-cond__name'>{row.item}</span>

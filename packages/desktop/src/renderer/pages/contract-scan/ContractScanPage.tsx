@@ -127,34 +127,17 @@ const ContractScanPage: React.FC = () => {
 
   // 历史扫描状态
   if (showHistory) {
-    return (
-      <HistoryScanView
-        onBack={() => setShowHistory(false)}
-        onViewReport={handleViewHistoryReport}
-      />
-    );
+    return <HistoryScanView onBack={() => setShowHistory(false)} onViewReport={handleViewHistoryReport} />;
   }
 
   // 查看历史报告状态
   if (viewingReport) {
-    return (
-      <ReportView
-        report={viewingReport}
-        onRescan={handleRescan}
-        onShowHistory={() => setShowHistory(true)}
-      />
-    );
+    return <ReportView report={viewingReport} onRescan={handleRescan} onShowHistory={() => setShowHistory(true)} />;
   }
 
   // 报告状态
   if (report) {
-    return (
-      <ReportView
-        report={report}
-        onRescan={handleRescan}
-        onShowHistory={() => setShowHistory(true)}
-      />
-    );
+    return <ReportView report={report} onRescan={handleRescan} onShowHistory={() => setShowHistory(true)} />;
   }
 
   return (

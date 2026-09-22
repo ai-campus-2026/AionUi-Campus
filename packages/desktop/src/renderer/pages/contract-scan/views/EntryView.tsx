@@ -58,7 +58,7 @@ const EntryView: React.FC<EntryViewProps> = ({
   const [dragOver, setDragOver] = useState(false);
   const [scanStep, setScanStep] = useState(0);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  
+
   // 调试状态
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugJson, setDebugJson] = useState('');
@@ -168,7 +168,7 @@ const EntryView: React.FC<EntryViewProps> = ({
           >
             调试
           </button>
-          <button 
+          <button
             onClick={onShowHistory}
             style={{
               color: '#fff',
@@ -192,9 +192,7 @@ const EntryView: React.FC<EntryViewProps> = ({
         {/* 中心图标 - 扫描时隐藏 */}
         {!scanning && (
           <div className={'cs-entry__hero'}>
-            <div className={'cs-entry__hero-icon'}>
-              ✦
-            </div>
+            <div className={'cs-entry__hero-icon'}>✦</div>
           </div>
         )}
 
@@ -213,8 +211,7 @@ const EntryView: React.FC<EntryViewProps> = ({
               onDrop={handleDrop}
             >
               <div className={'cs-entry__input-header'}>
-                📄
-                <span>粘贴合同全文</span>
+                📄<span>粘贴合同全文</span>
               </div>
               <textarea
                 className={'cs-entry__input'}
@@ -227,21 +224,12 @@ const EntryView: React.FC<EntryViewProps> = ({
               />
 
               <div className={'cs-entry__input-footer'}>
-                <button
-                  type="button"
-                  className={'cs-entry__upload-btn'}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  ↑
-                  上传文件
+                <button type='button' className={'cs-entry__upload-btn'} onClick={() => fileInputRef.current?.click()}>
+                  ↑ 上传文件
                 </button>
                 <div className={'cs-entry__footer-right'}>
                   {contractText && (
-                    <button
-                      type="button"
-                      className={'cs-entry__clear-btn'}
-                      onClick={() => setContractText('')}
-                    >
+                    <button type='button' className={'cs-entry__clear-btn'} onClick={() => setContractText('')}>
                       清空
                     </button>
                   )}
@@ -251,8 +239,8 @@ const EntryView: React.FC<EntryViewProps> = ({
 
               <input
                 ref={fileInputRef}
-                type="file"
-                accept=".txt,.md,.docx"
+                type='file'
+                accept='.txt,.md,.docx'
                 onChange={handleFileUpload}
                 style={{ display: 'none' }}
               />
@@ -266,16 +254,14 @@ const EntryView: React.FC<EntryViewProps> = ({
                   <div className={'cs-entry__file-name'}>{uploadedFile.name}</div>
                   <div className={'cs-entry__file-size'}>{(uploadedFile.size / 1024).toFixed(1)} KB</div>
                 </div>
-                <button className={'cs-entry__file-remove'} onClick={onRemoveFile}>×</button>
+                <button className={'cs-entry__file-remove'} onClick={onRemoveFile}>
+                  ×
+                </button>
               </div>
             )}
 
             {/* 输入过短提示 */}
-            {tooShort && (
-              <div className={'cs-entry__short-warning'}>
-                合同内容过短，请粘贴完整合同。
-              </div>
-            )}
+            {tooShort && <div className={'cs-entry__short-warning'}>合同内容过短，请粘贴完整合同。</div>}
 
             {/* 合同类型选择 */}
             <div className={'cs-entry__type-section'}>
@@ -284,7 +270,7 @@ const EntryView: React.FC<EntryViewProps> = ({
                 {CONTRACT_TYPES.map((t) => (
                   <button
                     key={t.value}
-                    type="button"
+                    type='button'
                     className={`cs-entry__type-capsule ${contractType === t.value ? 'cs-entry__type-capsule--active' : ''}`}
                     onClick={() => setContractType(t.value)}
                   >
@@ -297,16 +283,14 @@ const EntryView: React.FC<EntryViewProps> = ({
             {/* 开始扫描按钮 */}
             <div className={'cs-entry__action-area'}>
               <button
-                type="button"
+                type='button'
                 className={'cs-entry__scan-btn'}
                 onClick={onStartScan}
                 disabled={!isValid || scanning}
               >
                 {scanning ? '分析中……' : '开始智能扫描 →'}
               </button>
-              <p className={'cs-entry__privacy-note'}>
-                合同内容将用于本次 AI 分析，请勿上传与分析无关的敏感信息。
-              </p>
+              <p className={'cs-entry__privacy-note'}>合同内容将用于本次 AI 分析，请勿上传与分析无关的敏感信息。</p>
             </div>
           </>
         ) : (
@@ -316,9 +300,7 @@ const EntryView: React.FC<EntryViewProps> = ({
               {/* AI 核心 */}
               <div className={'cs-scan-core'}>
                 <div className={'cs-scan-core-ring'} />
-                <div className={'cs-scan-core-inner'}>
-                  ✦
-                </div>
+                <div className={'cs-scan-core-inner'}>✦</div>
               </div>
 
               <h3 className={'cs-scan-title'}>正在分析合同</h3>
@@ -353,9 +335,7 @@ const EntryView: React.FC<EntryViewProps> = ({
             </div>
 
             {/* 合同类型显示 */}
-            <div className={'cs-entry__type-display'}>
-              合同类型：{currentTypeName}
-            </div>
+            <div className={'cs-entry__type-display'}>合同类型：{currentTypeName}</div>
 
             {/* 取消扫描 */}
             <div className={'cs-entry__cancel-area'}>
@@ -381,10 +361,7 @@ const EntryView: React.FC<EntryViewProps> = ({
                   </div>
                 </div>
               ) : (
-                <button
-                  className={'cs-entry__cancel-btn'}
-                  onClick={() => setShowCancelConfirm(true)}
-                >
+                <button className={'cs-entry__cancel-btn'} onClick={() => setShowCancelConfirm(true)}>
                   取消扫描
                 </button>
               )}
@@ -395,8 +372,8 @@ const EntryView: React.FC<EntryViewProps> = ({
 
       {/* 调试：JSON 注入弹窗 */}
       {debugOpen && (
-        <div 
-          className="cs-debug-overlay" 
+        <div
+          className='cs-debug-overlay'
           onClick={(e) => {
             // 只有点击 overlay 本身（不是 modal 内部）才关闭
             if (e.target === e.currentTarget) {
@@ -404,16 +381,16 @@ const EntryView: React.FC<EntryViewProps> = ({
             }
           }}
         >
-          <div className="cs-debug-modal">
-            <div className="cs-debug__head">
-              <span className="cs-debug__title">调试：注入 MCP 结果 JSON</span>
-              <button type="button" className="cs-debug__close" onClick={() => setDebugOpen(false)}>×</button>
+          <div className='cs-debug-modal'>
+            <div className='cs-debug__head'>
+              <span className='cs-debug__title'>调试：注入 MCP 结果 JSON</span>
+              <button type='button' className='cs-debug__close' onClick={() => setDebugOpen(false)}>
+                ×
+              </button>
             </div>
-            <p className="cs-debug__desc">
-              粘贴 contract_scan MCP 返回的完整 JSON，直接生成报告。
-            </p>
+            <p className='cs-debug__desc'>粘贴 contract_scan MCP 返回的完整 JSON，直接生成报告。</p>
             <textarea
-              className="cs-debug__textarea"
+              className='cs-debug__textarea'
               placeholder='{"fairness_score": 72, "summary": "...", "red_flags": [...]}'
               value={debugJson}
               onChange={(e) => setDebugJson(e.target.value)}
@@ -421,12 +398,12 @@ const EntryView: React.FC<EntryViewProps> = ({
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
             />
-            {debugError && <div className="cs-debug__error">{debugError}</div>}
-            <div className="cs-debug__actions">
-              <button type="button" className="cs-debug__cancel" onClick={() => setDebugOpen(false)}>
+            {debugError && <div className='cs-debug__error'>{debugError}</div>}
+            <div className='cs-debug__actions'>
+              <button type='button' className='cs-debug__cancel' onClick={() => setDebugOpen(false)}>
                 取消
               </button>
-              <button type="button" className="cs-debug__confirm" onClick={handleDebugInject}>
+              <button type='button' className='cs-debug__confirm' onClick={handleDebugInject}>
                 注入并显示报告
               </button>
             </div>

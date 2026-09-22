@@ -71,6 +71,7 @@ describe('resolveFeedbackModule', () => {
       '/academic-path',
       '/rule-analysis',
       '/policy-comparison',
+      '/contract-scan',
     ];
     const isModuleLess = (pathname: string) =>
       moduleLessPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));

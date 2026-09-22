@@ -29,10 +29,58 @@ interface ModuleDef {
 }
 
 const MODULES: ModuleDef[] = [
-  { name: '学业路径', desc: '规划你的课程与学业路径', icon: DegreeHat, route: '/academic-path', phase: 0, accent: '#8BA67C', ox: -260, oy: -120, size: 185, speed: 1.0, dim: 1.0 },
-  { name: '政策对比', desc: '快速看懂新旧政策变化', icon: Contrast, route: '/policy-comparison', phase: Math.PI / 2, accent: '#B79D71', ox: 255, oy: -160, size: 175, speed: 1.25, dim: 0.92 },
-  { name: '合同扫描', desc: '识别合同风险与注意条款', icon: FileText, route: '/contract-scan', phase: Math.PI, accent: '#7A9CC4', ox: 270, oy: 90, size: 180, speed: 0.85, dim: 0.96 },
-  { name: '规则分析', desc: '理解校园规则，判断资格', icon: RuleTwo, route: '/rule-analysis', phase: (3 * Math.PI) / 2, accent: '#73AEA9', ox: -230, oy: 130, size: 190, speed: 1.15, dim: 1.0 },
+  {
+    name: '学业路径',
+    desc: '规划你的课程与学业路径',
+    icon: DegreeHat,
+    route: '/academic-path',
+    phase: 0,
+    accent: '#8BA67C',
+    ox: -260,
+    oy: -120,
+    size: 185,
+    speed: 1.0,
+    dim: 1.0,
+  },
+  {
+    name: '政策对比',
+    desc: '快速看懂新旧政策变化',
+    icon: Contrast,
+    route: '/policy-comparison',
+    phase: Math.PI / 2,
+    accent: '#B79D71',
+    ox: 255,
+    oy: -160,
+    size: 175,
+    speed: 1.25,
+    dim: 0.92,
+  },
+  {
+    name: '合同扫描',
+    desc: '识别合同风险与注意条款',
+    icon: FileText,
+    route: '/contract-scan',
+    phase: Math.PI,
+    accent: '#7A9CC4',
+    ox: 270,
+    oy: 90,
+    size: 180,
+    speed: 0.85,
+    dim: 0.96,
+  },
+  {
+    name: '规则分析',
+    desc: '理解校园规则，判断资格',
+    icon: RuleTwo,
+    route: '/rule-analysis',
+    phase: (3 * Math.PI) / 2,
+    accent: '#73AEA9',
+    ox: -230,
+    oy: 130,
+    size: 190,
+    speed: 1.15,
+    dim: 1.0,
+  },
 ];
 
 const RECOMMENDATIONS = [
@@ -45,7 +93,9 @@ const RECOMMENDATIONS = [
 const NewHomePage: React.FC = () => {
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState('');
-  const [messages, setMessages] = useState<Array<{id: string; text: string; role: 'user' | 'assistant'; timestamp: Date}>>([]);
+  const [messages, setMessages] = useState<
+    Array<{ id: string; text: string; role: 'user' | 'assistant'; timestamp: Date }>
+  >([]);
   const homeChat = useHomeChatSend();
   const isLoading = homeChat.sending;
   const messageContainerRef = useRef<HTMLDivElement>(null);
@@ -55,19 +105,19 @@ const NewHomePage: React.FC = () => {
   const offsetRef = useRef<{ x: number; y: number }[]>([]);
   const periodRef = useRef<number[]>([]);
   const reducedMotionRef = useRef(
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
 
   // Format time as relative (e.g., "2 minutes ago")
   const formatRelativeTime = (date: Date): string => {
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
+
     if (diffInSeconds < 60) return '刚刚';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}分钟前`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}小时前`;
     if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}天前`;
-    
+
     return date.toLocaleDateString();
   };
 
@@ -140,7 +190,8 @@ const NewHomePage: React.FC = () => {
     if (reducedMotionRef.current) return;
     for (let i = 0; i < MODULES.length; i++) {
       offsetRef.current[i] = { x: 0, y: 0 };
-      periodRef.current[i] = (FLOAT_PERIOD_MIN + Math.random() * (FLOAT_PERIOD_MAX - FLOAT_PERIOD_MIN)) * MODULES[i].speed;
+      periodRef.current[i] =
+        (FLOAT_PERIOD_MIN + Math.random() * (FLOAT_PERIOD_MAX - FLOAT_PERIOD_MIN)) * MODULES[i].speed;
     }
     let rafId = 0;
     const tick = () => {
@@ -222,14 +273,16 @@ const NewHomePage: React.FC = () => {
                 }}
                 type='button'
                 className={styles.glassBubble}
-                style={{
-                  '--acc': mod.accent,
-                  left: `calc(50% + ${mod.ox}px - ${mod.size / 2}px)`,
-                  top: `calc(50% + ${mod.oy}px - ${mod.size / 2}px)`,
-                  width: `${mod.size}px`,
-                  height: `${mod.size}px`,
-                  opacity: mod.dim,
-                } as React.CSSProperties}
+                style={
+                  {
+                    '--acc': mod.accent,
+                    left: `calc(50% + ${mod.ox}px - ${mod.size / 2}px)`,
+                    top: `calc(50% + ${mod.oy}px - ${mod.size / 2}px)`,
+                    width: `${mod.size}px`,
+                    height: `${mod.size}px`,
+                    opacity: mod.dim,
+                  } as React.CSSProperties
+                }
                 onClick={() => navigate(mod.route)}
                 aria-label={`进入${mod.name}`}
               >
@@ -256,25 +309,21 @@ const NewHomePage: React.FC = () => {
           {messages.length > 0 && (
             <div className={styles.messagesList}>
               {messages.map((message) => (
-                <div 
-                  key={message.id} 
+                <div
+                  key={message.id}
                   className={`${styles.message} ${styles[message.role]}`}
-                  role="region"
+                  role='region'
                   aria-label={`${message.role === 'user' ? '您说' : 'AI助手回复'}：${message.text}`}
                 >
                   <div className={styles.messageHeader}>
-                    <span className={styles.messageRole}>
-                      {message.role === 'user' ? '您' : 'AI助手'}
-                    </span>
-                    <span className={styles.messageTime}>
-                      {formatRelativeTime(message.timestamp)}
-                    </span>
+                    <span className={styles.messageRole}>{message.role === 'user' ? '您' : 'AI助手'}</span>
+                    <span className={styles.messageTime}>{formatRelativeTime(message.timestamp)}</span>
                   </div>
                   <div className={styles.messageContent}>{message.text}</div>
                 </div>
               ))}
               {isLoading && (
-                <div className={`${styles.message} ${styles.assistant}`} role="region" aria-label="AI助手正在思考">
+                <div className={`${styles.message} ${styles.assistant}`} role='region' aria-label='AI助手正在思考'>
                   <div className={styles.messageHeader}>
                     <span className={styles.messageRole}>AI助手</span>
                     <span className={styles.messageTime}>
@@ -293,7 +342,7 @@ const NewHomePage: React.FC = () => {
             </div>
           )}
         </div>
-        
+
         <div className={styles.suggestionRow}>
           {RECOMMENDATIONS.map((q) => (
             <button
@@ -306,7 +355,7 @@ const NewHomePage: React.FC = () => {
             </button>
           ))}
         </div>
-        
+
         <div className={styles.aiInputBox}>
           <textarea
             className={styles.aiInput}

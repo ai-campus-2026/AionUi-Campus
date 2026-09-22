@@ -100,23 +100,15 @@ const RuleAnalysisChat: React.FC<Props> = ({ taskId, taskName, assistantId, init
         // 发送失败由 AionrsSendBox 的通用错误处理兜底
       }
     },
-    [convId, selectedDocs],
+    [convId, selectedDocs]
   );
 
   if (error) {
-    return (
-      <div style={{ padding: 16, color: '#999', fontSize: 13 }}>
-        对话创建失败：{error}
-      </div>
-    );
+    return <div style={{ padding: 16, color: '#999', fontSize: 13 }}>对话创建失败：{error}</div>;
   }
 
   if (!convId) {
-    return (
-      <div style={{ padding: 16, color: '#999', fontSize: 13 }}>
-        正在准备对话…
-      </div>
-    );
+    return <div style={{ padding: 16, color: '#999', fontSize: 13 }}>正在准备对话…</div>;
   }
 
   return (

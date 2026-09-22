@@ -36,11 +36,7 @@ const HomePage: React.FC = () => {
         <Grid.Row gutter={[24, 24]}>
           {/* Academic Path Module */}
           <Grid.Col xs={24} sm={24} md={8}>
-            <Card 
-              className={styles.moduleCard}
-              hoverable
-              onClick={handleAcademicPathClick}
-            >
+            <Card className={styles.moduleCard} hoverable onClick={handleAcademicPathClick}>
               <div className={styles.moduleContent}>
                 <div className={styles.moduleIcon}>🎓</div>
                 <Typography.Title heading={4} style={{ marginTop: 16, marginBottom: 8 }}>
@@ -58,11 +54,7 @@ const HomePage: React.FC = () => {
 
           {/* Rule Analysis Module */}
           <Grid.Col xs={24} sm={24} md={8}>
-            <Card 
-              className={styles.moduleCard}
-              hoverable
-              onClick={handleRuleAnalysisClick}
-            >
+            <Card className={styles.moduleCard} hoverable onClick={handleRuleAnalysisClick}>
               <div className={styles.moduleContent}>
                 <div className={styles.moduleIcon}>🔍</div>
                 <Typography.Title heading={4} style={{ marginTop: 16, marginBottom: 8 }}>
@@ -80,11 +72,7 @@ const HomePage: React.FC = () => {
 
           {/* Policy Comparison Module */}
           <Grid.Col xs={24} sm={24} md={8}>
-            <Card 
-              className={styles.moduleCard}
-              hoverable
-              onClick={handlePolicyComparisonClick}
-            >
+            <Card className={styles.moduleCard} hoverable onClick={handlePolicyComparisonClick}>
               <div className={styles.moduleContent}>
                 <div className={styles.moduleIcon}>📊</div>
                 <Typography.Title heading={4} style={{ marginTop: 16, marginBottom: 8 }}>
@@ -108,11 +96,7 @@ const HomePage: React.FC = () => {
           <Typography.Text style={{ fontWeight: 600 }}>AI助手</Typography.Text>
         </div>
         <div className={styles.chatInput}>
-          <input 
-            type='text' 
-            placeholder='请输入您的问题...' 
-            className={styles.chatInputField}
-          />
+          <input type='text' placeholder='请输入您的问题...' className={styles.chatInputField} />
           <Button type='primary' size='small' className={styles.chatSendButton}>
             发送
           </Button>

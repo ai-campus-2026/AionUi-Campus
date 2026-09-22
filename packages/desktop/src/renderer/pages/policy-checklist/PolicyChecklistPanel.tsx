@@ -225,9 +225,7 @@ const PolicyChecklistPanel: React.FC = () => {
           )}
         </div>
         <Typography.Text type='secondary' style={{ fontSize: 11 }}>
-          {selectedDocs.length > 0
-            ? t('policyChecklist.filterBySelected')
-            : t('policyChecklist.followQuestion')}
+          {selectedDocs.length > 0 ? t('policyChecklist.filterBySelected') : t('policyChecklist.followQuestion')}
         </Typography.Text>
       </div>
 
@@ -247,7 +245,10 @@ const PolicyChecklistPanel: React.FC = () => {
       </div>
 
       {/* 底部操作 */}
-      <div className='flex items-center justify-between gap-10px px-14px py-10px shrink-0 border-t' style={{ borderColor: 'var(--border-base)' }}>
+      <div
+        className='flex items-center justify-between gap-10px px-14px py-10px shrink-0 border-t'
+        style={{ borderColor: 'var(--border-base)' }}
+      >
         <Typography.Text type='secondary' style={{ fontSize: 11 }}>
           {t('policyChecklist.footerHint')}
         </Typography.Text>

@@ -29,8 +29,7 @@ const RECENT_LIMIT = 5;
 // 知识库根目录由 policy-search/config.py 的 KNOWLEDGE_BASE_DIR 决定。
 // 路径优先从本机 AionUi 已配置的 policy-search MCP 动态解析（各成员机器路径不同也能用），
 // 解析失败时回退到本机默认路径。
-const FALLBACK_INDEX_PATH =
-  'D:/AI-Campus-Workspace/AionUi-Campus-SSH/policy-search/knowledge_base/index.json';
+const FALLBACK_INDEX_PATH = 'D:/AI-Campus-Workspace/AionUi-Campus-SSH/policy-search/knowledge_base/index.json';
 const FALLBACK_WORKSPACE_ROOT = 'D:/AI-Campus-Workspace/AionUi-Campus-SSH';
 
 interface KnowledgeIndexRef {
@@ -66,7 +65,7 @@ async function resolveKnowledgeIndex(): Promise<KnowledgeIndexRef | null> {
       if (!t || t.type !== 'stdio') continue;
       const envDir = t.env?.KNOWLEDGE_BASE_DIR;
       const serverFile = (t.args || []).find(
-        (a) => /server\.py$/i.test(a) || a.toLowerCase().includes('policy-search'),
+        (a) => /server\.py$/i.test(a) || a.toLowerCase().includes('policy-search')
       );
       const serverDir = serverFile ? serverFile.replace(/[\\/]+[^\\/]+$/, '') : '';
       // ① env 直接给出绝对知识库目录
@@ -193,8 +192,7 @@ const WorkbenchPage: React.FC = () => {
   useEffect(() => {
     let disposed = false;
     void (async () => {
-      const ref =
-        (await resolveKnowledgeIndex()) ?? { path: FALLBACK_INDEX_PATH, workspace: FALLBACK_WORKSPACE_ROOT };
+      const ref = (await resolveKnowledgeIndex()) ?? { path: FALLBACK_INDEX_PATH, workspace: FALLBACK_WORKSPACE_ROOT };
       const content = await readKnowledgeIndex(ref);
       if (disposed) return;
       if (content) {
@@ -260,7 +258,10 @@ const WorkbenchPage: React.FC = () => {
         }
         emitter.emit('chat.history.refresh');
         // 查询范围注入：工作台选了"查询文件"时，把所选知识库文件标题作为上下文附加到首条消息
-        const scopedInput = selectedDocs.length > 0 ? `${t('workbench.queryScopePrefix')}：${selectedDocs.join('、')}\n${trimmed}` : trimmed;
+        const scopedInput =
+          selectedDocs.length > 0
+            ? `${t('workbench.queryScopePrefix')}：${selectedDocs.join('、')}\n${trimmed}`
+            : trimmed;
         sessionStorage.setItem(
           `${isAionrs ? 'aionrs' : 'acp'}_initial_message_${conversation.id}`,
           JSON.stringify({ input: scopedInput })
@@ -273,7 +274,15 @@ const WorkbenchPage: React.FC = () => {
         setSending(false);
       }
     },
-    [agentSelection.selectedAssistantId, agentSelection.selectedAssistantBackend, localeKey, resolvePreferredModel, navigate, t, selectedDocs]
+    [
+      agentSelection.selectedAssistantId,
+      agentSelection.selectedAssistantBackend,
+      localeKey,
+      resolvePreferredModel,
+      navigate,
+      t,
+      selectedDocs,
+    ]
   );
 
   // --- 快捷胶囊：点击把问题带入输入框（不直接发送，用户可编辑）---
@@ -304,22 +313,17 @@ const WorkbenchPage: React.FC = () => {
   }, []);
 
   return (
-    <div
-      className={styles.workbench}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={() => setGlow(null)}
-    >
+    <div className={styles.workbench} onMouseMove={handleMouseMove} onMouseLeave={() => setGlow(null)}>
       {/* 环境光晕：两个常驻光斑 + 鼠标跟随光斑（液态玻璃的可视基础） */}
       <div
         className={styles.ambientLayer}
-        style={
-          glow
-            ? ({ '--glow-x': `${glow.x}%`, '--glow-y': `${glow.y}%` } as React.CSSProperties)
-            : undefined
-        }
+        style={glow ? ({ '--glow-x': `${glow.x}%`, '--glow-y': `${glow.y}%` } as React.CSSProperties) : undefined}
       />
 
-      <div className={`${styles.content} mx-auto flex flex-col gap-26px pt-48px px-24px pb-48px`} style={{ maxWidth: 780 }}>
+      <div
+        className={`${styles.content} mx-auto flex flex-col gap-26px pt-48px px-24px pb-48px`}
+        style={{ maxWidth: 780 }}
+      >
         {/* 标题区 */}
         <div>
           <Typography.Title heading={4} style={{ marginBottom: 4 }}>
@@ -348,7 +352,9 @@ const WorkbenchPage: React.FC = () => {
         </div>
 
         {/* 中央 AI 输入框（强液态玻璃 + AI 呼吸图标） */}
-        <div className={`${styles.inputGlass} ${isFocused ? styles.inputGlassFocus : ''} flex flex-row gap-14px p-18px`}>
+        <div
+          className={`${styles.inputGlass} ${isFocused ? styles.inputGlassFocus : ''} flex flex-row gap-14px p-18px`}
+        >
           <div className={styles.aiIcon}>✦</div>
           <div className='flex flex-col gap-8px flex-1 min-w-0'>
             <Input.TextArea

@@ -8,7 +8,11 @@ import type { AnalysisConditionGroup, AnalysisConditionRow, AnalysisSummary, Row
 // ---------- 状态元数据（纯字段映射，不做判断） ----------
 const STATE_META: Record<
   AnalysisConditionRow['match'],
-  { badge: string; text: string; icon: React.ComponentType<{ size?: number | string; theme?: string; fill?: string | string[] }> }
+  {
+    badge: string;
+    text: string;
+    icon: React.ComponentType<{ size?: number | string; theme?: string; fill?: string | string[] }>;
+  }
 > = {
   met: { badge: 'ra-cond__badge--met', text: '已满足', icon: CheckOne },
   missing_info: { badge: 'ra-cond__badge--missing', text: '待确认', icon: Attention },
@@ -34,15 +38,12 @@ const RowControlWidget: React.FC<{
   if (control.type === 'select') {
     return (
       <div className='ra-cond__inline'>
-        <select
-          className='ra-cond__input'
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          aria-label='选择'
-        >
+        <select className='ra-cond__input' value={draft} onChange={(e) => setDraft(e.target.value)} aria-label='选择'>
           <option value=''>{control.placeholder ?? '请选择'}</option>
           {control.options?.map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
           ))}
         </select>
         <button type='button' className='ra-cond__send' onClick={submit} disabled={!draft} aria-label='提交'>
@@ -89,9 +90,9 @@ const ConditionCard: React.FC<{
   const isMissing = row.match === 'missing_info' || row.match === 'needs_manual_review';
   // 缺失条件默认显示内嵌输入框：有 control 用 control，没有则用 guessFieldKey 推断字段
   const inferredKey = guessFieldKey(row.item);
-  const effectiveControl: RowControl | undefined = row.control ?? (
-    inferredKey ? { type: 'input', fieldKey: inferredKey, placeholder: `直接填写${row.item}` } : undefined
-  );
+  const effectiveControl: RowControl | undefined =
+    row.control ??
+    (inferredKey ? { type: 'input', fieldKey: inferredKey, placeholder: `直接填写${row.item}` } : undefined);
   const showControl = isMissing && !!onSupply && !!effectiveControl && effectiveControl.type !== 'text';
   // 输入后临时显示用户填的值
   const displayValue = localValue ?? row.userValue;
@@ -115,7 +116,10 @@ const ConditionCard: React.FC<{
         <div className='ra-cond__kv'>
           <div className='ra-cond__kvitem'>
             <div className='ra-cond__k'>当前</div>
-            <div className={`ra-cond__v${isMissing && !displayValue ? ' ra-cond__v--empty' : ''}`} style={localValue ? { color: '#648b80', fontWeight: 500 } : undefined}>
+            <div
+              className={`ra-cond__v${isMissing && !displayValue ? ' ra-cond__v--empty' : ''}`}
+              style={localValue ? { color: '#648b80', fontWeight: 500 } : undefined}
+            >
               {displayValue || '未提供'}
             </div>
           </div>
@@ -139,7 +143,11 @@ const ConditionCard: React.FC<{
           <button type='button' className='ra-btn ra-btn--ghost' onClick={() => setBasisOpen((v) => !v)}>
             <Book size={13} theme='outline' fill='currentColor' />
             政策依据
-            {basisOpen ? <Up size={11} theme='outline' fill='currentColor' /> : <Down size={11} theme='outline' fill='currentColor' />}
+            {basisOpen ? (
+              <Up size={11} theme='outline' fill='currentColor' />
+            ) : (
+              <Down size={11} theme='outline' fill='currentColor' />
+            )}
           </button>
         )}
       </div>
@@ -160,7 +168,8 @@ const GroupChain: React.FC<{
         const missing = g.rows.filter((r) => r.match === 'missing_info' || r.match === 'needs_manual_review').length;
         const notMet = g.rows.filter((r) => r.match === 'not_met').length;
         const stateIcon = notMet > 0 ? '×' : missing > 0 ? '!' : '✓';
-        const dotCls = notMet > 0 ? 'ra-chain__dot--notmet' : missing > 0 ? 'ra-chain__dot--missing' : 'ra-chain__dot--met';
+        const dotCls =
+          notMet > 0 ? 'ra-chain__dot--notmet' : missing > 0 ? 'ra-chain__dot--missing' : 'ra-chain__dot--met';
         return (
           <React.Fragment key={g.id}>
             {i > 0 && <div className='ra-chain__link' />}
@@ -186,19 +195,22 @@ const SummaryNumbers: React.FC<{ summary: AnalysisSummary }> = ({ summary }) => 
     <div className='ra-summary'>
       <div className='ra-summary__cell'>
         <div className='ra-summary__num ra-summary__num--met'>
-          {summary.met}<span className='ra-summary__unit'>项满足</span>
+          {summary.met}
+          <span className='ra-summary__unit'>项满足</span>
         </div>
         <div className='ra-summary__sub ra-summary__sub--met'>✓ 已满足</div>
       </div>
       <div className='ra-summary__cell'>
         <div className='ra-summary__num ra-summary__num--missing'>
-          {summary.missing + summary.review}<span className='ra-summary__unit'>项待确认</span>
+          {summary.missing + summary.review}
+          <span className='ra-summary__unit'>项待确认</span>
         </div>
         <div className='ra-summary__sub ra-summary__sub--missing'>! 缺少信息</div>
       </div>
       <div className='ra-summary__cell'>
         <div className='ra-summary__num ra-summary__num--notmet'>
-          {summary.notMet}<span className='ra-summary__unit'>项未满足</span>
+          {summary.notMet}
+          <span className='ra-summary__unit'>项未满足</span>
         </div>
         <div className='ra-summary__sub ra-summary__sub--notmet'>× 暂不符合</div>
       </div>
@@ -258,16 +270,10 @@ const McpAnalysisView: React.FC<{
       {groups.length > 0 && <SummaryNumbers summary={summary} />}
 
       {/* 结论 */}
-      {result.conclusion && (
-        <div className='ra-mcp-analysis__conclusion'>
-          {result.conclusion}
-        </div>
-      )}
+      {result.conclusion && <div className='ra-mcp-analysis__conclusion'>{result.conclusion}</div>}
 
       {/* 横向板块链路 */}
-      {groups.length > 0 && (
-        <GroupChain groups={groups} active={activeGroup} onSelect={setActiveGroup} />
-      )}
+      {groups.length > 0 && <GroupChain groups={groups} active={activeGroup} onSelect={setActiveGroup} />}
 
       {/* 当前板块条件卡片 */}
       {activeGroupData && (
@@ -283,7 +289,6 @@ const McpAnalysisView: React.FC<{
           </div>
         </div>
       )}
-
     </div>
   );
 };

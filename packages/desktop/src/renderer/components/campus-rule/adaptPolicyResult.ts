@@ -125,9 +125,9 @@ export const adaptPolicyQueryResult = (raw: unknown): CampusRuleToolResult | nul
 
   // ★ 条件比对（按类别分组）：category_matches → 组标签 + 组内行（同样按条件名去重）
   // 队友返回结构：{ category_key: { label, matches: [...] } }
-  const rawCategoryMatches = (primary.category_matches as
+  const rawCategoryMatches = primary.category_matches as
     | Record<string, { label?: string; matches?: Array<Record<string, unknown>> }>
-    | undefined);
+    | undefined;
   let conditionGroups: ConditionGroup[] | undefined;
   if (rawCategoryMatches && typeof rawCategoryMatches === 'object') {
     const groups: ConditionGroup[] = [];
@@ -275,7 +275,11 @@ export const isRagSearchResult = (data: unknown): boolean => {
   if (!Array.isArray(obj.results)) return false;
   if (obj.results.length === 0) return obj.error !== undefined || 'count' in obj;
   return obj.results.every(
-    (r) => r && typeof r === 'object' && 'text' in (r as Record<string, unknown>) && 'source' in (r as Record<string, unknown>)
+    (r) =>
+      r &&
+      typeof r === 'object' &&
+      'text' in (r as Record<string, unknown>) &&
+      'source' in (r as Record<string, unknown>)
   );
 };
 

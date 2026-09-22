@@ -8,13 +8,7 @@
     "title": "重庆邮电大学学生手册（节选）",
     "source_file": "校园规则手册.pdf",
     "effective_date": "2026-09-01",
-    "tags": [
-      "考勤管理",
-      "学分制",
-      "先修课程",
-      "转专业",
-      "毕业要求"
-    ]
+    "tags": ["考勤管理", "学分制", "先修课程", "转专业", "毕业要求"]
   },
   "raw_text": "重庆邮电大学学生手册（节选）\n 版本：2026 修订版 施行日期：2026年9月1日\n \n第一章 考勤与缺勤\n第一条 学生应按时参加教学计划规定的各项教学活动。学生缺勤累计达到该课程总课时的三分之一\n（含）以上的，取消该课程考核资格，该课程成绩记为不及格。\n第二条\n学生因故不能参加教学活动，应当事先请假。未经请假或请假未获批准而缺课的，按旷课处理。\n第三条 一学期内无故旷课累计达到 20 学时的，给予警告处分；达到 40\n学时的，给予严重警告处分。\n第二章 学分与毕业要求\n第四条 本科生实行学分制管理，学生须修满专业培养方案规定的学分方可毕业。计算机科学与技术\n专业毕业要求学分：160 学分。\n第五条 必修课不及格须参加补考；补考仍不及格的，须重修该课程。重修成绩按实际成绩记载。\n第六条 选修课学分不足会影响毕业资格，学生须在毕业前修满规定选修学分。\n第三章 课程先修关系\n第七条 部分课程存在先修关系。学生修读高阶课程前，须先修读并考核通过相应先修课程。\n第八条 数据结构是软件工程实践、算法设计与分析等课程的先修课程。未通过数据结构的，不得修\n读上述课程。\n第九条 高等数学是线性代数、概率论与数理统计的先修课程。\n第四章 转专业与学籍管理\n第十条\n学生在校期间可申请转专业，转专业须符合转入专业的接收条件，并通过转入学院组织的考核。\n第十一条\n转专业后须补修转入专业培养方案规定的相关课程，已修课程学分可按学校规定进行学分认定。\n第十二条 申请转专业的学生，原专业课程成绩须无不及格记录。\n",
   "requirements": {
@@ -248,60 +242,43 @@
       "group_id": "group_basic",
       "description": "基本学业合规条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001"
-      ]
+      "condition_ids": ["condition_001"]
     },
     {
       "group_id": "group_disciplinary_thresholds",
       "description": "纪律处分触发条件（旷课学时）",
       "logic": "OR",
-      "condition_ids": [
-        "condition_001",
-        "condition_002"
-      ]
+      "condition_ids": ["condition_001", "condition_002"]
     },
     {
       "group_id": "group_basic",
       "description": "基本毕业条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001"
-      ]
+      "condition_ids": ["condition_001"]
     },
     {
       "group_id": "group_basic",
       "description": "基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001"
-      ]
+      "condition_ids": ["condition_001"]
     },
     {
       "group_id": "group_academic_prereq",
       "description": "学业修读顺序要求",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001"
-      ]
+      "condition_ids": ["condition_001"]
     },
     {
       "group_id": "group_basic",
       "description": "基本转专业申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001",
-        "condition_002",
-        "condition_003"
-      ]
+      "condition_ids": ["condition_001", "condition_002", "condition_003"]
     },
     {
       "group_id": "group_basic",
       "description": "基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001"
-      ]
+      "condition_ids": ["condition_001"]
     }
   ],
   "important_dates": []

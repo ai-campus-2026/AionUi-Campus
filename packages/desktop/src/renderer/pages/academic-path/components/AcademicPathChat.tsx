@@ -25,7 +25,16 @@ type Props = {
   onConvIdReady?: (convId: string) => void;
 };
 
-const AcademicPathChat: React.FC<Props> = ({ taskId, taskName, plan, progress, selectedCourse, assistantId, initialModel, onConvIdReady }) => {
+const AcademicPathChat: React.FC<Props> = ({
+  taskId,
+  taskName,
+  plan,
+  progress,
+  selectedCourse,
+  assistantId,
+  initialModel,
+  onConvIdReady,
+}) => {
   const [convId, setConvId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [defaultModel, setDefaultModel] = useState<TProviderWithModel | undefined>(initialModel);
@@ -37,7 +46,9 @@ const AcademicPathChat: React.FC<Props> = ({ taskId, taskName, plan, progress, s
     pickDefaultModel().then((m) => {
       if (!cancelled && m) setDefaultModel(m);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [initialModel]);
 
   useEffect(() => {
@@ -53,8 +64,12 @@ const AcademicPathChat: React.FC<Props> = ({ taskId, taskName, plan, progress, s
         setConvId(res.id);
         onConvIdReady?.(res.id);
       })
-      .catch((e) => { if (!cancelled) setError(String(e)); });
-    return () => { cancelled = true; };
+      .catch((e) => {
+        if (!cancelled) setError(String(e));
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [taskId, taskName, assistantId, defaultModel, onConvIdReady]);
 
   const modelSelection = useAionrsModelSelection({
@@ -79,7 +94,7 @@ const AcademicPathChat: React.FC<Props> = ({ taskId, taskName, plan, progress, s
         files: payload.files,
       });
     },
-    [convId, plan, progress, selectedCourse],
+    [convId, plan, progress, selectedCourse]
   );
 
   if (error) {

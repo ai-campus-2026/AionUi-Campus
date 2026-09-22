@@ -80,7 +80,9 @@ const BonusBoard: React.FC<BonusBoardProps> = ({ conditions, answers, evidence, 
                   </Typography.Text>
                   {condition.variants.map((variant, i) => (
                     <div key={i} className='flex items-baseline gap-6px flex-wrap'>
-                      <Typography.Text style={{ fontSize: 12 }}>{variant.requirement || variant.description}</Typography.Text>
+                      <Typography.Text style={{ fontSize: 12 }}>
+                        {variant.requirement || variant.description}
+                      </Typography.Text>
                       {variant.source_section && (
                         <Typography.Text type='secondary' style={{ fontSize: 11 }}>
                           {t('policyChecklist.sourceSection')} {variant.source_section}
