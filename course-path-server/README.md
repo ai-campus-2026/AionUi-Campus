@@ -269,7 +269,7 @@ generation. Graph generation may call `retry_curriculum_extraction` once and
 take several minutes. The existing PDF is reused; no second upload is needed.
 
 `course_path_plan` accepts optional `document_id`. When set, its deterministic
-prerequisite check uses *only* the verified catalog attached to that document.
+prerequisite check uses _only_ the verified catalog attached to that document.
 `major` and `grade` must match the catalog's major and cohort. Without
 `document_id`, it retains the legacy bundled example catalog, which is not a
 substitute for a student's uploaded plan.
@@ -532,7 +532,7 @@ present in an already-ingested document record with the same SHA-256 or in the
 file name; it is never guessed from the computer's clock. Rows lacking a
 definite course name, credit value, semester 1-8, or required/elective marker
 are skipped and counted in `warnings`. If the document does not state direct
-prerequisites per course, `prerequisites` remains empty for this *display-only*
+prerequisites per course, `prerequisites` remains empty for this _display-only_
 preview and a warning explicitly says it cannot be used to decide eligibility.
 Scanned PDFs, Word documents, and standalone images still require a separate
 OCR path and currently return a clear failure here.
