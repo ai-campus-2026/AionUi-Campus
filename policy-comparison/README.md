@@ -4,8 +4,8 @@
 
 ## 功能概述
 
-| 工具                      | 功能                                                                 |
-| ------------------------- | -------------------------------------------------------------------- |
+| 工具                      | 功能                                                                   |
+| ------------------------- | ---------------------------------------------------------------------- |
 | `compare_policy_versions` | 输入两个政策版本（路径/规则库标题/文件名），自动定位全文并输出逐条变化 |
 
 输出结构（契约 v1 `PolicyDiffResult`）：
@@ -77,7 +77,7 @@ pip install -r requirements.txt
 
 ### 4. 试跑
 
-在 Agent 对话中要求对比 `examples/` 下两版示例，或直接说“对比 学生奖学金管理办法_2024版 和 学生奖学金管理办法_2025版”。
+在 Agent 对话中要求对比 `examples/` 下两版示例，或直接说“对比 学生奖学金管理办法\_2024版 和 学生奖学金管理办法\_2025版”。
 
 ## 文件定位规则
 
@@ -91,36 +91,36 @@ pip install -r requirements.txt
 
 ## 对比引擎
 
-| 场景                       | 引擎         | aiExplanation       |
-| -------------------------- | ------------ | ------------------- |
-| 配置了 Key 且调用成功      | LLM 语义对比 | 有（≤100 字）       |
-| 未配置 Key / 超时 / 失败   | 规则对比     | 无                  |
-| LLM 未检出而规则检出变化   | 规则对比     | 无（交叉验证防漏报）|
+| 场景                     | 引擎         | aiExplanation        |
+| ------------------------ | ------------ | -------------------- |
+| 配置了 Key 且调用成功    | LLM 语义对比 | 有（≤100 字）        |
+| 未配置 Key / 超时 / 失败 | 规则对比     | 无                   |
+| LLM 未检出而规则检出变化 | 规则对比     | 无（交叉验证防漏报） |
 
 - LLM：DashScope `qwen3.7-plus`（OpenAI 兼容模式，关闭思考模式），单篇文本上限 12000 字符；
 - 规则：按 `第X条/第X章/一、/（一）/(1)/1.` 切分条款，`difflib.SequenceMatcher` 对齐为 modified/added/removed，全零依赖、离线可用。
 
 ## 契约限制（输出自动裁剪）
 
-| 项              | 限制            |
-| --------------- | --------------- |
-| changes 条数    | ≤ 20            |
-| content 长度    | ≤ 500 字符      |
-| aiExplanation   | ≤ 100 字符      |
-| context         | ≤ 2 条 × 300 字符 |
-| changeId        | `change-001` 起顺序重编 |
+| 项            | 限制                    |
+| ------------- | ----------------------- |
+| changes 条数  | ≤ 20                    |
+| content 长度  | ≤ 500 字符              |
+| aiExplanation | ≤ 100 字符              |
+| context       | ≤ 2 条 × 300 字符       |
+| changeId      | `change-001` 起顺序重编 |
 
 ## 环境变量
 
-| 变量                              | 默认值                       | 说明                       |
-| --------------------------------- | ---------------------------- | -------------------------- |
-| `DASHSCOPE_API_KEY`               | 空                           | 应用侧自动注入；空则规则对比 |
-| `POLICY_COMPARE_LLM_MODEL`        | `qwen3.7-plus`               | LLM 模型                   |
-| `POLICY_COMPARE_LLM_TIMEOUT`      | `20`                         | LLM 超时（秒）             |
-| `POLICY_COMPARE_DISABLE_LLM`      | 空                           | 置 1 强制规则对比          |
-| `KNOWLEDGE_BASE_DIR`              | `../policy-search/knowledge_base` | 规则库目录            |
-| `POLICY_COMPARE_SEARCH_DIRS`      | 桌面/下载/文档               | 文件名搜索目录（分号分隔） |
-| `POLICY_COMPARE_MATCH_THRESHOLD`  | `0.6`                        | 名称匹配最低相似度         |
+| 变量                             | 默认值                            | 说明                         |
+| -------------------------------- | --------------------------------- | ---------------------------- |
+| `DASHSCOPE_API_KEY`              | 空                                | 应用侧自动注入；空则规则对比 |
+| `POLICY_COMPARE_LLM_MODEL`       | `qwen3.7-plus`                    | LLM 模型                     |
+| `POLICY_COMPARE_LLM_TIMEOUT`     | `20`                              | LLM 超时（秒）               |
+| `POLICY_COMPARE_DISABLE_LLM`     | 空                                | 置 1 强制规则对比            |
+| `KNOWLEDGE_BASE_DIR`             | `../policy-search/knowledge_base` | 规则库目录                   |
+| `POLICY_COMPARE_SEARCH_DIRS`     | 桌面/下载/文档                    | 文件名搜索目录（分号分隔）   |
+| `POLICY_COMPARE_MATCH_THRESHOLD` | `0.6`                             | 名称匹配最低相似度           |
 
 ## 局限
 

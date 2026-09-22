@@ -237,4 +237,10 @@ graphify-out/
 # Local scratch/analysis (wireframes, candidate mockups)
 .analysis/
 temp/
-policy-search-local-backup/
+<<<<<<< HEAD
+
+=======
+# Python virtual environments
+.venv/
+**/.venv/
+>>>>>>> origin/develop
