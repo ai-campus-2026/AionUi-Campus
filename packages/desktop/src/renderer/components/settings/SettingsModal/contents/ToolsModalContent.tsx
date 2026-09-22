@@ -19,7 +19,7 @@ import AionSelect from '@/renderer/components/base/AionSelect';
 import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
 import AddMcpServerModal from '@/renderer/pages/settings/components/AddMcpServerModal';
 import McpServerItem from '@/renderer/pages/settings/ToolsSettings/McpServerItem';
-import { collectCampusPythonServers, hasCampusEnvKey } from '@/common/config/campusMcp';
+import { collectCampusMcpServers, hasCampusEnvKey } from '@/common/config/campusMcp';
 import { onCampusApiKeyDialogSaved, requestCampusApiKeyDialog } from '@/renderer/services/campusApiKeyDialogBus';
 import {
   useMcpServers,
@@ -50,17 +50,19 @@ const areEnvRecordsEqual = (a: Record<string, string>, b: Record<string, string>
 /**
  * 校园规则解码器 MCP 的 DashScope Key 状态条 / 入口（常驻）。
  *
- * 检测不靠硬编码名字、也不靠 builtin 标记（校园 MCP 常是手动添加的，builtin 为
- * false，用它当闸门会让本条永远不出现）：凡是 `python xxx/server.py` 形态的 stdio
- * MCP 都纳入检查（policy_search、rag、contract-scan 合同审查，以及后续新增的）。
+ * 检测不靠 builtin 标记（校园 MCP 常是手动添加的，builtin 为 false，用它当闸门
+ * 会让本条永远不出现），也不做「凡是 Python 启动就算校园 MCP」的泛化匹配 ——
+ * 那会把用户自己装的无关 Python MCP 误判进来。只认 campusMcp.ts 里的显式白名单：
+ * policy_search、rag、contract-scan、policy-comparison（名称或 server.py 路径命中）。
  *
  * 为什么常驻：填过 key 之后启动弹窗会按设计短路不再弹，如果本条只在「缺 key」时
  * 出现，那么全部配好后入口就彻底消失、再也没法更换/重填 key。所以只要列表里存在
- * Python MCP，本条就一直在——缺 key 时是告警态「填写 API Key」，已配好时是中性态
- * 「修改 Key」。两种按钮都通过事件总线打开全局 CampusApiKeyDialog（手动打开会预填
- * 当前已存的 key，方便更换）；弹窗保存成功后发事件让本条立即刷新，不必重开设置页。
+ * 白名单内的校园 MCP，本条就一直在——缺 key 时是告警态「填写 API Key」，已配好时
+ * 是中性态「修改 Key」。两种按钮都通过事件总线打开全局 CampusApiKeyDialog（手动
+ * 打开会预填当前已存的 key，方便更换）；弹窗保存成功后发事件让本条立即刷新，不必
+ * 重开设置页。
  *
- * 仅当列表里一个 Python MCP 都没有时才隐藏（说明确实没有需要 key 的校园 MCP）。
+ * 仅当列表里一个白名单内的校园 MCP 都没有时才隐藏（说明确实没有需要 key 的服务）。
  */
 const CampusApiKeyNotice: React.FC = () => {
   const [total, setTotal] = useState(0);
@@ -69,7 +71,7 @@ const CampusApiKeyNotice: React.FC = () => {
   const refresh = useCallback(async () => {
     try {
       const servers = (await mcpService.listServers.invoke()) || [];
-      const targets = collectCampusPythonServers(servers);
+      const targets = collectCampusMcpServers(servers);
       setTotal(targets.length);
       setMissingNames(targets.filter((server) => !hasCampusEnvKey(server)).map((server) => server.name));
     } catch (error) {
@@ -86,7 +88,7 @@ const CampusApiKeyNotice: React.FC = () => {
     });
   }, [refresh]);
 
-  // 一个 Python MCP 都没有 → 没有需要 key 的校园 MCP，整条隐藏
+  // 白名单内一个 MCP 都没有 → 没有需要 key 的校园 MCP，整条隐藏
   if (total === 0) return null;
 
   const allConfigured = missingNames.length === 0;

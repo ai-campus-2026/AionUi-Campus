@@ -9,29 +9,29 @@
  *
  * 触发条件（自动弹出，三者同时满足）：
  *   1. 后端 client preferences 里 `tools.campusMcp.dashscopeApiKey` 为空/未设置；
- *   2. MCP 列表里存在至少一个「Python stdio MCP」（stdio 且用 python 解释器启动）——
- *      这就是校园 MCP 的通用特征，不依赖 builtin 标记：policy_search / rag /
- *      contract-scan 常常是手动添加的，builtin 为 false，用 builtin 当闸门会让弹窗
- *      永远不出现；而应用自带的内置 MCP 都是 node/npx 启动，天然被排除；
- *   3. 列表里**任意一个** Python stdio MCP 的 transport.env 还没有 DASHSCOPE_API_KEY
+ *   2. MCP 列表里存在至少一个**白名单内的校园 MCP**（policy_search / rag /
+ *      contract-scan / policy-comparison，按名称或 server.py 路径标记命中，
+ *      见 common/config/campusMcp.ts 的 CAMPUS_MCP_WHITELIST）—— 白名单条目
+ *      常常是手动添加的，builtin 为 false，用 builtin 当闸门会让弹窗永远不出现；
+ *   3. 这些条目里**任意一个**的 transport.env 还没有 DASHSCOPE_API_KEY
  *      —— 注意不能看 enabled 标志：Python server 没有 key 也能正常启动并通过连接
  *      测试，enabled 只说明「进程起来了」，不代表「配置好了」。
  *
- * 检测与注入都不靠硬编码名字：凡是 `python xxx/server.py` 形态的 stdio MCP 都算
- * 校园 MCP（policy_search、rag、contract-scan 合同审查，以及后续新增的），保存时
- * 会把 key 注入到当前列表里的**全部**这类条目。
+ * 识别只认显式白名单。历史上曾按「stdio + Python 解释器命令」泛化识别，会把用户
+ * 自己装的无关 Python MCP 也误判成校园服务（误写 Key、误启用、甚至覆盖其他 MCP
+ * 自己的 DASHSCOPE_API_KEY），现已收敛为白名单，绝不能回退到泛化匹配。
  *
  * 手动入口：设置 → 工具 页的提示条通过 campusApiKeyDialogBus 发事件打开本弹窗
  * （此时即使 preferences 里已有 key 也打开，输入框预填旧值，方便更换）。
  *
  * 保存动作：
  *   - 把 key 写进 client preferences（下次启动 bootstrap 直接读到，不必再弹）；
- *   - 同步更新列表里全部 Python MCP 条目的 transport.env 与 enabled=true，让本次
- *     会话立刻可用，不必重启应用。
+ *   - 同步更新白名单内全部条目的 transport.env 与 enabled=true，让本次会话立刻
+ *     可用，不必重启应用。
  *
  * 「稍后再说」只关闭弹窗，不写任何持久化标记 —— 下次启动还会再弹。这是有意的：
  * 开发态下 key 是必需品，反复提醒比静默禁用更友好；真正不想用的人可以在设置里
- * 把这些 MCP 条目删掉（弹窗检测不到 Python MCP 就不再出现），或者配置过 key
+ * 把这些 MCP 条目删掉（弹窗检测不到白名单内 MCP 就不再出现），或者配置过 key
  * 之后再手动禁用（preferences 里已有 key 会直接短路，同样不会再弹）。
  */
 
@@ -46,7 +46,7 @@ import {
 } from '@/renderer/services/campusApiKeyDialogBus';
 import AionModal from '@/renderer/components/base/AionModal';
 import { toBackendMcpPayload } from '@/renderer/hooks/mcp/catalog';
-import { collectCampusPythonServers, hasCampusEnvKey, withCampusApiKey } from '@/common/config/campusMcp';
+import { collectCampusMcpServers, hasCampusEnvKey, withCampusApiKey } from '@/common/config/campusMcp';
 
 const CAMPUS_SETTING_KEY = 'tools.campusMcp.dashscopeApiKey' as const;
 
@@ -57,17 +57,18 @@ const CampusApiKeyDialog: React.FC = () => {
   const [campusServers, setCampusServers] = useState<IMcpServer[]>([]);
 
   /**
-   * 拉取 MCP 列表，挑出全部需要注入 key 的 Python MCP。
+   * 拉取 MCP 列表，挑出白名单内的校园 MCP（policy_search / rag / contract-scan /
+   * policy-comparison，名称或 server.py 路径标记命中）。
    *
-   * 不再用「builtin 内置标记」当闸门：校园 MCP（policy_search / rag / contract-scan）
-   * 经常是用户手动添加的，builtin 为 false/undefined，用它当闸门会导致弹窗与提示条
-   * 永远不出现。判据只剩一条 —— **stdio + Python 解释器命令**，这既能覆盖手动添加、
-   * 源码在仓库外的 contract-scan，也不会误伤 node/npx 启动的应用内置 MCP。没有任何
-   * Python MCP 时返回 null（弹窗无意义）。
+   * 不用「builtin 内置标记」当闸门：校园 MCP 经常是用户手动添加的，builtin 为
+   * false/undefined，用它当闸门会导致弹窗与提示条永远不出现；也不用「stdio +
+   * Python 解释器」的泛化特征 —— 那会把用户自己装的无关 Python MCP 也误判进来。
+   * 判据只有显式白名单（见 common/config/campusMcp.ts）。没有任何白名单条目时
+   * 返回 null（弹窗无意义）。
    */
   const loadCampusServers = useCallback(async (): Promise<IMcpServer[] | null> => {
     const servers = (await mcpService.listServers.invoke()) || [];
-    const targets = collectCampusPythonServers(servers);
+    const targets = collectCampusMcpServers(servers);
     return targets.length > 0 ? targets : null;
   }, []);
 
@@ -89,9 +90,9 @@ const CampusApiKeyDialog: React.FC = () => {
         if (existingKey && existingKey.trim()) return; // 已配置，不打扰
 
         const targets = await loadCampusServers();
-        // 列表里存在 Python stdio MCP 才有意义（否则没有需要 key 的校园 MCP）
+        // 列表里存在白名单内的校园 MCP 才有意义（否则没有需要 key 的服务）
         if (!targets) return;
-        // 列表里每一个 Python MCP 都已经在 env 里带了 key（用户自己填过），不再打扰
+        // 每一个白名单条目都已经在 env 里带了 key（用户自己填过），不再打扰
         if (targets.every(hasCampusEnvKey)) return;
 
         if (cancelled) return;
@@ -154,7 +155,7 @@ const CampusApiKeyDialog: React.FC = () => {
       // 1. 持久化 key，下次启动 bootstrap 直接读到
       await setClientBusinessSetting(CAMPUS_SETTING_KEY, trimmed);
 
-      // 2. 同步更新全部 Python MCP 条目，本次会话立刻生效
+      // 2. 同步更新白名单内全部校园 MCP 条目，本次会话立刻生效
       for (const server of campusServers) {
         const updated = withCampusApiKey(server, trimmed);
         await mcpService.updateServer.invoke({

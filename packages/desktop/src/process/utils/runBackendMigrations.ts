@@ -15,7 +15,7 @@ import {
   resolveImageGenerationMcpEnv,
   type ImageGenerationMcpEnvResolveResult,
 } from '@/common/config/imageGenerationMcpEnv';
-import { collectCampusPythonServers, hasCampusEnvKey, withCampusApiKey } from '@/common/config/campusMcp';
+import { collectCampusMcpServers, hasCampusEnvKey, withCampusApiKey } from '@/common/config/campusMcp';
 import { BUILTIN_IMAGE_GEN_NAME, type IMcpServer, type IProvider } from '@/common/config/storage';
 import { getBuiltinMcpScriptPath, type ProcessConfig as ProcessConfigType } from './initStorage';
 import {
@@ -530,22 +530,26 @@ async function ensureBootstrapMcpServersInDb(configFile: ConfigFile): Promise<vo
   }
 
   /**
-   * 通用 Key 注入：覆盖**全部** Python stdio MCP，而不只是 bootstrap 按名字注册的
-   * policy_search / rag。用户手动添加的 contract-scan（源码在仓库外 D:/contract-guard）、
-   * 以及后续新增的校园 MCP，都是 `python xxx/server.py` 形态、共用同一个 DashScope
-   * Key，理应一并被自动识别并注入。
+   * 白名单 Key 注入：只覆盖明确登记的校园 MCP（policy_search、rag、contract-scan、
+   * policy-comparison，见 campusMcp.ts 的 CAMPUS_MCP_WHITELIST），绝不碰用户自己
+   * 添加的无关 Python MCP。
    *
-   * 不再用 builtin 标记当闸门（校园 MCP 常是手动添加的，builtin 为 false，会让本段
-   * 永远跳过、contract-scan 拿不到 key）。唯一守卫是 preferences 里存有非空 Key ——
-   * 该 Key 只能由本项目的 CampusApiKeyDialog 写入，生产构建里恒为空，整段被跳过，
-   * 绝不会去碰最终用户自己装的无关 Python MCP。
+   * 历史教训：这里曾按「stdio + Python 解释器」泛化匹配，会把用户装的任何 Python
+   * MCP 都当成校园服务 —— 误写 DASHSCOPE_API_KEY（可能覆盖其他 MCP 自己的同名
+   * 变量）、误把用户禁用的条目重新启用、误改他人配置。识别规则已收敛为白名单：
+   * 名称命中或 server.py 路径标记命中。
+   *
+   * 不按 builtin 标记当闸门：校园 MCP 常是手动添加的（contract-scan /
+   * policy-comparison 就不由 bootstrap 注册），builtin 为 false。唯一守卫是
+   * preferences 里存有非空 Key —— 该 Key 只能由本项目的 CampusApiKeyDialog 写入，
+   * 生产构建里恒为空，整段被跳过。
    */
   const rawCampusKey = backendPrefs['tools.campusMcp.dashscopeApiKey'];
   const campusApiKey = typeof rawCampusKey === 'string' ? rawCampusKey.trim() : '';
   let campusKeyInjected = 0;
   if (campusApiKey) {
     const allServersNow = await mcpService.listServers.invoke();
-    for (const server of collectCampusPythonServers(allServersNow)) {
+    for (const server of collectCampusMcpServers(allServersNow)) {
       if (server.transport.type !== 'stdio') continue;
       const currentKey = server.transport.env?.DASHSCOPE_API_KEY?.trim() || '';
       // 已经是对的 Key 就跳过（bootstrap 注册的条目上面那段漂移修复已经同步过）
@@ -553,7 +557,7 @@ async function ensureBootstrapMcpServersInDb(configFile: ConfigFile): Promise<vo
 
       const updated = withCampusApiKey(server, campusApiKey);
       console.info(
-        '[Migration] injecting DashScope key into python MCP %s (had key: %s, enabled: %s)',
+        '[Migration] injecting DashScope key into campus MCP %s (had key: %s, enabled: %s)',
         server.name,
         hasCampusEnvKey(server) ? 'yes' : 'no',
         server.enabled ? 'yes' : 'no'
@@ -570,7 +574,7 @@ async function ensureBootstrapMcpServersInDb(configFile: ConfigFile): Promise<vo
           await mcpService.toggleServer.invoke({ id: server.id });
         } catch (toggleError) {
           console.warn(
-            '[Migration] python MCP %s toggleServer failed during key injection, will retry next launch',
+            '[Migration] campus MCP %s toggleServer failed during key injection, will retry next launch',
             server.name,
             toggleError
           );
@@ -581,7 +585,7 @@ async function ensureBootstrapMcpServersInDb(configFile: ConfigFile): Promise<vo
   }
 
   console.info(
-    '[Migration] MCP bootstrap completed, imported %d missing defaults, updated image server: %s, updated browser server: %s, updated campus servers: %s, injected key into %d python MCP(s), image config source: %s, image enabled: %s',
+    '[Migration] MCP bootstrap completed, imported %d missing defaults, updated image server: %s, updated browser server: %s, updated campus servers: %s, injected key into %d campus MCP(s), image config source: %s, image enabled: %s',
     missing.length,
     imageServerUpdated ? 'yes' : 'no',
     browserServerUpdated ? 'yes' : 'no',
