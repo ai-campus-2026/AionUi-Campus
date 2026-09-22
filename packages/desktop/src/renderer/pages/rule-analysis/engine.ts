@@ -128,7 +128,9 @@ const notEmpty = (v: string) => hasValue(v) && !no(v);
 /** 国家奖学金 · 条件库（14 满足 / 2 待确认 / 1 未满足 的种子口径） */
 export const SCHOLAR_CONDITIONS: ConditionRule[] = [
   {
-    id: 's-enrolled', group: 'g-basic', item: '学籍在读',
+    id: 's-enrolled',
+    group: 'g-basic',
+    item: '学籍在读',
     requirement: '全日制在读本科生',
     sourceQuote: '第二条：国家奖学金用于奖励高校全日制本专科（含高职、第二学士学位）在校生中特别优秀的学生。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第二条',
@@ -136,7 +138,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => /在读|在校/.test(v),
   },
   {
-    id: 's-registered', group: 'g-basic', item: '按时注册',
+    id: 's-registered',
+    group: 'g-basic',
+    item: '按时注册',
     requirement: '每学年按时完成注册',
     sourceQuote: '第三条：申请者须为已按时完成当学年注册的在校学生。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第三条',
@@ -144,7 +148,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: () => true,
   },
   {
-    id: 's-within-years', group: 'g-basic', item: '学制年限内',
+    id: 's-within-years',
+    group: 'g-basic',
+    item: '学制年限内',
     requirement: '处于正常学制年限内',
     sourceQuote: '第三条：申请者须处于正常学制年限内，不含延长学习年限学生。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第三条',
@@ -152,7 +158,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: () => true,
   },
   {
-    id: 's-no-discipline', group: 'g-basic', item: '无处分记录',
+    id: 's-no-discipline',
+    group: 'g-basic',
+    item: '无处分记录',
     requirement: '在校期间无纪律处分',
     sourceQuote: '第三条：申请者在校期间无违反校规校纪记录。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第三条',
@@ -160,7 +168,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => no(v),
   },
   {
-    id: 's-gpa', group: 'g-academic', item: 'GPA 成绩',
+    id: 's-gpa',
+    group: 'g-academic',
+    item: 'GPA 成绩',
     requirement: '平均学分绩点不低于 3.5',
     sourceQuote: '第四条：申请者上一学年平均学分绩点不低于 3.5。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第四条',
@@ -168,7 +178,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => gteNum(v, 3.5),
   },
   {
-    id: 's-rank', group: 'g-academic', item: '专业排名',
+    id: 's-rank',
+    group: 'g-academic',
+    item: '专业排名',
     requirement: '专业综合排名前 30%',
     sourceQuote: '第四条：申请者专业综合测评排名原则上进入前 30%。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第四条',
@@ -176,7 +188,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => ratioOk(v, 0.3),
   },
   {
-    id: 's-no-fail', group: 'g-academic', item: '无挂科记录',
+    id: 's-no-fail',
+    group: 'g-academic',
+    item: '无挂科记录',
     requirement: '上一学年无不及格课程',
     sourceQuote: '第四条：申请者上一学年无不及格课程记录。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第四条',
@@ -184,7 +198,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => no(v),
   },
   {
-    id: 's-course-min', group: 'g-academic', item: '课程成绩',
+    id: 's-course-min',
+    group: 'g-academic',
+    item: '课程成绩',
     requirement: '全部课程成绩不低于 60 分',
     sourceQuote: '第四条：申请者课程成绩均不低于 60 分。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第四条',
@@ -192,7 +208,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => no(v) || /不低于|≥|60/.test(v),
   },
   {
-    id: 's-cet4', group: 'g-english', item: 'CET-4 成绩',
+    id: 's-cet4',
+    group: 'g-english',
+    item: 'CET-4 成绩',
     requirement: 'CET-4 不低于 425 分',
     sourceQuote: '第五条：申请者须通过全国大学英语四级考试（425 分及以上）。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第五条',
@@ -200,7 +218,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => gteNum(v, 425),
   },
   {
-    id: 's-cet6', group: 'g-english', item: 'CET-6 成绩',
+    id: 's-cet6',
+    group: 'g-english',
+    item: 'CET-6 成绩',
     requirement: 'CET-6 不低于 450 分',
     sourceQuote: '第五条：同等条件下，通过六级考试（450 分及以上）者优先。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第五条',
@@ -208,7 +228,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => gteNum(v, 450),
   },
   {
-    id: 's-comprehensive', group: 'g-performance', item: '综合测评',
+    id: 's-comprehensive',
+    group: 'g-performance',
+    item: '综合测评',
     requirement: '综合测评成绩不低于 85 分',
     sourceQuote: '第六条：申请者综合测评成绩不低于 85 分。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第六条',
@@ -216,7 +238,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => gteNum(v, 85),
   },
   {
-    id: 's-volunteer', group: 'g-performance', item: '志愿服务',
+    id: 's-volunteer',
+    group: 'g-performance',
+    item: '志愿服务',
     requirement: '年度志愿服务不少于 20 小时',
     sourceQuote: '第六条：申请者当学年志愿服务时长不少于 20 小时。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第六条',
@@ -227,7 +251,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     },
   },
   {
-    id: 's-no-violation', group: 'g-performance', item: '无违纪记录',
+    id: 's-no-violation',
+    group: 'g-performance',
+    item: '无违纪记录',
     requirement: '当学年无违纪记录',
     sourceQuote: '第六条：申请者当学年无违纪违规记录。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第六条',
@@ -235,7 +261,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => no(v),
   },
   {
-    id: 's-research', group: 'g-apply', item: '科研成果',
+    id: 's-research',
+    group: 'g-apply',
+    item: '科研成果',
     requirement: '至少 1 项公开发表成果或科研项目',
     sourceQuote: '第七条：申请者须具有至少 1 项公开发表的学术成果或主持/参与的科研项目。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第七条',
@@ -243,7 +271,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => notEmpty(v),
   },
   {
-    id: 's-recommendation', group: 'g-apply', item: '专家推荐信',
+    id: 's-recommendation',
+    group: 'g-apply',
+    item: '专家推荐信',
     requirement: '至少 1 封专家推荐信',
     sourceQuote: '第七条：申请者须提交至少 1 封任课教师或导师推荐信。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第七条',
@@ -251,7 +281,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => notEmpty(v),
   },
   {
-    id: 's-activity', group: 'g-apply', item: '学术活动参与',
+    id: 's-activity',
+    group: 'g-apply',
+    item: '学术活动参与',
     requirement: '参加校级及以上学术活动',
     sourceQuote: '第七条：申请者须参加校级及以上学术活动或学科竞赛。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第七条',
@@ -259,7 +291,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
     judge: (v) => !/^无|未提供/.test(v) && /参加|有/.test(v),
   },
   {
-    id: 's-materials', group: 'g-materials', item: '申请材料',
+    id: 's-materials',
+    group: 'g-materials',
+    item: '申请材料',
     requirement: '按要求提交全部申请材料',
     sourceQuote: '第八条：申请者须按要求完整提交申请材料，逾期不予受理。',
     sourceFile: '《XX大学国家奖学金评定办法》2026版 · 第八条',
@@ -271,7 +305,9 @@ export const SCHOLAR_CONDITIONS: ConditionRule[] = [
 /** 研究生推免 · 条件库（推免 2026 版：GPA 门槛 3.7） */
 export const TUIMIAN_CONDITIONS: ConditionRule[] = [
   {
-    id: 't-enrolled', group: 'g-basic', item: '学籍在读',
+    id: 't-enrolled',
+    group: 'g-basic',
+    item: '学籍在读',
     requirement: '应届本科毕业生',
     sourceQuote: '第二条：推荐对象为当年应届本科毕业生。',
     sourceFile: '《XX大学推荐免试攻读研究生工作办法》2026版 · 第二条',
@@ -279,7 +315,9 @@ export const TUIMIAN_CONDITIONS: ConditionRule[] = [
     judge: (v) => /在读|在校/.test(v),
   },
   {
-    id: 't-no-discipline', group: 'g-basic', item: '无处分记录',
+    id: 't-no-discipline',
+    group: 'g-basic',
+    item: '无处分记录',
     requirement: '在校期间无纪律处分',
     sourceQuote: '第三条：申请者在校期间无违反校规校纪记录。',
     sourceFile: '《XX大学推荐免试攻读研究生工作办法》2026版 · 第三条',
@@ -287,7 +325,9 @@ export const TUIMIAN_CONDITIONS: ConditionRule[] = [
     judge: (v) => no(v),
   },
   {
-    id: 't-rank', group: 'g-academic', item: '专业排名',
+    id: 't-rank',
+    group: 'g-academic',
+    item: '专业排名',
     requirement: '专业综合排名前 20%',
     sourceQuote: '第四条：申请者专业综合排名原则上进入前 20%。',
     sourceFile: '《XX大学推荐免试攻读研究生工作办法》2026版 · 第四条',
@@ -295,7 +335,9 @@ export const TUIMIAN_CONDITIONS: ConditionRule[] = [
     judge: (v) => ratioOk(v, 0.2),
   },
   {
-    id: 't-gpa', group: 'g-academic', item: 'GPA 成绩',
+    id: 't-gpa',
+    group: 'g-academic',
+    item: 'GPA 成绩',
     requirement: '平均学分绩点不低于 3.7（2026 版调整）',
     sourceQuote: '第四条：申请者平均学分绩点不低于 3.7（2025 版为 3.8，2026 版起放宽）。',
     sourceFile: '《XX大学推荐免试攻读研究生工作办法》2026版 · 第四条',
@@ -303,7 +345,9 @@ export const TUIMIAN_CONDITIONS: ConditionRule[] = [
     judge: (v) => gteNum(v, 3.7),
   },
   {
-    id: 't-no-fail', group: 'g-academic', item: '无挂科记录',
+    id: 't-no-fail',
+    group: 'g-academic',
+    item: '无挂科记录',
     requirement: '在校期间无不及格课程',
     sourceQuote: '第四条：申请者在校期间无不及格课程记录。',
     sourceFile: '《XX大学推荐免试攻读研究生工作办法》2026版 · 第四条',
@@ -311,7 +355,9 @@ export const TUIMIAN_CONDITIONS: ConditionRule[] = [
     judge: (v) => no(v),
   },
   {
-    id: 't-cet6', group: 'g-english', item: 'CET-6 成绩',
+    id: 't-cet6',
+    group: 'g-english',
+    item: 'CET-6 成绩',
     requirement: 'CET-6 不低于 425 分',
     sourceQuote: '第五条：申请者须通过全国大学英语六级考试（425 分及以上）。',
     sourceFile: '《XX大学推荐免试攻读研究生工作办法》2026版 · 第五条',
@@ -319,7 +365,9 @@ export const TUIMIAN_CONDITIONS: ConditionRule[] = [
     judge: (v) => gteNum(v, 425),
   },
   {
-    id: 't-comprehensive', group: 'g-performance', item: '综合测评',
+    id: 't-comprehensive',
+    group: 'g-performance',
+    item: '综合测评',
     requirement: '综合测评成绩不低于 85 分',
     sourceQuote: '第六条：申请者综合测评成绩不低于 85 分。',
     sourceFile: '《XX大学推荐免试攻读研究生工作办法》2026版 · 第六条',
@@ -327,7 +375,9 @@ export const TUIMIAN_CONDITIONS: ConditionRule[] = [
     judge: (v) => gteNum(v, 85),
   },
   {
-    id: 't-research', group: 'g-apply', item: '科研经历',
+    id: 't-research',
+    group: 'g-apply',
+    item: '科研经历',
     requirement: '具有科研经历或学术成果',
     sourceQuote: '第七条：申请者须具有科研训练经历或公开发表学术成果。',
     sourceFile: '《XX大学推荐免试攻读研究生工作办法》2026版 · 第七条',
@@ -345,7 +395,9 @@ export interface MatchOutcome {
 /** 学业奖学金 · 条件库（轻量，适合学业奖学金 / 励志类评定） */
 export const STUDY_CONDITIONS: ConditionRule[] = [
   {
-    id: 'y-enrolled', group: 'g-basic', item: '学籍在读',
+    id: 'y-enrolled',
+    group: 'g-basic',
+    item: '学籍在读',
     requirement: '全日制在读学生',
     sourceQuote: '第二条：学业奖学金用于奖励在校期间学业表现良好的全日制学生。',
     sourceFile: '《XX大学学业奖学金评定办法》2026版 · 第二条',
@@ -353,7 +405,9 @@ export const STUDY_CONDITIONS: ConditionRule[] = [
     judge: (v) => /在读|在校/.test(v),
   },
   {
-    id: 'y-no-discipline', group: 'g-basic', item: '无处分记录',
+    id: 'y-no-discipline',
+    group: 'g-basic',
+    item: '无处分记录',
     requirement: '在校期间无纪律处分',
     sourceQuote: '第三条：申请者在校期间无违反校规校纪记录。',
     sourceFile: '《XX大学学业奖学金评定办法》2026版 · 第三条',
@@ -361,7 +415,9 @@ export const STUDY_CONDITIONS: ConditionRule[] = [
     judge: (v) => no(v),
   },
   {
-    id: 'y-gpa', group: 'g-academic', item: 'GPA 成绩',
+    id: 'y-gpa',
+    group: 'g-academic',
+    item: 'GPA 成绩',
     requirement: '平均学分绩点不低于 2.8',
     sourceQuote: '第四条：申请者上一学年平均学分绩点不低于 2.8。',
     sourceFile: '《XX大学学业奖学金评定办法》2026版 · 第四条',
@@ -369,7 +425,9 @@ export const STUDY_CONDITIONS: ConditionRule[] = [
     judge: (v) => gteNum(v, 2.8),
   },
   {
-    id: 'y-no-fail', group: 'g-academic', item: '无挂科记录',
+    id: 'y-no-fail',
+    group: 'g-academic',
+    item: '无挂科记录',
     requirement: '上一学年无不及格课程',
     sourceQuote: '第四条：申请者上一学年无不及格课程。',
     sourceFile: '《XX大学学业奖学金评定办法》2026版 · 第四条',
@@ -377,7 +435,9 @@ export const STUDY_CONDITIONS: ConditionRule[] = [
     judge: (v) => no(v),
   },
   {
-    id: 'y-comprehensive', group: 'g-performance', item: '综合测评',
+    id: 'y-comprehensive',
+    group: 'g-performance',
+    item: '综合测评',
     requirement: '综合测评成绩不低于 75 分',
     sourceQuote: '第五条：申请者综合测评成绩须达到良好以上。',
     sourceFile: '《XX大学学业奖学金评定办法》2026版 · 第五条',
@@ -398,7 +458,7 @@ export const GROUPS: { id: string; label: string }[] = [
 export function matchConditions(profile: UserProfile, conditions: ConditionRule[]): MatchOutcome {
   const rows: MatchResult[] = conditions.map((c) => {
     const first = c.dependsOn[0];
-    const fv = first ? profile.fields[first]?.value ?? UNPROVIDED : UNPROVIDED;
+    const fv = first ? (profile.fields[first]?.value ?? UNPROVIDED) : UNPROVIDED;
     let state: ConditionState;
     if (!hasValue(fv)) {
       state = 'missing';
@@ -495,7 +555,11 @@ export function detectGoal(text: string): GoalPick | null {
   const t = text.replace(/\s/g, '');
   for (const g of GOALS) {
     if (g.detect.test(t)) {
-      return { goalKey: g.goalKey, title: g.title, ambiguous: !!g.vague && g.vague.test(t) && /呢|吗|怎么样|看看|那/.test(t) };
+      return {
+        goalKey: g.goalKey,
+        title: g.title,
+        ambiguous: !!g.vague && g.vague.test(t) && /呢|吗|怎么样|看看|那/.test(t),
+      };
     }
   }
   return null;
@@ -700,7 +764,14 @@ export function createSeedState(): WorkbenchState {
       version: 1,
       createdAt: '2026-09-01',
       analysisTaskId: 'task-scholar',
-      profileSnapshot: snapshotEntries(profile, ['basic.enrolled', 'basic.grade', 'academic.gpa', 'academic.fail', 'english.cet4', 'other.discipline']),
+      profileSnapshot: snapshotEntries(profile, [
+        'basic.enrolled',
+        'basic.grade',
+        'academic.gpa',
+        'academic.fail',
+        'english.cet4',
+        'other.discipline',
+      ]),
       policyVersion: pvScholar,
       matchResults: scholarMcp,
       summary: { met: 12, missing: 4, notMet: 1 },
@@ -714,7 +785,15 @@ export function createSeedState(): WorkbenchState {
       version: 2,
       createdAt: '2026-09-08',
       analysisTaskId: 'task-scholar',
-      profileSnapshot: snapshotEntries(profile, ['basic.enrolled', 'basic.grade', 'academic.gpa', 'academic.rank', 'academic.fail', 'english.cet4', 'other.discipline']),
+      profileSnapshot: snapshotEntries(profile, [
+        'basic.enrolled',
+        'basic.grade',
+        'academic.gpa',
+        'academic.rank',
+        'academic.fail',
+        'english.cet4',
+        'other.discipline',
+      ]),
       policyVersion: pvScholar,
       matchResults: scholarMcp,
       summary: { met: 13, missing: 3, notMet: 1 },
@@ -729,9 +808,18 @@ export function createSeedState(): WorkbenchState {
       createdAt: '2026-09-12',
       analysisTaskId: 'task-scholar',
       profileSnapshot: snapshotEntries(profile, [
-        'basic.enrolled', 'basic.grade', 'academic.gpa', 'academic.rank', 'academic.fail',
-        'english.cet4', 'performance.volunteer', 'performance.activity', 'awards.awards',
-        'other.discipline', 'other.recommendation', 'other.materials',
+        'basic.enrolled',
+        'basic.grade',
+        'academic.gpa',
+        'academic.rank',
+        'academic.fail',
+        'english.cet4',
+        'performance.volunteer',
+        'performance.activity',
+        'awards.awards',
+        'other.discipline',
+        'other.recommendation',
+        'other.materials',
       ]),
       policyVersion: pvScholar,
       matchResults: scholarMcp,
@@ -743,7 +831,15 @@ export function createSeedState(): WorkbenchState {
       version: 1,
       createdAt: '2026-09-02',
       analysisTaskId: 'task-tuimian',
-      profileSnapshot: snapshotEntries(profile, ['basic.enrolled', 'basic.grade', 'academic.gpa', 'academic.rank', 'academic.fail', 'english.cet4', 'other.discipline']),
+      profileSnapshot: snapshotEntries(profile, [
+        'basic.enrolled',
+        'basic.grade',
+        'academic.gpa',
+        'academic.rank',
+        'academic.fail',
+        'english.cet4',
+        'other.discipline',
+      ]),
       // 锁定旧版政策：2025 版（GPA 门槛 3.8）
       policyVersion: pvTuimian25,
       matchResults: engineGroupsToMcp(tuimian.groups).map((g) => ({

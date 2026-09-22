@@ -495,9 +495,15 @@
   flex-shrink: 0;
 }
 
-.cr-diagnosis__item-dot--high { background: color-mix(in srgb, var(--color-danger-6) 75%, transparent); }
-.cr-diagnosis__item-dot--medium { background: color-mix(in srgb, var(--color-warning-6) 80%, transparent); }
-.cr-diagnosis__item-dot--low { background: var(--color-fill-4); }
+.cr-diagnosis__item-dot--high {
+  background: color-mix(in srgb, var(--color-danger-6) 75%, transparent);
+}
+.cr-diagnosis__item-dot--medium {
+  background: color-mix(in srgb, var(--color-warning-6) 80%, transparent);
+}
+.cr-diagnosis__item-dot--low {
+  background: var(--color-fill-4);
+}
 
 .cr-diagnosis__verify {
   display: flex;
@@ -595,7 +601,10 @@
   max-height: 0;
   opacity: 0;
   transform: translateY(-4px);
-  transition: max-height 0.28s ease-out, opacity 0.25s ease-out, transform 0.28s ease-out;
+  transition:
+    max-height 0.28s ease-out,
+    opacity 0.25s ease-out,
+    transform 0.28s ease-out;
 }
 
 .cr-diagnosis__collapsible--open {

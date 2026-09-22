@@ -86,7 +86,9 @@ export function adaptQueryPolicyResult(result: BackendPolicyResult): AdaptedChec
       description: m.requirement ?? m.detail ?? '',
       type: inferType(board),
       board,
-      input_kind: (['number', 'range', 'select', 'yes_no', 'text', 'upload', 'none'] as const).includes(m.input_kind as never)
+      input_kind: (['number', 'range', 'select', 'yes_no', 'text', 'upload', 'none'] as const).includes(
+        m.input_kind as never
+      )
         ? (m.input_kind as PolicyCondition['input_kind'])
         : 'none',
       requires_evidence: m.requires_evidence ?? false,

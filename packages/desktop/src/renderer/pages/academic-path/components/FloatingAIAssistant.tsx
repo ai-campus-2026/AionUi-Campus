@@ -101,7 +101,9 @@ const FloatingAIAssistant: React.FC<Props> = ({ selectedCourse, plan, progress, 
     try {
       const raw = localStorage.getItem('academic-path:my-info');
       if (raw) return JSON.parse(raw);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return {};
   };
   const [convId, setConvId] = useState<string | null>(null);
@@ -205,33 +207,39 @@ const FloatingAIAssistant: React.FC<Props> = ({ selectedCourse, plan, progress, 
     };
   }, []);
 
-  const handleFabMouseDown = useCallback((e: React.MouseEvent) => {
-    dragRef.current = {
-      dragging: true,
-      startX: e.clientX,
-      startY: e.clientY,
-      origX: pos.x,
-      origY: pos.y,
-      moved: false,
-    };
-    setHint(null);
-    e.preventDefault();
-  }, [pos]);
+  const handleFabMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      dragRef.current = {
+        dragging: true,
+        startX: e.clientX,
+        startY: e.clientY,
+        origX: pos.x,
+        origY: pos.y,
+        moved: false,
+      };
+      setHint(null);
+      e.preventDefault();
+    },
+    [pos]
+  );
 
-  const handleResizeStart = useCallback((dir: ResizeDir) => (e: React.MouseEvent) => {
-    const currentPos = popupOffset || calcPopupInitialPos(quadrant, popupSize.width, popupSize.height);
-    resizeRef.current = {
-      active: dir,
-      startX: e.clientX,
-      startY: e.clientY,
-      startLeft: currentPos.left,
-      startTop: currentPos.top,
-      startW: popupSize.width,
-      startH: popupSize.height,
-    };
-    e.preventDefault();
-    e.stopPropagation();
-  }, [popupOffset, popupSize, quadrant]);
+  const handleResizeStart = useCallback(
+    (dir: ResizeDir) => (e: React.MouseEvent) => {
+      const currentPos = popupOffset || calcPopupInitialPos(quadrant, popupSize.width, popupSize.height);
+      resizeRef.current = {
+        active: dir,
+        startX: e.clientX,
+        startY: e.clientY,
+        startLeft: currentPos.left,
+        startTop: currentPos.top,
+        startW: popupSize.width,
+        startH: popupSize.height,
+      };
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    [popupOffset, popupSize, quadrant]
+  );
 
   const handleFabClick = useCallback(() => {
     if (dragRef.current.moved) {
@@ -276,7 +284,7 @@ const FloatingAIAssistant: React.FC<Props> = ({ selectedCourse, plan, progress, 
         setTimeout(() => setThinking(false), 1500);
       }
     },
-    [convId, selectedCourse, plan, progress],
+    [convId, selectedCourse, plan, progress]
   );
 
   const handleConvIdReady = useCallback((id: string) => {
@@ -299,22 +307,19 @@ const FloatingAIAssistant: React.FC<Props> = ({ selectedCourse, plan, progress, 
   ];
 
   return (
-    <div
-      className="ap-ai-fab-wrapper"
-      style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
-    >
+    <div className='ap-ai-fab-wrapper' style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}>
       {/* 定时提示语 */}
       {hint && !open && (
         <div className={hintClass}>
-          <span className="ap-ai-hint__text">{hint}</span>
-          <span className="ap-ai-hint__arrow" />
+          <span className='ap-ai-hint__text'>{hint}</span>
+          <span className='ap-ai-hint__arrow' />
         </div>
       )}
 
       {/* 展开的聊天框（position: absolute，相对于 wrapper） */}
       {open && (
         <div
-          className="ap-ai-popup"
+          className='ap-ai-popup'
           style={{
             position: 'absolute',
             left: popupPos.left,
@@ -328,48 +333,38 @@ const FloatingAIAssistant: React.FC<Props> = ({ selectedCourse, plan, progress, 
             <div key={dir} className={className} onMouseDown={handleResizeStart(dir)} />
           ))}
 
-          <div className="ap-ai-popup__header">
-            <div className="ap-ai-popup__header-info">
-              <span className="ap-ai-popup__title">AI 学业助手</span>
-              <span className="ap-ai-popup__subtitle">基于你的培养方案和当前学业状态</span>
+          <div className='ap-ai-popup__header'>
+            <div className='ap-ai-popup__header-info'>
+              <span className='ap-ai-popup__title'>AI 学业助手</span>
+              <span className='ap-ai-popup__subtitle'>基于你的培养方案和当前学业状态</span>
             </div>
-            <button
-              type="button"
-              className="ap-ai-popup__close"
-              onClick={() => setOpen(false)}
-              aria-label="关闭"
-            >
+            <button type='button' className='ap-ai-popup__close' onClick={() => setOpen(false)} aria-label='关闭'>
               ✕
             </button>
           </div>
 
           {selectedCourse && (
-            <div className="ap-ai-popup__context">
-              <span className="ap-ai-popup__context-label">当前查看</span>
-              <span className="ap-ai-popup__context-course">「{selectedCourse.name}」</span>
-              <span className="ap-ai-popup__context-meta">
+            <div className='ap-ai-popup__context'>
+              <span className='ap-ai-popup__context-label'>当前查看</span>
+              <span className='ap-ai-popup__context-course'>「{selectedCourse.name}」</span>
+              <span className='ap-ai-popup__context-meta'>
                 {selectedCourse.credits}学分 · {selectedCourse.categoryLabel}
               </span>
             </div>
           )}
 
-          <div className="ap-ai-popup__quick">
+          <div className='ap-ai-popup__quick'>
             {quickQuestions.map((q) => (
-              <button
-                key={q}
-                type="button"
-                className="ap-ai-popup__quick-btn"
-                onClick={() => handleSendQuick(q)}
-              >
+              <button key={q} type='button' className='ap-ai-popup__quick-btn' onClick={() => handleSendQuick(q)}>
                 {q}
               </button>
             ))}
           </div>
 
-          <div className="ap-ai-popup__body">
+          <div className='ap-ai-popup__body'>
             <AcademicPathChat
-              taskId="academic-path-main"
-              taskName="学业路径助手"
+              taskId='academic-path-main'
+              taskName='学业路径助手'
               plan={plan}
               progress={progress}
               selectedCourse={selectedCourse}
@@ -381,33 +376,33 @@ const FloatingAIAssistant: React.FC<Props> = ({ selectedCourse, plan, progress, 
 
       {/* 悬浮 AI 核心（可拖拽） */}
       <button
-        type="button"
+        type='button'
         className={`ap-ai-fab ${open ? 'ap-ai-fab--open' : ''} ${thinking ? 'ap-ai-fab--thinking' : ''}`}
         onMouseDown={handleFabMouseDown}
         onClick={handleFabClick}
         aria-label={open ? '关闭 AI 学业助手' : '打开 AI 学业助手'}
       >
         {/* 外层光晕 */}
-        <span className="ap-ai-fab__halo" />
-        <span className="ap-ai-fab__halo ap-ai-fab__halo--outer" />
+        <span className='ap-ai-fab__halo' />
+        <span className='ap-ai-fab__halo ap-ai-fab__halo--outer' />
 
         {/* 双旋转环 */}
-        <span className="ap-ai-fab__ring ap-ai-fab__ring--outer">
-          <span className="ap-ai-fab__ring-dot ap-ai-fab__ring-dot--1" />
-          <span className="ap-ai-fab__ring-dot ap-ai-fab__ring-dot--2" />
+        <span className='ap-ai-fab__ring ap-ai-fab__ring--outer'>
+          <span className='ap-ai-fab__ring-dot ap-ai-fab__ring-dot--1' />
+          <span className='ap-ai-fab__ring-dot ap-ai-fab__ring-dot--2' />
         </span>
-        <span className="ap-ai-fab__ring ap-ai-fab__ring--inner">
-          <span className="ap-ai-fab__ring-dot ap-ai-fab__ring-dot--3" />
+        <span className='ap-ai-fab__ring ap-ai-fab__ring--inner'>
+          <span className='ap-ai-fab__ring-dot ap-ai-fab__ring-dot--3' />
         </span>
 
         {/* AI 核心球体 */}
-        <span className="ap-ai-fab__core">
-          <span className="ap-ai-fab__core-inner" />
-          <span className="ap-ai-fab__core-shine" />
+        <span className='ap-ai-fab__core'>
+          <span className='ap-ai-fab__core-inner' />
+          <span className='ap-ai-fab__core-shine' />
         </span>
 
         {/* 常驻标签 */}
-        <span className="ap-ai-fab__tag">学业问题，问我</span>
+        <span className='ap-ai-fab__tag'>学业问题，问我</span>
       </button>
     </div>
   );

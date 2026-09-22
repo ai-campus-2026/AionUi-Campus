@@ -100,7 +100,10 @@ async function loadEnabledMcpServers(): Promise<{
   const enabled = all.filter((s) => s.enabled !== false && s.id);
   const userServerIds = enabled.map((s) => s.id);
   const sessionServers = enabled.map((s) => toSessionMcpServer(s));
-  console.log('[contract-scan] all enabled MCP:', enabled.map((s) => ({id: s.id, name: s.name, builtin: s.builtin})));
+  console.log(
+    '[contract-scan] all enabled MCP:',
+    enabled.map((s) => ({ id: s.id, name: s.name, builtin: s.builtin }))
+  );
   return { userServerIds, sessionServers };
 }
 
@@ -141,7 +144,7 @@ export async function ensureConversation(): Promise<string> {
 
   save(result.id);
   console.log(
-    `[contract-scan] conversation created: id=${result.id} assistant=${assistant?.id ?? 'none'} mcp=${mcp.userServerIds.length} user-servers`,
+    `[contract-scan] conversation created: id=${result.id} assistant=${assistant?.id ?? 'none'} mcp=${mcp.userServerIds.length} user-servers`
   );
   // 预热运行时：会话首次打开时后端才物化 session，主动 ensure 尽早暴露失败
   ipcBridge.conversation.ensureRuntime.invoke({ conversation_id: result.id }).catch(() => {});
@@ -235,7 +238,7 @@ async function findReportInTools(tools: NormalizedToolCall[]): Promise<ContractR
 export async function pollScanResult(
   conversationId: string | null,
   onStatusChange?: (status: ScanStatus) => void,
-  timeoutMs = 600000,
+  timeoutMs = 600000
 ): Promise<ContractReport> {
   const id = conversationId ?? convId;
   if (!id) throw new Error('会话尚未创建');
@@ -252,9 +255,13 @@ export async function pollScanResult(
       const page = await loadLatestConversationMessages(id, { limit: 100, contentMode: 'full' });
       console.log('[contract-scan] poll: got', page.items?.length, 'messages');
       const toolMsgs = (page.items ?? []).filter(
-        (m): m is ToolMessage => m.type === 'tool_call' || m.type === 'tool_group' || m.type === 'acp_tool_call',
+        (m): m is ToolMessage => m.type === 'tool_call' || m.type === 'tool_group' || m.type === 'acp_tool_call'
       );
-      console.log('[contract-scan] tool messages:', toolMsgs.length, toolMsgs.map((m: any) => m.name));
+      console.log(
+        '[contract-scan] tool messages:',
+        toolMsgs.length,
+        toolMsgs.map((m: any) => m.name)
+      );
       if (toolMsgs.length === 0) continue;
 
       const result = await findReportInTools(normalizeToolMessages(toolMsgs));

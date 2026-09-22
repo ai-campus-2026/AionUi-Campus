@@ -52,8 +52,7 @@ const PolicyEntryView: React.FC<{
           <div className='ra-entry__inner'>
             <div className='ra-entry__title'>你想了解哪项校园政策？</div>
             <div className='ra-entry__sub'>
-              告诉我你的目标，AI 会基于你的长期个人信息持续分析；
-              每次重新分析只生成一份新的报告快照，历史结果永远保留。
+              告诉我你的目标，AI 会基于你的长期个人信息持续分析； 每次重新分析只生成一份新的报告快照，历史结果永远保留。
             </div>
             <div className='ra-entry__hint'>
               提示：指明具体政策名称（如「国家奖学金评定办法」「保研政策」）可获得更准确的分析结果
@@ -62,7 +61,12 @@ const PolicyEntryView: React.FC<{
             <div className='ra-entry__quick'>
               <span className='ra-entry__quick-label'>试试</span>
               {QUICK.map((q) => (
-                <button key={q.goalKey} type='button' className='ra-chip' onClick={() => void sendQuickPrompt(q.prompt)}>
+                <button
+                  key={q.goalKey}
+                  type='button'
+                  className='ra-chip'
+                  onClick={() => void sendQuickPrompt(q.prompt)}
+                >
                   {q.label}
                 </button>
               ))}
@@ -76,36 +80,34 @@ const PolicyEntryView: React.FC<{
                     .toSorted((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
                     .slice(0, 4)
                     .map((t) => {
-                    const latest = reports
-                      .filter((r) => r.analysisTaskId === t.id)
-                      .toSorted((a, b) => b.version - a.version)[0];
-                    return (
-                      <button
-                        key={t.id}
-                        type='button'
-                        className='ra-entry__recent-item'
-                        onClick={() => api.openInterpret(t.id)}
-                      >
-                        <span className='ra-entry__recent-name'>{t.title}</span>
-                        {latest ? (
-                          <span className='ra-entry__recent-meta'>
-                            V{latest.version} · {latest.createdAt} · ✓ {latest.summary.met} / !{' '}
-                            {latest.summary.missing} / × {latest.summary.notMet}
+                      const latest = reports
+                        .filter((r) => r.analysisTaskId === t.id)
+                        .toSorted((a, b) => b.version - a.version)[0];
+                      return (
+                        <button
+                          key={t.id}
+                          type='button'
+                          className='ra-entry__recent-item'
+                          onClick={() => api.openInterpret(t.id)}
+                        >
+                          <span className='ra-entry__recent-name'>{t.title}</span>
+                          {latest ? (
+                            <span className='ra-entry__recent-meta'>
+                              V{latest.version} · {latest.createdAt} · ✓ {latest.summary.met} / !{' '}
+                              {latest.summary.missing} / × {latest.summary.notMet}
+                            </span>
+                          ) : (
+                            <span className='ra-entry__recent-meta'>尚未生成快照</span>
+                          )}
+                          <span className='ra-entry__recent-go'>
+                            <Right size={13} theme='outline' fill='currentColor' />
                           </span>
-                        ) : (
-                          <span className='ra-entry__recent-meta'>尚未生成快照</span>
-                        )}
-                        <span className='ra-entry__recent-go'>
-                          <Right size={13} theme='outline' fill='currentColor' />
-                        </span>
-                      </button>
-                    );
-                  })}
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
             )}
-
-
           </div>
         </div>
       </div>

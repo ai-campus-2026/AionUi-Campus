@@ -78,7 +78,8 @@ const ChecklistSection: React.FC<{
           {docMeta.title}
         </Typography.Title>
         <Typography.Text type='secondary' style={{ fontSize: 13 }}>
-          {docMeta.school} · {docMeta.department} · {t('policyChecklist.metaEffective', { date: docMeta.effective_date })}
+          {docMeta.school} · {docMeta.department} ·{' '}
+          {t('policyChecklist.metaEffective', { date: docMeta.effective_date })}
         </Typography.Text>
         <Typography.Text type='secondary' style={{ fontSize: 12 }}>
           {t('policyChecklist.metaSource')}：{docMeta.source_file}
@@ -154,7 +155,12 @@ const ChecklistSection: React.FC<{
               <div className='flex items-center gap-8px'>
                 <span
                   className='px-8px py-2px rd-6px'
-                  style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-warning-6)', background: 'var(--color-warning-1)' }}
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: 'var(--color-warning-6)',
+                    background: 'var(--color-warning-1)',
+                  }}
                 >
                   ⚠ {t('policyChecklist.submittedPendingTitle', { count: pendingCount })}
                 </span>
@@ -184,7 +190,12 @@ const ChecklistSection: React.FC<{
               <div className='flex items-center gap-8px'>
                 <span
                   className='px-8px py-2px rd-6px'
-                  style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-success-6)', background: 'var(--color-success-1)' }}
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: 'var(--color-success-6)',
+                    background: 'var(--color-success-1)',
+                  }}
                 >
                   ✓ {t('policyChecklist.submittedConfirmedTitle', { count: confirmedCount })}
                 </span>
@@ -220,10 +231,7 @@ const PolicyChecklistPage: React.FC = () => {
   const { rawResults, hints, selectedDocs } = usePolicyChecklistPanel();
 
   // 实时数据源：完整 results 数组 → 每份政策适配一份清单
-  const liveList = useMemo(
-    () => (rawResults ? rawResults.map((r) => adaptQueryPolicyResult(r)) : []),
-    [rawResults]
-  );
+  const liveList = useMemo(() => (rawResults ? rawResults.map((r) => adaptQueryPolicyResult(r)) : []), [rawResults]);
 
   // 按工作台所选文件（标题）过滤；未选 → 全部；选了但返回里没有 → 全部（不空白）
   const sources = useMemo(() => {
@@ -314,10 +322,7 @@ const PolicyChecklistPage: React.FC = () => {
   }
 
   return (
-    <div
-      className='mx-auto flex flex-col gap-24px pt-40px px-24px pb-48px'
-      style={{ maxWidth: 860 }}
-    >
+    <div className='mx-auto flex flex-col gap-24px pt-40px px-24px pb-48px' style={{ maxWidth: 860 }}>
       {/* 顶部：实时标记 + 过滤提示 */}
       <div className='flex items-center gap-8px flex-wrap'>
         <Tag color='green'>{t('policyChecklist.liveTag')}</Tag>

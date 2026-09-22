@@ -43,10 +43,7 @@ const ScanningView: React.FC<ScanningViewProps> = ({ onCancel }) => {
 
         <div className={'csSteps'}>
           {steps.map((step, i) => (
-            <div
-              key={step.key}
-              className={`csStep ${styles[`csStep_${step.status}`]}`}
-            >
+            <div key={step.key} className={`csStep ${styles[`csStep_${step.status}`]}`}>
               <span className={'csStepIcon'}>
                 {step.status === 'completed' ? '✓' : step.status === 'running' ? '◉' : '○'}
               </span>
@@ -55,11 +52,7 @@ const ScanningView: React.FC<ScanningViewProps> = ({ onCancel }) => {
           ))}
         </div>
 
-        <button
-          type='button'
-          className={'csCancelBtn'}
-          onClick={onCancel}
-        >
+        <button type='button' className={'csCancelBtn'} onClick={onCancel}>
           取消扫描
         </button>
       </div>

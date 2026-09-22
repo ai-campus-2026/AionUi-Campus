@@ -96,7 +96,9 @@ async function parseViaMcp(fileName?: string): Promise<ParseResult> {
   // 0. 快速检测：是否有可用的 MCP 服务器。没有则立即降级 mock，不让用户等待。
   try {
     const servers = await ipcBridge.mcp.listServers.invoke();
-    const enabled = Array.isArray(servers) ? servers.filter((s) => (s as { enabled?: boolean })?.enabled !== false) : [];
+    const enabled = Array.isArray(servers)
+      ? servers.filter((s) => (s as { enabled?: boolean })?.enabled !== false)
+      : [];
     if (enabled.length === 0) throw new Error('未检测到可用的MCP服务器');
   } catch (e) {
     throw new Error(e instanceof Error ? e.message : 'MCP未就绪', { cause: e });
@@ -222,10 +224,15 @@ async function waitForReply(conversationId: string, timeoutMs: number): Promise<
 
     // 兜底：每3秒轮询消息列表，检查是否已有assistant回复
     const pollInterval = setInterval(() => {
-      if (settled) { clearInterval(pollInterval); return; }
-      pollLatestAssistantMessage(conversationId).then((text) => {
-        if (text && !settled) finish(text);
-      }).catch(() => {});
+      if (settled) {
+        clearInterval(pollInterval);
+        return;
+      }
+      pollLatestAssistantMessage(conversationId)
+        .then((text) => {
+          if (text && !settled) finish(text);
+        })
+        .catch(() => {});
     }, 3000);
 
     // 清理时也清掉轮询
@@ -244,7 +251,10 @@ async function pollLatestAssistantMessage(conversationId: string): Promise<strin
       conversation_id: conversationId,
       limit: 5,
     });
-    const items: unknown[] = (page as { items?: unknown[]; data?: unknown[] })?.items ?? (page as { items?: unknown[]; data?: unknown[] })?.data ?? [];
+    const items: unknown[] =
+      (page as { items?: unknown[]; data?: unknown[] })?.items ??
+      (page as { items?: unknown[]; data?: unknown[] })?.data ??
+      [];
     for (const msg of items) {
       if (msg?.role === 'assistant') {
         const text = extractTextFromMessage(msg);
@@ -280,15 +290,27 @@ function extractJson(text: string): McpProgramPlanResult | null {
   // 1. 提取 ```json ... ``` 代码块
   const jsonBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (jsonBlock) {
-    try { return JSON.parse(jsonBlock[1]) as McpProgramPlanResult; } catch { /* fall through */ }
+    try {
+      return JSON.parse(jsonBlock[1]) as McpProgramPlanResult;
+    } catch {
+      /* fall through */
+    }
   }
   // 2. 直接解析整个文本
-  try { return JSON.parse(text) as McpProgramPlanResult; } catch { /* fall through */ }
+  try {
+    return JSON.parse(text) as McpProgramPlanResult;
+  } catch {
+    /* fall through */
+  }
   // 3. 提取第一个 { 到最后一个 }
   const first = text.indexOf('{');
   const last = text.lastIndexOf('}');
   if (first >= 0 && last > first) {
-    try { return JSON.parse(text.slice(first, last + 1)) as McpProgramPlanResult; } catch { /* return null */ }
+    try {
+      return JSON.parse(text.slice(first, last + 1)) as McpProgramPlanResult;
+    } catch {
+      /* return null */
+    }
   }
   return null;
 }
@@ -341,9 +363,7 @@ function buildMockFallback(fileName?: string, fallbackReason?: string): ParseRes
     confirmedAt: undefined,
     isCurrent: false,
   };
-  const warnings: string[] = [
-    '⚠ MCP 解析失败，当前显示的是演示数据（非真实文件解析结果）',
-  ];
+  const warnings: string[] = ['⚠ MCP 解析失败，当前显示的是演示数据（非真实文件解析结果）'];
   if (fallbackReason) {
     warnings.push(`失败原因：${fallbackReason}`);
   }

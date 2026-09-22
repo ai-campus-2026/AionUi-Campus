@@ -12,14 +12,7 @@ interface RiskDetailViewProps {
   onBack: () => void;
 }
 
-const RiskDetailView: React.FC<RiskDetailViewProps> = ({
-  risk,
-  totalRisks,
-  currentIndex,
-  onPrev,
-  onNext,
-  onBack,
-}) => {
+const RiskDetailView: React.FC<RiskDetailViewProps> = ({ risk, totalRisks, currentIndex, onPrev, onNext, onBack }) => {
   const navigate = useNavigate();
 
   return (
@@ -33,21 +26,13 @@ const RiskDetailView: React.FC<RiskDetailViewProps> = ({
           ← 返回报告
         </button>
         <div className={'cs-risk-detail__nav'}>
-          <button
-            className={'cs-risk-detail__nav-btn'}
-            onClick={onPrev}
-            disabled={currentIndex === 0}
-          >
+          <button className={'cs-risk-detail__nav-btn'} onClick={onPrev} disabled={currentIndex === 0}>
             ‹ 上一个
           </button>
           <span className={'cs-risk-detail__counter'}>
             {currentIndex + 1} / {totalRisks}
           </span>
-          <button
-            className={'cs-risk-detail__nav-btn'}
-            onClick={onNext}
-            disabled={currentIndex === totalRisks - 1}
-          >
+          <button className={'cs-risk-detail__nav-btn'} onClick={onNext} disabled={currentIndex === totalRisks - 1}>
             下一个 ›
           </button>
         </div>
@@ -63,9 +48,7 @@ const RiskDetailView: React.FC<RiskDetailViewProps> = ({
             <span className={`cs-risk-detail__level-dot cs-risk-detail__level-dot--${risk.severity}`} />
             <span>{risk.severity === 'high' ? '高风险' : '中风险'}</span>
           </div>
-          <p className={'cs-risk-detail__intro'}>
-            AI 检测到该条款可能存在需要关注的内容，建议在签署前进一步确认。
-          </p>
+          <p className={'cs-risk-detail__intro'}>AI 检测到该条款可能存在需要关注的内容，建议在签署前进一步确认。</p>
         </section>
 
         {/* 合同原文 */}

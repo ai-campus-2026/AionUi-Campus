@@ -64,13 +64,11 @@ const ReportView: React.FC<ReportViewProps> = ({ report, onRescan, onShowHistory
           </button>
           <div className={'cs-report__header-titles'}>
             <h1 className={'cs-report__doc-title'}>《{report.meta.title}》</h1>
-            <p className={'cs-report__doc-subtitle'}>
-              {String(report.meta.contractType)} · 刚刚完成分析
-            </p>
+            <p className={'cs-report__doc-subtitle'}>{String(report.meta.contractType)} · 刚刚完成分析</p>
           </div>
         </div>
         <div className={'cs-report__header-actions'}>
-          <button 
+          <button
             onClick={onShowHistory}
             style={{
               color: '#fff',
@@ -89,9 +87,7 @@ const ReportView: React.FC<ReportViewProps> = ({ report, onRescan, onShowHistory
           <button className={'cs-report__rescan-btn'} onClick={onRescan}>
             重新扫描
           </button>
-          <button className={'cs-report__more-btn'}>
-            ···
-          </button>
+          <button className={'cs-report__more-btn'}>···</button>
         </div>
       </header>
 
@@ -140,15 +136,10 @@ const ReportView: React.FC<ReportViewProps> = ({ report, onRescan, onShowHistory
                     className={`cs-risk-nav-item ${selectedRiskIndex === index ? 'cs-risk-nav-item--active' : ''}`}
                     onClick={() => setSelectedRiskIndex(index)}
                   >
-                    <span
-                      className={'cs-risk-nav-dot'}
-                      style={{ background: getSeverityColor(flag.severity) }}
-                    />
+                    <span className={'cs-risk-nav-dot'} style={{ background: getSeverityColor(flag.severity) }} />
                     <div className={'cs-risk-nav-content'}>
                       <span className={'cs-risk-nav-title'}>{flag.title}</span>
-                      {flag.clause && (
-                        <span className={'cs-risk-nav-clause'}>{flag.clause}</span>
-                      )}
+                      {flag.clause && <span className={'cs-risk-nav-clause'}>{flag.clause}</span>}
                     </div>
                   </div>
                 ))}
@@ -195,11 +186,7 @@ const ReportView: React.FC<ReportViewProps> = ({ report, onRescan, onShowHistory
                       <span className={'cs-risk-block-label'}>建议修改措辞</span>
                       <div className={'cs-redline-content'}>
                         <p>{selectedRisk.redline}</p>
-                        <button
-                          className={'cs-copy-btn'}
-                          onClick={() => handleCopyRedline(selectedRisk.redline!)}
-                        >
-                          
+                        <button className={'cs-copy-btn'} onClick={() => handleCopyRedline(selectedRisk.redline!)}>
                           {copied ? '已复制' : '复制改写措辞'}
                         </button>
                       </div>
@@ -239,9 +226,7 @@ const ReportView: React.FC<ReportViewProps> = ({ report, onRescan, onShowHistory
                   <span className={'cs-good-check'}>✓</span>
                   <div>
                     <span className={'cs-good-title'}>{good.title}</span>
-                    {good.explanation && (
-                      <p className={'cs-good-explanation'}>{good.explanation}</p>
-                    )}
+                    {good.explanation && <p className={'cs-good-explanation'}>{good.explanation}</p>}
                   </div>
                 </div>
               ))}
@@ -268,9 +253,7 @@ const ReportView: React.FC<ReportViewProps> = ({ report, onRescan, onShowHistory
           <section className={'cs-report__section'}>
             <div className={'cs-report__section-header'}>
               <h3 className={'cs-report__section-title'}>法规核查</h3>
-              <span className={'cs-statute-count'}>
-                {report.statuteChecks.length} 项检查
-              </span>
+              <span className={'cs-statute-count'}>{report.statuteChecks.length} 项检查</span>
             </div>
 
             {/* 统计 */}
@@ -291,13 +274,9 @@ const ReportView: React.FC<ReportViewProps> = ({ report, onRescan, onShowHistory
                     className={'cs-statute-row-header'}
                     onClick={() => setExpandedStatuteId(expandedStatuteId === check.id ? null : check.id)}
                   >
-                    <span className={'cs-statute-row-icon'}>
-                      {getStatuteStatusIcon(check.status)}
-                    </span>
+                    <span className={'cs-statute-row-icon'}>{getStatuteStatusIcon(check.status)}</span>
                     <span className={'cs-statute-row-title'}>{check.title}</span>
-                    <span className={'cs-statute-row-expand'}>
-                      {expandedStatuteId === check.id ? '收起' : '展开'}
-                    </span>
+                    <span className={'cs-statute-row-expand'}>{expandedStatuteId === check.id ? '收起' : '展开'}</span>
                   </div>
 
                   {expandedStatuteId === check.id && (

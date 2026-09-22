@@ -96,7 +96,8 @@ const ChatLayout: React.FC<{
   // preview panel. Everywhere below uses `isPreviewOpen` for that local decision.
   // 桌面端右侧区域常驻（默认清单面板）；移动端维持触发/主动打开才显示。
   const checklistResident = Boolean(props.checklistResident);
-  const isPreviewOpen = !previewHosted && ((checklistResident && isDesktop) || isPreviewOpenRaw || checklistPanelActive);
+  const isPreviewOpen =
+    !previewHosted && ((checklistResident && isDesktop) || isPreviewOpenRaw || checklistPanelActive);
 
   // --- Hook A: workspace collapse ---
   const { rightSiderCollapsed, setRightSiderCollapsed } = useWorkspaceCollapse({

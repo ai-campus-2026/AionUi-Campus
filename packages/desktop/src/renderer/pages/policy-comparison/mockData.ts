@@ -22,7 +22,10 @@ export const mockDiffResult: PolicyDiffResult = {
       type: 'modified',
       old: { section: '第五条', content: '综合成绩达到80分以上，且无不及格科目。' },
       new: { section: '第五条', content: '综合成绩达到85分以上，且无不及格科目。' },
-      context: { before: ['第四条 奖学金分为一等奖、二等奖、三等奖三个等级。'], after: ['第六条 各等级奖学金比例由学校统一规定。'] },
+      context: {
+        before: ['第四条 奖学金分为一等奖、二等奖、三等奖三个等级。'],
+        after: ['第六条 各等级奖学金比例由学校统一规定。'],
+      },
       aiExplanation: '申请成绩门槛由80分提高至85分，竞争更加激烈。',
     },
     {
@@ -74,7 +77,6 @@ export const mockDiffResult: PolicyDiffResult = {
   ],
 };
 
-
 /** 生成带完整快照的 mock 历史记录 */
 function makeMockHistory(
   id: string,
@@ -83,7 +85,7 @@ function makeMockHistory(
   newVersion: string,
   hoursAgo: number,
   summary: { total: number; modified: number; added: number; removed: number },
-  changeOffset: number,
+  changeOffset: number
 ) {
   // 循环取用 mockDiffResult.changes，让每条记录的变化内容不同
   const all = mockDiffResult.changes;
@@ -110,7 +112,31 @@ function makeMockHistory(
 
 /** 示例历史对照记录（首次进入时展示，带完整 Diff 快照） */
 export const mockHistory = [
-  makeMockHistory('mock-history-1', '推免工作管理办法', '2025版', '2026版', 2, { total: 7, modified: 3, added: 2, removed: 2 }, 0),
-  makeMockHistory('mock-history-2', '毕业生就业管理办法', '2024版', '2025版', 26, { total: 5, modified: 2, added: 2, removed: 1 }, 3),
-  makeMockHistory('mock-history-3', '学生违纪处分条例', '2023版', '2025版', 72, { total: 7, modified: 4, added: 2, removed: 1 }, 5),
+  makeMockHistory(
+    'mock-history-1',
+    '推免工作管理办法',
+    '2025版',
+    '2026版',
+    2,
+    { total: 7, modified: 3, added: 2, removed: 2 },
+    0
+  ),
+  makeMockHistory(
+    'mock-history-2',
+    '毕业生就业管理办法',
+    '2024版',
+    '2025版',
+    26,
+    { total: 5, modified: 2, added: 2, removed: 1 },
+    3
+  ),
+  makeMockHistory(
+    'mock-history-3',
+    '学生违纪处分条例',
+    '2023版',
+    '2025版',
+    72,
+    { total: 7, modified: 4, added: 2, removed: 1 },
+    5
+  ),
 ];

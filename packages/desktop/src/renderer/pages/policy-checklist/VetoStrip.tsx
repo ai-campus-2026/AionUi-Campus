@@ -48,7 +48,11 @@ const VetoStrip: React.FC<VetoStripProps> = ({ conditions, answers, onAnswer, su
               className='flex items-center gap-8px px-12px py-8px rd-10px'
               style={{
                 background: hit ? 'var(--color-danger-1)' : cleared ? 'var(--color-success-1)' : 'var(--color-fill-2)',
-                border: hit ? '1px solid var(--color-danger-4)' : cleared ? '1px solid var(--color-success-4)' : '1px solid transparent',
+                border: hit
+                  ? '1px solid var(--color-danger-4)'
+                  : cleared
+                    ? '1px solid var(--color-success-4)'
+                    : '1px solid transparent',
                 transition: 'all 200ms ease',
               }}
             >

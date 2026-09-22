@@ -63,13 +63,9 @@ const ReportsView: React.FC<{ api: WorkbenchApi }> = ({ api }) => {
   };
 
   // 按最新报告时间排序
-  const sortedTasks = [...state.tasks].sort((a, b) => {
-    const aLatest = state.reports
-      .filter((r) => r.analysisTaskId === a.id)
-      .sort((x, y) => y.version - x.version)[0];
-    const bLatest = state.reports
-      .filter((r) => r.analysisTaskId === b.id)
-      .sort((x, y) => y.version - x.version)[0];
+  const sortedTasks = [...state.tasks].toSorted((a, b) => {
+    const aLatest = state.reports.filter((r) => r.analysisTaskId === a.id).toSorted((x, y) => y.version - x.version)[0];
+    const bLatest = state.reports.filter((r) => r.analysisTaskId === b.id).toSorted((x, y) => y.version - x.version)[0];
     const aTime = aLatest?.createdAt ?? a.updatedAt;
     const bTime = bLatest?.createdAt ?? b.updatedAt;
     if (sortOrder === 'desc') return aTime < bTime ? 1 : -1;
@@ -125,7 +121,14 @@ const ReportsView: React.FC<{ api: WorkbenchApi }> = ({ api }) => {
                 <Delete size={13} theme='outline' fill='currentColor' />
                 批量删除
               </button>
-              <button type='button' className='ra-reports__sort-btn' onClick={() => { setSelectMode(false); setSelected(new Set()); }}>
+              <button
+                type='button'
+                className='ra-reports__sort-btn'
+                onClick={() => {
+                  setSelectMode(false);
+                  setSelected(new Set());
+                }}
+              >
                 退出
               </button>
             </>
@@ -159,7 +162,7 @@ const ReportsView: React.FC<{ api: WorkbenchApi }> = ({ api }) => {
         {sortedTasks.map((task) => {
           const reports = state.reports
             .filter((r) => r.analysisTaskId === task.id)
-            .sort((a, b) => b.version - a.version);
+            .toSorted((a, b) => b.version - a.version);
           const latest = reports[0];
           const history = reports.slice(1);
           const isCollapsed = collapsed.has(task.id);
@@ -171,7 +174,11 @@ const ReportsView: React.FC<{ api: WorkbenchApi }> = ({ api }) => {
             <div
               key={task.id}
               className='ra-card ra-rep-task'
-              style={isSelected ? { borderColor: 'var(--color-primary-light-3)', boxShadow: '0 0 0 2px var(--color-primary-light-2)' } : undefined}
+              style={
+                isSelected
+                  ? { borderColor: 'var(--color-primary-light-3)', boxShadow: '0 0 0 2px var(--color-primary-light-2)' }
+                  : undefined
+              }
             >
               <div className='ra-rep-task__head'>
                 {selectMode && (
@@ -231,9 +238,7 @@ const ReportsView: React.FC<{ api: WorkbenchApi }> = ({ api }) => {
                   <span className='ra-rep-task__change'>{summaryText(latest)}</span>
                   <span className='ra-rep-task__change'>
                     最近变化：
-                    {latest.changes.find((c) => c.label === '新增信息')?.text ??
-                      latest.changes[0]?.text ??
-                      '—'}
+                    {latest.changes.find((c) => c.label === '新增信息')?.text ?? latest.changes[0]?.text ?? '—'}
                   </span>
                   {!selectMode && (
                     <span className='ra-rep-task__actions'>
@@ -247,7 +252,11 @@ const ReportsView: React.FC<{ api: WorkbenchApi }> = ({ api }) => {
                         <ArrowRight size={13} theme='outline' fill='currentColor' />
                         继续完善
                       </button>
-                      <button type='button' className='ra-btn ra-btn--primary' onClick={() => api.openReportOfTask(task.id)}>
+                      <button
+                        type='button'
+                        className='ra-btn ra-btn--primary'
+                        onClick={() => api.openReportOfTask(task.id)}
+                      >
                         <DoubleRight size={13} theme='outline' fill='currentColor' />
                         查看报告
                       </button>
@@ -258,14 +267,14 @@ const ReportsView: React.FC<{ api: WorkbenchApi }> = ({ api }) => {
 
               {history.length > 0 && !selectMode && (
                 <div className='ra-rep-task__history'>
-                  <button
-                    type='button'
-                    className='ra-rep-task__htoggle'
-                    onClick={() => toggleCollapse(task.id)}
-                  >
+                  <button type='button' className='ra-rep-task__htoggle' onClick={() => toggleCollapse(task.id)}>
                     <span className='ra-rep-task__hlabel'>历史快照（{history.length}）</span>
                     <span className='ra-rep-task__hicon'>
-                      {isCollapsed ? <Down size={12} theme='outline' fill='currentColor' /> : <Up size={12} theme='outline' fill='currentColor' />}
+                      {isCollapsed ? (
+                        <Down size={12} theme='outline' fill='currentColor' />
+                      ) : (
+                        <Up size={12} theme='outline' fill='currentColor' />
+                      )}
                     </span>
                   </button>
                   {!isCollapsed && (

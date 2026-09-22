@@ -39,7 +39,8 @@ const DiagnosisPanel: React.FC<Props> = ({ result, question }) => {
   // 置信度：已覆盖证据 / (已覆盖证据 + 风险项)，与报告自检页同口径
   const total = goodEvidences.length + risks.length;
   const confidence = total > 0 ? Math.round((goodEvidences.length / total) * 100) : 0;
-  const confidenceColor = confidence >= 70 ? 'var(--color-success-6)' : confidence >= 40 ? 'var(--color-warning-6)' : 'var(--color-danger-6)';
+  const confidenceColor =
+    confidence >= 70 ? 'var(--color-success-6)' : confidence >= 40 ? 'var(--color-warning-6)' : 'var(--color-danger-6)';
 
   // 验证依据：优先取第一条非低相关证据，其次政策命中条款
   const evidence = goodEvidences[0] ?? evidences[0];
@@ -74,10 +75,7 @@ const DiagnosisPanel: React.FC<Props> = ({ result, question }) => {
         <div className='cr-diagnosis__verify'>
           <span className='cr-diagnosis__verify-label'>证据核验</span>
           <div className='cr-diagnosis__bar'>
-            <div
-              className='cr-diagnosis__bar-fill'
-              style={{ width: `${confidence}%`, background: confidenceColor }}
-            />
+            <div className='cr-diagnosis__bar-fill' style={{ width: `${confidence}%`, background: confidenceColor }} />
           </div>
           <span className='cr-diagnosis__verify-num' style={{ color: confidenceColor }}>
             {confidence}%

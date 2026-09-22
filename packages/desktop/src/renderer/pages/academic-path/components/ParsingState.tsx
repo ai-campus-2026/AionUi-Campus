@@ -24,14 +24,14 @@ const ParsingState: React.FC<Props> = ({ onDone, error, onReupload }) => {
   // 解析失败界面
   if (error) {
     return (
-      <div className="ap-parsing">
-        <div className="ap-parsing__card ap-parsing__card--failed">
-          <div className="ap-parsing__failed-icon">✕</div>
-          <h2 className="ap-parsing__title">解析失败</h2>
-          <p className="ap-parsing__failed-msg">{error.message}</p>
-          {error.code && <p className="ap-parsing__failed-code">错误代码：{error.code}</p>}
-          <div className="ap-parsing__failed-actions">
-            <button type="button" className="ap-btn ap-btn--primary ap-btn--large" onClick={onReupload}>
+      <div className='ap-parsing'>
+        <div className='ap-parsing__card ap-parsing__card--failed'>
+          <div className='ap-parsing__failed-icon'>✕</div>
+          <h2 className='ap-parsing__title'>解析失败</h2>
+          <p className='ap-parsing__failed-msg'>{error.message}</p>
+          {error.code && <p className='ap-parsing__failed-code'>错误代码：{error.code}</p>}
+          <div className='ap-parsing__failed-actions'>
+            <button type='button' className='ap-btn ap-btn--primary ap-btn--large' onClick={onReupload}>
               重新上传
             </button>
           </div>
@@ -41,17 +41,18 @@ const ParsingState: React.FC<Props> = ({ onDone, error, onReupload }) => {
   }
 
   return (
-    <div className="ap-parsing">
-      <div className="ap-parsing__card">
-        <div className="ap-parsing__spinner" />
-        <h2 className="ap-parsing__title">正在理解你的培养方案……</h2>
-        <div className="ap-parsing__steps">
+    <div className='ap-parsing'>
+      <div className='ap-parsing__card'>
+        <div className='ap-parsing__spinner' />
+        <h2 className='ap-parsing__title'>正在理解你的培养方案……</h2>
+        <div className='ap-parsing__steps'>
           {parsingSteps.map((s, i) => (
-            <div key={s} className={`ap-parsing__step ${i < step ? 'ap-parsing__step--done' : i === step ? 'ap-parsing__step--active' : ''}`}>
-              <span className="ap-parsing__step-icon">
-                {i < step ? '✓' : i === step ? '●' : '○'}
-              </span>
-              <span className="ap-parsing__step-text">{s}</span>
+            <div
+              key={s}
+              className={`ap-parsing__step ${i < step ? 'ap-parsing__step--done' : i === step ? 'ap-parsing__step--active' : ''}`}
+            >
+              <span className='ap-parsing__step-icon'>{i < step ? '✓' : i === step ? '●' : '○'}</span>
+              <span className='ap-parsing__step-text'>{s}</span>
             </div>
           ))}
         </div>

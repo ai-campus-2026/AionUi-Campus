@@ -17,7 +17,16 @@ interface Props {
   onBack: () => void;
 }
 
-const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasHistory, onViewHistory, onBack, recentPlanName, onUseRecentPlan }) => {
+const EmptyState: React.FC<Props> = ({
+  onUpload,
+  onDebugInject,
+  parseError,
+  hasHistory,
+  onViewHistory,
+  onBack,
+  recentPlanName,
+  onUseRecentPlan,
+}) => {
   const navigate = useNavigate();
   const [dragging, setDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -33,16 +42,16 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
     try {
       const files = await ipcBridge.dialog.showOpen.invoke({
         properties: ['openFile'],
-        filters: [
-          { name: '培养方案', extensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'] },
-        ],
+        filters: [{ name: '培养方案', extensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'] }],
       });
       if (files && files.length > 0) {
         const path = files[0];
         const name = path.split(/[\\/]/).pop() || path;
         setSelectedFile(name);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -111,25 +120,27 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
   // 解析失败 → 显示失败状态
   if (parsing && parseError) {
     return (
-      <div className="ap-empty">
-        <header className="ap-empty__header">
-          <button type="button" className="ap-back" onClick={onBack}>← 返回</button>
+      <div className='ap-empty'>
+        <header className='ap-empty__header'>
+          <button type='button' className='ap-back' onClick={onBack}>
+            ← 返回
+          </button>
           {hasHistory && (
-            <button type="button" className="ap-btn ap-btn--primary" onClick={onViewHistory}>
+            <button type='button' className='ap-btn ap-btn--primary' onClick={onViewHistory}>
               培养方案历史
             </button>
           )}
         </header>
-        <div className="ap-empty__inner">
-          <div className="ap-empty__icon">🎓</div>
-          <h1 className="ap-empty__title">建立你的学业路径</h1>
-          <div className="ap-empty__parse-card ap-empty__parse-card--failed">
-            <div className="ap-parsing__failed-icon">✕</div>
-            <h2 className="ap-parsing__title">解析失败</h2>
-            <p className="ap-parsing__failed-msg">{parseError.message}</p>
-            {parseError.code && <p className="ap-parsing__failed-code">错误代码：{parseError.code}</p>}
-            <div className="ap-parsing__failed-actions">
-              <button type="button" className="ap-btn ap-btn--primary ap-btn--large" onClick={handleCancel}>
+        <div className='ap-empty__inner'>
+          <div className='ap-empty__icon'>🎓</div>
+          <h1 className='ap-empty__title'>建立你的学业路径</h1>
+          <div className='ap-empty__parse-card ap-empty__parse-card--failed'>
+            <div className='ap-parsing__failed-icon'>✕</div>
+            <h2 className='ap-parsing__title'>解析失败</h2>
+            <p className='ap-parsing__failed-msg'>{parseError.message}</p>
+            {parseError.code && <p className='ap-parsing__failed-code'>错误代码：{parseError.code}</p>}
+            <div className='ap-parsing__failed-actions'>
+              <button type='button' className='ap-btn ap-btn--primary ap-btn--large' onClick={handleCancel}>
                 重新上传
               </button>
             </div>
@@ -142,38 +153,46 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
   // 解析中 → 内联显示解析动画（替换上传卡片）
   if (parsing) {
     return (
-      <div className="ap-empty">
-        <header className="ap-empty__header">
-          <button type="button" className="ap-back" onClick={onBack}>← 返回</button>
+      <div className='ap-empty'>
+        <header className='ap-empty__header'>
+          <button type='button' className='ap-back' onClick={onBack}>
+            ← 返回
+          </button>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button type="button" className="ap-btn ap-btn--ghost ap-debug-btn" onClick={() => setDebugOpen(true)} title="Ctrl+Shift+D">
+            <button
+              type='button'
+              className='ap-btn ap-btn--ghost ap-debug-btn'
+              onClick={() => setDebugOpen(true)}
+              title='Ctrl+Shift+D'
+            >
               调试
             </button>
             {hasHistory && (
-              <button type="button" className="ap-btn ap-btn--primary" onClick={onViewHistory}>
+              <button type='button' className='ap-btn ap-btn--primary' onClick={onViewHistory}>
                 培养方案历史
               </button>
             )}
           </div>
         </header>
-        <div className="ap-empty__inner">
-          <div className="ap-empty__icon">🎓</div>
-          <h1 className="ap-empty__title">建立你的学业路径</h1>
-          <div className="ap-empty__parse-card">
-            <div className="ap-parsing__spinner" />
-            <h2 className="ap-parsing__title">正在理解你的培养方案……</h2>
-            <div className="ap-empty__parse-filename">{selectedFile}</div>
-            <div className="ap-parsing__steps">
+        <div className='ap-empty__inner'>
+          <div className='ap-empty__icon'>🎓</div>
+          <h1 className='ap-empty__title'>建立你的学业路径</h1>
+          <div className='ap-empty__parse-card'>
+            <div className='ap-parsing__spinner' />
+            <h2 className='ap-parsing__title'>正在理解你的培养方案……</h2>
+            <div className='ap-empty__parse-filename'>{selectedFile}</div>
+            <div className='ap-parsing__steps'>
               {parsingSteps.map((s, i) => (
-                <div key={s} className={`ap-parsing__step ${i < parseStep ? 'ap-parsing__step--done' : i === parseStep ? 'ap-parsing__step--active' : ''}`}>
-                  <span className="ap-parsing__step-icon">
-                    {i < parseStep ? '✓' : i === parseStep ? '●' : '○'}
-                  </span>
-                  <span className="ap-parsing__step-text">{s}</span>
+                <div
+                  key={s}
+                  className={`ap-parsing__step ${i < parseStep ? 'ap-parsing__step--done' : i === parseStep ? 'ap-parsing__step--active' : ''}`}
+                >
+                  <span className='ap-parsing__step-icon'>{i < parseStep ? '✓' : i === parseStep ? '●' : '○'}</span>
+                  <span className='ap-parsing__step-text'>{s}</span>
                 </div>
               ))}
             </div>
-            <button type="button" className="ap-btn ap-btn--ghost ap-empty__parse-cancel" onClick={handleCancel}>
+            <button type='button' className='ap-btn ap-btn--ghost ap-empty__parse-cancel' onClick={handleCancel}>
               取消
             </button>
           </div>
@@ -184,53 +203,72 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
 
   // 默认：上传状态
   return (
-    <div className="ap-empty">
+    <div className='ap-empty'>
       {/* 装饰性背景：淡灰色课程节点连线 */}
-      <header className="ap-empty__header">
+      <header className='ap-empty__header'>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button type="button" className="ap-btn ap-btn--ghost ap-debug-btn" onClick={() => setDebugOpen(true)} title="Ctrl+Shift+D">
+          <button
+            type='button'
+            className='ap-btn ap-btn--ghost ap-debug-btn'
+            onClick={() => setDebugOpen(true)}
+            title='Ctrl+Shift+D'
+          >
             调试
           </button>
         </div>
       </header>
 
-      <div className="ap-empty__inner">
-        <div className="ap-empty__icon">🎓</div>
-        <h1 className="ap-empty__title">建立你的学业路径</h1>
-        <p className="ap-empty__desc">
+      <div className='ap-empty__inner'>
+        <div className='ap-empty__icon'>🎓</div>
+        <h1 className='ap-empty__title'>建立你的学业路径</h1>
+        <p className='ap-empty__desc'>
           上传你的专业培养方案，AI 将自动识别课程、学分、培养要求和课程先修关系，为你生成个人学业地图。
         </p>
 
         <div
           className={`ap-empty__dropzone ${dragging ? 'ap-empty__dropzone--dragging' : ''} ${selectedFile ? 'ap-empty__dropzone--filled' : ''}`}
           onClick={handleFile}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
           onDragLeave={() => setDragging(false)}
           onDrop={handleDrop}
         >
-          <input ref={inputRef} type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style={{ display: 'none' }} onChange={handleFile} />
+          <input
+            ref={inputRef}
+            type='file'
+            accept='.pdf,.doc,.docx,.jpg,.jpeg,.png'
+            style={{ display: 'none' }}
+            onChange={handleFile}
+          />
           {selectedFile ? (
             <>
-              <div className="ap-empty__dropzone-icon">✓</div>
-              <div className="ap-empty__dropzone-title">{selectedFile}</div>
-              <div className="ap-empty__dropzone-sub">已选择，点击可重新选择</div>
+              <div className='ap-empty__dropzone-icon'>✓</div>
+              <div className='ap-empty__dropzone-title'>{selectedFile}</div>
+              <div className='ap-empty__dropzone-sub'>已选择，点击可重新选择</div>
             </>
           ) : (
             <>
-              <div className="ap-empty__dropzone-icon">📄</div>
-              <div className="ap-empty__dropzone-title">上传培养方案</div>
-              <div className="ap-empty__dropzone-sub">点击或拖拽文件到此处</div>
-              <div className="ap-empty__dropzone-formats">支持 PDF / Word / 图片</div>
+              <div className='ap-empty__dropzone-icon'>📄</div>
+              <div className='ap-empty__dropzone-title'>上传培养方案</div>
+              <div className='ap-empty__dropzone-sub'>点击或拖拽文件到此处</div>
+              <div className='ap-empty__dropzone-formats'>支持 PDF / Word / 图片</div>
             </>
           )}
         </div>
 
-        <div className="ap-empty__start-wrap" style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
-            {selectedFile && (
-              <button type="button" className="ap-btn ap-btn--ghost" onClick={() => setSelectedFile(null)}>取消选择</button>
-            )}
+        <div
+          className='ap-empty__start-wrap'
+          style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}
+        >
+          {selectedFile && (
+            <button type='button' className='ap-btn ap-btn--ghost' onClick={() => setSelectedFile(null)}>
+              取消选择
+            </button>
+          )}
           <button
-            type="button"
+            type='button'
             className={`ap-btn ap-btn--primary ap-btn--large ap-empty__start-btn ${!selectedFile ? 'ap-btn--disabled' : ''}`}
             disabled={!selectedFile}
             onClick={handleStart}
@@ -238,32 +276,34 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
             开始分析
           </button>
         </div>
-
-
       </div>
 
       {/* 调试：JSON 注入弹窗 */}
       {debugOpen && (
-        <div className="ap-debug-overlay" onClick={() => setDebugOpen(false)}>
-          <div className="ap-debug-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ap-debug__head">
-              <span className="ap-debug__title">调试：注入培养方案 JSON</span>
-              <button type="button" className="ap-debug__close" onClick={() => setDebugOpen(false)}>×</button>
+        <div className='ap-debug-overlay' onClick={() => setDebugOpen(false)}>
+          <div className='ap-debug-modal' onClick={(e) => e.stopPropagation()}>
+            <div className='ap-debug__head'>
+              <span className='ap-debug__title'>调试：注入培养方案 JSON</span>
+              <button type='button' className='ap-debug__close' onClick={() => setDebugOpen(false)}>
+                ×
+              </button>
             </div>
-            <p className="ap-debug__desc">
-              粘贴 MCP 返回的培养方案 JSON，直接进入确认页（Ctrl+Shift+D 开关此面板）。
-            </p>
+            <p className='ap-debug__desc'>粘贴 MCP 返回的培养方案 JSON，直接进入确认页（Ctrl+Shift+D 开关此面板）。</p>
             <textarea
-              className="ap-debug__textarea"
+              className='ap-debug__textarea'
               placeholder='{"major": "软件工程", "grade": "2024", "courses": [...]}'
               value={debugJson}
               onChange={(e) => setDebugJson(e.target.value)}
               spellCheck={false}
             />
-            {debugError && <div className="ap-debug__error">{debugError}</div>}
-            <div className="ap-debug__actions">
-              <button type="button" className="ap-btn ap-btn--ghost" onClick={() => setDebugOpen(false)}>取消</button>
-              <button type="button" className="ap-btn ap-btn--primary" onClick={handleDebugInject}>注入并确认</button>
+            {debugError && <div className='ap-debug__error'>{debugError}</div>}
+            <div className='ap-debug__actions'>
+              <button type='button' className='ap-btn ap-btn--ghost' onClick={() => setDebugOpen(false)}>
+                取消
+              </button>
+              <button type='button' className='ap-btn ap-btn--primary' onClick={handleDebugInject}>
+                注入并确认
+              </button>
             </div>
           </div>
         </div>

@@ -160,7 +160,7 @@ export async function ensureComparisonConversation(): Promise<{ id: string } | {
     if (conv && conv.id) {
       save(conv.id);
       console.log(
-        `[policy-comparison] conversation created: id=${conv.id} mcp=${mcp.userServerIds.length} user-servers`,
+        `[policy-comparison] conversation created: id=${conv.id} mcp=${mcp.userServerIds.length} user-servers`
       );
       ipcBridge.conversation.ensureRuntime.invoke({ conversation_id: conv.id }).catch(() => {});
       return { id: conv.id };
@@ -176,7 +176,7 @@ export async function ensureComparisonConversation(): Promise<{ id: string } | {
 export async function sendComparisonRequest(
   id: string,
   oldFileName: string,
-  newFileName: string,
+  newFileName: string
 ): Promise<{ ok: boolean; error?: string; isConflict?: boolean }> {
   const text = `请对比以下两个政策文件的差异，找出所有修改、新增和删除的条款：\n旧政策：${oldFileName}\n新政策：${newFileName}\n请以结构化 JSON 格式返回对比结果。`;
   try {
@@ -210,8 +210,7 @@ export async function loadLatestDiffResult(conversationId: string): Promise<Load
   try {
     const page = await loadLatestConversationMessages(conversationId, { limit: 100, contentMode: 'full' });
     const toolMsgs = (page.items ?? []).filter(
-      (m): m is ToolMessage =>
-        m.type === 'tool_call' || m.type === 'tool_group' || m.type === 'acp_tool_call',
+      (m): m is ToolMessage => m.type === 'tool_call' || m.type === 'tool_group' || m.type === 'acp_tool_call'
     );
     // MCP 没有返回任何工具结果（可能还在运行或调用超时）
     if (toolMsgs.length === 0) return { status: 'no_tool_output' };

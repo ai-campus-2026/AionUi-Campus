@@ -74,7 +74,7 @@ const RuleAnalysisPage: React.FC = () => {
     () => () => {
       if (toastTimer.current) clearTimeout(toastTimer.current);
     },
-    [],
+    []
   );
 
   /* 顶栏「政策解读」：无条件回到提问入口（空状态），不保留任何「已在工作台则不动」的分支。
@@ -88,7 +88,7 @@ const RuleAnalysisPage: React.FC = () => {
       }
       api.switchView(v);
     },
-    [api],
+    [api]
   );
 
   const viewingReport: ReportSnapshot | undefined = ui.viewingReportId
@@ -203,9 +203,7 @@ const RuleAnalysisPage: React.FC = () => {
                 }}
               />
             </div>
-            {debugError && (
-              <div style={{ color: '#d4380d', fontSize: 12, marginBottom: 12 }}>{debugError}</div>
-            )}
+            {debugError && <div style={{ color: '#d4380d', fontSize: 12, marginBottom: 12 }}>{debugError}</div>}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 type='button'

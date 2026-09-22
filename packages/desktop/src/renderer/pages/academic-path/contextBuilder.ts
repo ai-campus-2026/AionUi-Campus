@@ -21,7 +21,7 @@ export function buildAcademicContext(
   plan: ProgramPlan,
   progress: StudentProgress,
   selectedCourse: Course | null,
-  userInfo?: Record<string, string>,
+  userInfo?: Record<string, string>
 ): string {
   const totalCourses = plan.courses.length;
   const totalCredits = plan.courses.reduce((sum, c) => sum + c.credits, 0);

@@ -7,9 +7,6 @@
 
 import { ipcBridge } from '@/common';
 
-const FALLBACK_INDEX_PATH =
-  'D:/AI-Campus-Workspace/AionUi-Campus-SSH/policy-search/knowledge_base/index.json';
-
 interface KnowledgeIndexRef {
   path: string;
   workspace?: string;
@@ -43,7 +40,7 @@ async function resolveKnowledgeIndex(): Promise<KnowledgeIndexRef | null> {
       if (!t || t.type !== 'stdio') continue;
       const envDir = t.env?.KNOWLEDGE_BASE_DIR;
       const serverFile = (t.args || []).find(
-        (a) => /server\.py$/i.test(a) || a.toLowerCase().includes('policy-search'),
+        (a) => /server\.py$/i.test(a) || a.toLowerCase().includes('policy-search')
       );
       const serverDir = serverFile ? serverFile.replace(/[\\/]+[^\\/]+$/, '') : '';
       if (envDir && isAbsPath(envDir)) {
@@ -59,7 +56,7 @@ async function resolveKnowledgeIndex(): Promise<KnowledgeIndexRef | null> {
   } catch {
     // 回退默认路径
   }
-  return { path: FALLBACK_INDEX_PATH };
+  return null;
 }
 
 async function readKnowledgeIndex(ref: KnowledgeIndexRef): Promise<string | null> {
@@ -95,13 +92,16 @@ export async function loadKnowledgeDocs(): Promise<KnowledgeDoc[]> {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as {
       last_updated?: string;
-      categories?: Record<string, Array<{
-        doc_id?: string;
-        title?: string;
-        file?: string;
-        effective_date?: string;
-        year?: number;
-      }>>;
+      categories?: Record<
+        string,
+        Array<{
+          doc_id?: string;
+          title?: string;
+          file?: string;
+          effective_date?: string;
+          year?: number;
+        }>
+      >;
     };
     const categories = parsed?.categories ?? {};
     const docs: KnowledgeDoc[] = [];
@@ -119,9 +119,7 @@ export async function loadKnowledgeDocs(): Promise<KnowledgeDoc[]> {
       }
     }
     // 按施行日期倒序
-    return docs.toSorted((a, b) =>
-      String(b.effectiveDate ?? '').localeCompare(String(a.effectiveDate ?? '')),
-    );
+    return docs.toSorted((a, b) => String(b.effectiveDate ?? '').localeCompare(String(a.effectiveDate ?? '')));
   } catch {
     return [];
   }

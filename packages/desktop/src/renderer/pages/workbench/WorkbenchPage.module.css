@@ -23,35 +23,27 @@
   pointer-events: none;
   background:
     /* 顶部左：冷白柔光（浅色下给玻璃一个可透射的亮度来源） */
-    radial-gradient(
-      720px circle at 16% 4%,
-      rgba(255, 255, 255, 0.55),
-      transparent 60%
-    ),
+    radial-gradient(720px circle at 16% 4%, rgba(255, 255, 255, 0.55), transparent 60%),
     /* 顶部右：蓝紫色低透明光晕 */
-    radial-gradient(
-      820px circle at 84% 8%,
-      color-mix(in srgb, var(--color-primary-6) 9%, transparent),
-      transparent 62%
-    ),
+    radial-gradient(820px circle at 84% 8%, color-mix(in srgb, var(--color-primary-6) 9%, transparent), transparent 62%),
     /* 中部偏左：冷蓝氛围 */
     radial-gradient(
-      640px circle at 30% 46%,
-      color-mix(in srgb, var(--color-primary-6) 5%, transparent),
-      transparent 60%
-    ),
+        640px circle at 30% 46%,
+        color-mix(in srgb, var(--color-primary-6) 5%, transparent),
+        transparent 60%
+      ),
     /* 底部：暖紫弱光 */
     radial-gradient(
-      700px circle at 72% 92%,
-      color-mix(in srgb, var(--color-primary-6) 6%, transparent),
-      transparent 62%
-    ),
+        700px circle at 72% 92%,
+        color-mix(in srgb, var(--color-primary-6) 6%, transparent),
+        transparent 62%
+      ),
     /* 鼠标跟随光斑：幅度最小 */
     radial-gradient(
-      520px circle at var(--glow-x, 50%) var(--glow-y, 30%),
-      color-mix(in srgb, var(--color-primary-6) 10%, transparent),
-      transparent 66%
-    );
+        520px circle at var(--glow-x, 50%) var(--glow-y, 30%),
+        color-mix(in srgb, var(--color-primary-6) 10%, transparent),
+        transparent 66%
+      );
   transition: background 0.2s ease-out;
 }
 
@@ -383,7 +375,9 @@
   padding: 10px 14px;
   border-radius: 11px;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition:
+    background 0.3s ease,
+    transform 0.2s ease;
 }
 
 .infoRow:hover {

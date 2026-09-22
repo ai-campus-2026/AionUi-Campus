@@ -2,7 +2,11 @@ import React from 'react';
 import { FileText, History, User, Home, Refresh, ArrowLeft, Code } from '@icon-park/react';
 import type { ViewName } from '../model';
 
-const TABS: { key: ViewName; label: string; icon: React.ComponentType<{ size?: number | string; theme?: string; fill?: string | string[] }> }[] = [
+const TABS: {
+  key: ViewName;
+  label: string;
+  icon: React.ComponentType<{ size?: number | string; theme?: string; fill?: string | string[] }>;
+}[] = [
   { key: 'analysis', label: '政策解读', icon: FileText },
   { key: 'reports', label: '我的报告', icon: History },
   { key: 'profile', label: '我的信息', icon: User },
@@ -45,7 +49,13 @@ const TopNav: React.FC<{
           <Code size={15} theme='outline' fill='currentColor' />
         </button>
       )}
-      <button type='button' className='ra-topnav__iconbtn' title='重置演示数据' aria-label='重置演示数据' onClick={onReset}>
+      <button
+        type='button'
+        className='ra-topnav__iconbtn'
+        title='重置演示数据'
+        aria-label='重置演示数据'
+        onClick={onReset}
+      >
         <Refresh size={15} theme='outline' fill='currentColor' />
       </button>
       <button type='button' className='ra-topnav__iconbtn' title='返回首页' aria-label='返回首页' onClick={onHome}>

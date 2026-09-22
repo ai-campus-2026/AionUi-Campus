@@ -2,7 +2,16 @@
 // 合同扫描 · MCP 结果适配层
 // ============================================================
 
-import type { ContractReport, RedFlag, Warning, GoodClause, MissingProtection, StatuteCheck, LegalSource, ContractType } from './types';
+import type {
+  ContractReport,
+  RedFlag,
+  Warning,
+  GoodClause,
+  MissingProtection,
+  StatuteCheck,
+  LegalSource,
+  ContractType,
+} from './types';
 
 /** MCP 返回的原始结构（宽松定义） */
 interface RawContractScanResult {
@@ -32,7 +41,14 @@ interface RawContractScanResult {
     redline?: string;
     severity?: string;
   }>;
-  warnings_list?: Array<{ title?: string; explanation?: string; quote?: string; suggestion?: string; redline?: string; severity?: string }>;
+  warnings_list?: Array<{
+    title?: string;
+    explanation?: string;
+    quote?: string;
+    suggestion?: string;
+    redline?: string;
+    severity?: string;
+  }>;
   good_clauses?: Array<{ title?: string; clause?: string; explanation?: string }>;
   missing_protections?: Array<string | { title?: string; explanation?: string }>;
   statute_checks?: Array<{
@@ -81,7 +97,14 @@ interface RawContractData {
     redline?: string;
     severity?: string;
   }>;
-  warnings?: Array<{ title?: string; explanation?: string; quote?: string; suggestion?: string; redline?: string; severity?: string }>;
+  warnings?: Array<{
+    title?: string;
+    explanation?: string;
+    quote?: string;
+    suggestion?: string;
+    redline?: string;
+    severity?: string;
+  }>;
   good_clauses?: Array<{ title?: string; clause?: string; explanation?: string }>;
   missing_protections?: Array<string | { title?: string; explanation?: string }>;
   statute_checks?: Array<{
@@ -179,7 +202,7 @@ export function tryParseContractScanResult(raw: unknown): ContractReport | null 
 
   const legalSources: LegalSource[] = (data.sources ?? []).map((ls) => ({
     ruleId: ls.rule_id ?? '',
-    title: ls.document && ls.section ? `${ls.document} ${ls.section}` : ls.title ?? '',
+    title: ls.document && ls.section ? `${ls.document} ${ls.section}` : (ls.title ?? ''),
     content: ls.text ?? ls.content ?? '',
   }));
 
@@ -200,7 +223,11 @@ export function tryParseContractScanResult(raw: unknown): ContractReport | null 
     missingProtections,
     statuteChecks,
     legalSources,
-    analysisDuration: envelope.meta?.elapsed_ms ? envelope.meta.elapsed_ms / 1000 : (envelope.elapsed_ms ? envelope.elapsed_ms / 1000 : undefined),
+    analysisDuration: envelope.meta?.elapsed_ms
+      ? envelope.meta.elapsed_ms / 1000
+      : envelope.elapsed_ms
+        ? envelope.elapsed_ms / 1000
+        : undefined,
     analysisId: envelope.meta?.request_id ?? envelope.request_id,
   };
 }

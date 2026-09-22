@@ -4,7 +4,10 @@ import type { WorkbenchApi } from '../store';
 import { FIELD_DEFS } from '../engine';
 import { PROFILE_CATEGORIES, type ProfileCategory } from '../model';
 
-const CATEGORY_ICONS: Record<ProfileCategory, React.ComponentType<{ size?: number | string; theme?: string; fill?: string | string[] }>> = {
+const CATEGORY_ICONS: Record<
+  ProfileCategory,
+  React.ComponentType<{ size?: number | string; theme?: string; fill?: string | string[] }>
+> = {
   basic: School,
   academic: Book,
   english: Text,
@@ -42,13 +45,16 @@ const ProfileView: React.FC<{ api: WorkbenchApi; notify: (msg: string) => void }
             </span>
             我的信息
           </div>
-          <div className='ra-head__sub'>长期个人资料 · 分析中补充的信息会自动同步到这里 · 编辑后请重新分析以更新结果</div>
+          <div className='ra-head__sub'>
+            长期个人资料 · 分析中补充的信息会自动同步到这里 · 编辑后请重新分析以更新结果
+          </div>
         </div>
       </div>
 
       <div className='ra-profile'>
         <div className='ra-card ra-profile__intro'>
-          这里保存的是你的长期资料，不属于任何一份报告。重新分析时，系统会基于「我的信息」+ 当时的政策版本生成新的报告快照；旧报告不会因这里的修改而改变。
+          这里保存的是你的长期资料，不属于任何一份报告。重新分析时，系统会基于「我的信息」+
+          当时的政策版本生成新的报告快照；旧报告不会因这里的修改而改变。
         </div>
 
         <div className='ra-profile__grid'>
@@ -103,7 +109,12 @@ const ProfileView: React.FC<{ api: WorkbenchApi; notify: (msg: string) => void }
                             {value}
                           </span>
                           <span className='ra-field__time'>{field ? `更新于 ${field.updatedAt}` : '未填写'}</span>
-                          <button type='button' className='ra-field__edit' onClick={() => startEdit(key, value)} aria-label={`编辑${label}`}>
+                          <button
+                            type='button'
+                            className='ra-field__edit'
+                            onClick={() => startEdit(key, value)}
+                            aria-label={`编辑${label}`}
+                          >
                             <Edit size={14} theme='outline' fill='currentColor' />
                           </button>
                         </>

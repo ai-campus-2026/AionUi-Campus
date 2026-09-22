@@ -90,11 +90,4 @@ export interface ContractReport {
 }
 
 /** 扫描状态 */
-export type ScanStatus =
-  | 'idle'
-  | 'scanning'
-  | 'success'
-  | 'no_mcp'
-  | 'timeout'
-  | 'parse_failed'
-  | 'error';
+export type ScanStatus = 'idle' | 'scanning' | 'success' | 'no_mcp' | 'timeout' | 'parse_failed' | 'error';

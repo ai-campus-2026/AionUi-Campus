@@ -88,7 +88,8 @@ function parseChange(obj: unknown): PolicyChange | null {
   const typeRaw = c.type;
   let type: ChangeType = 'modified';
   if (typeRaw === 'added' || typeRaw === 'add' || typeRaw === '新增') type = 'added';
-  else if (typeRaw === 'removed' || typeRaw === 'remove' || typeRaw === 'deleted' || typeRaw === '删除') type = 'removed';
+  else if (typeRaw === 'removed' || typeRaw === 'remove' || typeRaw === 'deleted' || typeRaw === '删除')
+    type = 'removed';
   else type = 'modified';
 
   const old = parseChangeContent(c.old);

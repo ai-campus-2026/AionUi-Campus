@@ -15,7 +15,11 @@ import { AnswerTemplate, mockCourseRuleSuccessResult } from '@renderer/component
 import type { CampusRuleToolResult } from '@renderer/components/campus-rule';
 import { tryParseCampusRuleResult } from '@renderer/components/campus-rule/adaptPolicyResult';
 import RuleErrorBox from '@renderer/components/campus-rule/RuleErrorBox';
-import { usePolicyChecklistPanel, type ChecklistDocKey, type ChecklistHints } from '@renderer/pages/policy-checklist/checklistPanelStore';
+import {
+  usePolicyChecklistPanel,
+  type ChecklistDocKey,
+  type ChecklistHints,
+} from '@renderer/pages/policy-checklist/checklistPanelStore';
 import type { BackendPolicyResult } from '@renderer/pages/policy-checklist/adaptQueryPolicyResult';
 import { parseUserHints, extractUserInfoHints } from '@renderer/pages/policy-checklist/parseUserHints';
 import './MessageToolGroupSummary.css';
@@ -288,9 +292,7 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
   const hasTruncatedOutput = useMemo(
     () =>
       tools.some(
-        (item) =>
-          item.truncated ||
-          (typeof item.output === 'string' && /\[truncated|…\[truncated/i.test(item.output))
+        (item) => item.truncated || (typeof item.output === 'string' && /\[truncated|…\[truncated/i.test(item.output))
       ),
     [tools]
   );
@@ -359,4 +361,3 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
 };
 
 export default React.memo(MessageToolGroupSummary);
-

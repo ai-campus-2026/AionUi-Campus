@@ -43,7 +43,6 @@ export interface PolicyDiffResult {
 
 export type DiffLoadState = 'idle' | 'loading' | 'success' | 'error' | 'empty';
 
-
 /** 历史对照记录（保存完整 Diff 快照，点击后直接渲染，不重新调用 MCP） */
 export interface ComparisonHistoryRecord {
   id: string;

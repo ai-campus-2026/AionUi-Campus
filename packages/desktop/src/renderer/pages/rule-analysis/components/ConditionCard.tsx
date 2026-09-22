@@ -4,7 +4,11 @@ import type { MatchResult, UiConditionState } from '../model';
 
 const STATE_META: Record<
   UiConditionState,
-  { badge: string; text: string; icon: React.ComponentType<{ size?: number | string; theme?: string; fill?: string | string[] }> }
+  {
+    badge: string;
+    text: string;
+    icon: React.ComponentType<{ size?: number | string; theme?: string; fill?: string | string[] }>;
+  }
 > = {
   met: { badge: 'ra-cond__badge--met', text: '已满足', icon: CheckOne },
   missing: { badge: 'ra-cond__badge--missing', text: '待确认', icon: Attention },
@@ -103,7 +107,11 @@ const ConditionCard: React.FC<{
         <button type='button' className='ra-btn ra-btn--ghost' onClick={() => setBasisOpen((v) => !v)}>
           <Book size={13} theme='outline' fill='currentColor' />
           政策依据
-          {basisOpen ? <Up size={11} theme='outline' fill='currentColor' /> : <Down size={11} theme='outline' fill='currentColor' />}
+          {basisOpen ? (
+            <Up size={11} theme='outline' fill='currentColor' />
+          ) : (
+            <Down size={11} theme='outline' fill='currentColor' />
+          )}
         </button>
         {onSupplement && !showInline && (
           <button type='button' className='ra-btn' onClick={() => onSupplement(row.item)}>

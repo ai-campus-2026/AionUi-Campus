@@ -47,7 +47,8 @@ import '@renderer/styles/layout.css';
 // 产品演示只需要「聊天 | 清单」，故整体隐藏。需要恢复时置为 false。
 const HIDE_PROJECT_EXPLORER = true;
 
-const SidebarIcon: React.FC<{ size?: number; strokeWidth?: number }> = ({ size = 18, strokeWidth = 4 }) => (  <svg
+const SidebarIcon: React.FC<{ size?: number; strokeWidth?: number }> = ({ size = 18, strokeWidth = 4 }) => (
+  <svg
     width={size}
     height={size}
     viewBox='0 0 48 48'

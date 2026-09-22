@@ -123,10 +123,7 @@ const HistoryScanView: React.FC<HistoryScanViewProps> = ({ onBack, onViewReport 
                   </button>
                 </>
               ) : (
-                <button
-                  className={'cs-history__manage-btn'}
-                  onClick={() => setIsBatchMode(true)}
-                >
+                <button className={'cs-history__manage-btn'} onClick={() => setIsBatchMode(true)}>
                   批量管理
                 </button>
               )}
@@ -161,16 +158,14 @@ const HistoryScanView: React.FC<HistoryScanViewProps> = ({ onBack, onViewReport 
                 }}
               >
                 {/* 批量选择框 */}
-                {isBatchMode && (
-                  <div className={'cs-history-checkbox'}>
-                    {selectedIds.has(record.id) && '✓'}
-                  </div>
-                )}
+                {isBatchMode && <div className={'cs-history-checkbox'}>{selectedIds.has(record.id) && '✓'}</div>}
 
                 <div className={'cs-history-item-content'}>
                   <div className={'cs-history-item-header'}>
                     <h4 className={'cs-history-item-title'}>《{record.fileName}》</h4>
-                    <span className={'cs-history-item-score'}>{record.score} {record.grade}</span>
+                    <span className={'cs-history-item-score'}>
+                      {record.score} {record.grade}
+                    </span>
                   </div>
                   <p className={'cs-history-item-summary'}>{record.summary.slice(0, 80)}...</p>
                   <div className={'cs-history-item-meta'}>
@@ -188,7 +183,7 @@ const HistoryScanView: React.FC<HistoryScanViewProps> = ({ onBack, onViewReport 
                       e.stopPropagation();
                       handleDelete(record.id);
                     }}
-                    title="删除此记录"
+                    title='删除此记录'
                   >
                     🗑
                   </button>
