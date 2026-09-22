@@ -681,9 +681,9 @@ export const dialog = {
 
 export type CurriculumIngestRequest = {
   attachmentPath: string;
-  major: string;
-  cohort: string;
-  version: string;
+  major?: string;
+  cohort?: string;
+  version?: string;
 };
 
 export type CurriculumIngestResponse = {
@@ -695,6 +695,7 @@ export type CurriculumIngestResponse = {
   ragStatus?: string;
   errorCode?: string;
   errorMessage?: string;
+  plan?: CurriculumPlanPreview;
 };
 
 export type CurriculumPlanPreview = {

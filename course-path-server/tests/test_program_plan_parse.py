@@ -104,11 +104,11 @@ def test_continuing_table_page_keeps_course_name_and_credit_separate() -> None:
     assert by_code["A1050062"]["credits"] == 2
 
 
-def test_missing_grade_is_not_guessed() -> None:
-    with pytest.raises(ProgramPlanParseError) as error:
-        parse_program_plan_pages(_pages(), grade="")
+def test_missing_grade_is_explicitly_marked_unknown() -> None:
+    result = parse_program_plan_pages(_pages(), grade="")
 
-    assert error.value.code == "PARSE_FAILED"
+    assert result["grade"] == "未注明"
+    assert result["courses"]
 
 
 def test_file_path_handler_uses_registered_cohort_without_model_call(
@@ -142,7 +142,7 @@ def test_handler_returns_only_failure_fields_for_unsupported_file(tmp_path: Path
     }
 
 
-def test_unregistered_pdf_without_year_returns_failure_instead_of_guessing(
+def test_unregistered_pdf_without_year_returns_unknown_grade_instead_of_guessing(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     source = tmp_path / "curriculum.pdf"
@@ -152,9 +152,27 @@ def test_unregistered_pdf_without_year_returns_failure_instead_of_guessing(
 
     result = server.handle_parse_program_plan(str(source))
 
-    assert result["success"] is False
-    assert result["errorCode"] == "PARSE_FAILED"
-    assert "courses" not in result
+    assert result["success"] is True
+    assert result["grade"] == "未注明"
+    assert any("未注明" in warning for warning in result["warnings"])
+
+
+def test_automatic_storage_placeholders_are_not_presented_as_source_metadata(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    source = tmp_path / "curriculum.pdf"
+    source.write_bytes(b"%PDF-1.7 test")
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    monkeypatch.setattr(server, "curriculum_store", SimpleNamespace(list_documents=lambda: [
+        {"sha256": digest, "cohort": "unspecified", "version": "auto"}
+    ]))
+    monkeypatch.setattr(server, "native_pdf_pages_for_plan", lambda _path: _pages())
+
+    result = server.handle_parse_program_plan(str(source))
+
+    assert result["success"] is True
+    assert result["grade"] == "未注明"
+    assert "version" not in result
 
 
 def test_visual_flow_candidates_never_become_formal_prerequisites() -> None:

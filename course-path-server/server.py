@@ -100,13 +100,23 @@ def handle_parse_program_plan(
             record for record in curriculum_store.list_documents()
             if record.get("sha256") == digest
         ]
-        cohorts = {record.get("cohort") for record in matched if record.get("cohort")}
-        versions = {record.get("version") for record in matched if record.get("version")}
+        cohorts = {
+            record.get("cohort")
+            for record in matched
+            if re.fullmatch(r"20\d{2}", str(record.get("cohort") or ""))
+        }
+        versions = {
+            record.get("version")
+            for record in matched
+            if record.get("version") and record.get("version") != "auto"
+        }
         filename_year = re.search(r"(?:^|\D)(20\d{2})(?:\D|$)", source.stem)
         grade = next(iter(cohorts)) if len(cohorts) == 1 else filename_year.group(1) if filename_year else ""
         version = next(iter(versions)) if len(versions) == 1 else None
         pages = native_pdf_pages_for_plan(source)
         result = parse_program_plan_pages(pages, grade=grade, version=version)
+        if not grade:
+            result["warnings"].append("原文和文件名未明确标注适用年级，已标记为未注明，请在确认页核对。")
         if include_flow:
             result["recommendedSequences"] = []
             flow_page = next(
