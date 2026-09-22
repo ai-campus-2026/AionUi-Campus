@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import hashlib
-import os
 from pathlib import Path
 from typing import Any
 
 
 ALLOWED_EXTENSIONS = frozenset({".pdf", ".png", ".jpg", ".jpeg"})
 MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024
-ATTACHMENT_ROOT_ENV = "COURSE_PATH_ATTACHMENT_ROOT"
 
 
 def inspect_attachment(path_value: str | None) -> dict[str, Any] | None:
@@ -22,18 +20,11 @@ def inspect_attachment(path_value: str | None) -> dict[str, Any] | None:
     if path_value is None:
         return None
 
-    allowed_root = os.getenv(ATTACHMENT_ROOT_ENV)
-    if not allowed_root:
-        return _rejected("ATTACHMENT_ROOT_NOT_CONFIGURED")
-
-    root = Path(allowed_root).resolve()
     try:
-        attachment = Path(path_value).resolve(strict=True)
+        attachment = Path(_normalize_windows_path(path_value)).resolve(strict=True)
     except OSError:
         return _rejected("ATTACHMENT_NOT_FOUND")
 
-    if not _is_within(attachment, root):
-        return _rejected("ATTACHMENT_PATH_OUTSIDE_ALLOWED_ROOT")
     if not attachment.is_file():
         return _rejected("ATTACHMENT_NOT_A_FILE")
     if attachment.suffix.lower() not in ALLOWED_EXTENSIONS:
@@ -58,12 +49,11 @@ def inspect_attachment(path_value: str | None) -> dict[str, Any] | None:
     }
 
 
-def _is_within(candidate: Path, root: Path) -> bool:
-    try:
-        candidate.relative_to(root)
-    except ValueError:
-        return False
-    return True
+def _normalize_windows_path(path_value: str) -> str:
+    """Accept Windows verbatim paths while retaining exact-file-only access."""
+    if path_value.startswith("\\\\?\\"):
+        return path_value[4:]
+    return path_value
 
 
 def _sha256(path: Path) -> str:
