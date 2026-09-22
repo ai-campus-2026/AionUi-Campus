@@ -10,7 +10,7 @@ const NewHomePage: React.FC = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isMouseActive, setIsMouseActive] = useState(false);
   const historyRef = useRef<HTMLDivElement>(null);
-  
+
   // Mock recent conversations for demo
   const recentConversations = [
     { id: '1', title: '转专业政策解读', time: '2分钟前' },
@@ -62,7 +62,7 @@ const NewHomePage: React.FC = () => {
     '我能申请助学金吗？',
     '帮我比较两个专业培养方案',
     '毕业要求有哪些？',
-    '实习学分如何认定？'
+    '实习学分如何认定？',
   ];
 
   const handleAcademicPathClick = () => {
@@ -86,8 +86,8 @@ const NewHomePage: React.FC = () => {
   // Bubble positions and states
   const [bubblePositions, setBubblePositions] = useState([
     { x: 0, y: 0, originalX: 0, originalY: 0, phase: 0 },
-    { x: 0, y: 0, originalX: 0, originalY: 0, phase: 2 * Math.PI / 3 },
-    { x: 0, y: 0, originalX: 0, originalY: 0, phase: 4 * Math.PI / 3 }
+    { x: 0, y: 0, originalX: 0, originalY: 0, phase: (2 * Math.PI) / 3 },
+    { x: 0, y: 0, originalX: 0, originalY: 0, phase: (4 * Math.PI) / 3 },
   ]);
 
   // Initialize bubble positions on mount
@@ -96,26 +96,26 @@ const NewHomePage: React.FC = () => {
     const updatePositions = () => {
       const container = document.querySelector(`.${styles.modulesSection}`);
       if (!container) return;
-      
+
       const rect = container.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
-      
+
       // Position bubbles in a triangle pattern around center
-      setBubblePositions(prev => [
+      setBubblePositions((prev) => [
         { ...prev[0], originalX: centerX - 120, originalY: centerY - 60, x: centerX - 120, y: centerY - 60 },
         { ...prev[1], originalX: centerX, originalY: centerY + 80, x: centerX, y: centerY + 80 },
-        { ...prev[2], originalX: centerX + 120, originalY: centerY - 60, x: centerX + 120, y: centerY - 60 }
+        { ...prev[2], originalX: centerX + 120, originalY: centerY - 60, x: centerX + 120, y: centerY - 60 },
       ]);
     };
-    
+
     updatePositions();
-    
+
     // Handle window resize
     const handleResize = () => {
       updatePositions();
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -126,22 +126,22 @@ const NewHomePage: React.FC = () => {
       setMousePosition({ x: e.clientX, y: e.clientY });
       setIsMouseActive(true);
     };
-    
+
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length > 0) {
         setMousePosition({ x: e.touches[0].clientX, y: e.touches[0].clientY });
         setIsMouseActive(true);
       }
     };
-    
+
     const handleMouseLeave = () => {
       setIsMouseActive(false);
     };
-    
+
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('touchmove', handleTouchMove);
     window.addEventListener('mouseleave', handleMouseLeave);
-    
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
@@ -152,58 +152,62 @@ const NewHomePage: React.FC = () => {
   // Animation loop for magnetic bubbles
   useEffect(() => {
     let animationFrameId: number;
-    
+
     const animate = () => {
       if (!isMouseActive) {
         // Apply floating animation when idle
-        setBubblePositions(prev => prev.map((bubble, index) => {
-          const time = Date.now() / 1000;
-          const floatX = Math.sin(time * 0.5 + bubble.phase) * FLOATING_AMPLITUDE;
-          const floatY = Math.cos(time * 0.3 + bubble.phase * 0.7) * FLOATING_AMPLITUDE;
-          
-          // Smoothly interpolate back to original position
-          const newX = bubble.x + (bubble.originalX - bubble.x) * 0.05;
-          const newY = bubble.y + (bubble.originalY - bubble.y) * 0.05;
-          
-          return {
-            ...bubble,
-            x: newX + floatX,
-            y: newY + floatY
-          };
-        }));
+        setBubblePositions((prev) =>
+          prev.map((bubble, index) => {
+            const time = Date.now() / 1000;
+            const floatX = Math.sin(time * 0.5 + bubble.phase) * FLOATING_AMPLITUDE;
+            const floatY = Math.cos(time * 0.3 + bubble.phase * 0.7) * FLOATING_AMPLITUDE;
+
+            // Smoothly interpolate back to original position
+            const newX = bubble.x + (bubble.originalX - bubble.x) * 0.05;
+            const newY = bubble.y + (bubble.originalY - bubble.y) * 0.05;
+
+            return {
+              ...bubble,
+              x: newX + floatX,
+              y: newY + floatY,
+            };
+          })
+        );
       } else {
         // Apply magnetic attraction
-        setBubblePositions(prev => prev.map(bubble => {
-          const dx = mousePosition.x - bubble.originalX;
-          const dy = mousePosition.y - bubble.originalY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < MAGNETIC_RADIUS) {
-            // Calculate attraction force
-            const force = MAGNETIC_STRENGTH * (1 - distance / MAGNETIC_RADIUS);
-            const targetX = bubble.originalX + dx * force;
-            const targetY = bubble.originalY + dy * force;
-            
-            // Smooth interpolation toward target
-            const newX = bubble.x + (targetX - bubble.x) * 0.15;
-            const newY = bubble.y + (targetY - bubble.y) * 0.15;
-            
+        setBubblePositions((prev) =>
+          prev.map((bubble) => {
+            const dx = mousePosition.x - bubble.originalX;
+            const dy = mousePosition.y - bubble.originalY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < MAGNETIC_RADIUS) {
+              // Calculate attraction force
+              const force = MAGNETIC_STRENGTH * (1 - distance / MAGNETIC_RADIUS);
+              const targetX = bubble.originalX + dx * force;
+              const targetY = bubble.originalY + dy * force;
+
+              // Smooth interpolation toward target
+              const newX = bubble.x + (targetX - bubble.x) * 0.15;
+              const newY = bubble.y + (targetY - bubble.y) * 0.15;
+
+              return { ...bubble, x: newX, y: newY };
+            }
+
+            // Smoothly interpolate back to original position
+            const newX = bubble.x + (bubble.originalX - bubble.x) * 0.05;
+            const newY = bubble.y + (bubble.originalY - bubble.y) * 0.05;
+
             return { ...bubble, x: newX, y: newY };
-          }
-          
-          // Smoothly interpolate back to original position
-          const newX = bubble.x + (bubble.originalX - bubble.x) * 0.05;
-          const newY = bubble.y + (bubble.originalY - bubble.y) * 0.05;
-          
-          return { ...bubble, x: newX, y: newY };
-        }));
+          })
+        );
       }
-      
+
       animationFrameId = requestAnimationFrame(animate);
     };
-    
+
     animationFrameId = requestAnimationFrame(animate);
-    
+
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
@@ -214,17 +218,19 @@ const NewHomePage: React.FC = () => {
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.brand}>
-          <Typography.Text bold style={{ fontSize: 20 }}>AionUI</Typography.Text>
+          <Typography.Text bold style={{ fontSize: 20 }}>
+            AionUI
+          </Typography.Text>
         </div>
         <div className={styles.headerActions}>
           <Tooltip content='搜索'>
             <Button type='text' size='small' icon={<Search theme='outline' size='16' />} />
           </Tooltip>
           <Tooltip content='对话历史'>
-            <Button 
-              type='text' 
-              size='small' 
-              icon={<History theme='outline' size='16' />} 
+            <Button
+              type='text'
+              size='small'
+              icon={<History theme='outline' size='16' />}
               onClick={handleHistoryToggle}
               className={isHistoryOpen ? styles.activeIcon : ''}
             />
@@ -245,15 +251,15 @@ const NewHomePage: React.FC = () => {
           <Typography.Text type='secondary' style={{ fontSize: 18, marginBottom: 32 }}>
             理解规则，从这里开始。
           </Typography.Text>
-          
+
           {/* AI Input Box - Liquid Glass Effect */}
           <div className={styles.aiInputContainer}>
-            <div 
+            <div
               className={`${styles.aiInputBox} ${isInputFocused ? styles.focused : ''}`}
               style={{
-                boxShadow: isInputFocused 
-                  ? '0 8px 32px rgba(74, 140, 114, 0.15)' 
-                  : '0 4px 16px rgba(74, 140, 114, 0.1)'
+                boxShadow: isInputFocused
+                  ? '0 8px 32px rgba(74, 140, 114, 0.15)'
+                  : '0 4px 16px rgba(74, 140, 114, 0.1)',
               }}
             >
               <Input.TextArea
@@ -271,10 +277,10 @@ const NewHomePage: React.FC = () => {
                 }}
                 className={styles.aiInput}
               />
-              <Button 
-                type='primary' 
-                size='large' 
-                icon={<Send theme='outline' size='16' />} 
+              <Button
+                type='primary'
+                size='large'
+                icon={<Send theme='outline' size='16' />}
                 onClick={handleSend}
                 className={styles.sendButton}
               />
@@ -289,8 +295,8 @@ const NewHomePage: React.FC = () => {
           </Typography.Text>
           <div className={styles.recommendationsGrid}>
             {recommendations.map((question, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className={styles.recommendationItem}
                 onClick={() => handleRecommendationClick(question)}
               >
@@ -306,16 +312,16 @@ const NewHomePage: React.FC = () => {
           <Typography.Text type='secondary' style={{ fontSize: 14, marginBottom: 24 }}>
             快捷入口
           </Typography.Text>
-          
+
           {/* Academic Path Module - Magnetic Bubble */}
-          <div 
+          <div
             className={styles.magneticBubble}
             style={{
               position: 'absolute',
               left: `${bubblePositions[0].x}px`,
               top: `${bubblePositions[0].y}px`,
               transform: 'translate(-50%, -50%)',
-              transition: 'transform 0.1s ease-out'
+              transition: 'transform 0.1s ease-out',
             }}
             onClick={handleAcademicPathClick}
           >
@@ -334,14 +340,14 @@ const NewHomePage: React.FC = () => {
           </div>
 
           {/* Rule Analysis Module - Magnetic Bubble */}
-          <div 
+          <div
             className={styles.magneticBubble}
             style={{
               position: 'absolute',
               left: `${bubblePositions[1].x}px`,
               top: `${bubblePositions[1].y}px`,
               transform: 'translate(-50%, -50%)',
-              transition: 'transform 0.1s ease-out'
+              transition: 'transform 0.1s ease-out',
             }}
             onClick={handleRuleAnalysisClick}
           >
@@ -360,14 +366,14 @@ const NewHomePage: React.FC = () => {
           </div>
 
           {/* Policy Comparison Module - Magnetic Bubble */}
-          <div 
+          <div
             className={styles.magneticBubble}
             style={{
               position: 'absolute',
               left: `${bubblePositions[2].x}px`,
               top: `${bubblePositions[2].y}px`,
               transform: 'translate(-50%, -50%)',
-              transition: 'transform 0.1s ease-out'
+              transition: 'transform 0.1s ease-out',
             }}
             onClick={handlePolicyComparisonClick}
           >
@@ -389,34 +395,32 @@ const NewHomePage: React.FC = () => {
 
       {/* History Popover */}
       {isHistoryOpen && (
-        <div 
+        <div
           ref={historyRef}
           className={styles.historyPopover}
           style={{
             top: '64px',
             right: '24px',
             transform: 'translateY(8px)',
-            animation: 'fadeInUp 0.3s ease-out'
+            animation: 'fadeInUp 0.3s ease-out',
           }}
         >
           <div className={styles.historyHeader}>
             <Typography.Text bold>最近对话</Typography.Text>
-            <Button 
-              type='text' 
-              size='small' 
-              icon={<Close theme='outline' size='14' />} 
+            <Button
+              type='text'
+              size='small'
+              icon={<Close theme='outline' size='14' />}
               onClick={() => setIsHistoryOpen(false)}
             />
           </div>
           <div className={styles.historyList}>
             {recentConversations.map((conv) => (
-              <div 
-                key={conv.id} 
-                className={styles.historyItem}
-                onClick={() => handleHistoryClick(conv.id)}
-              >
+              <div key={conv.id} className={styles.historyItem} onClick={() => handleHistoryClick(conv.id)}>
                 <Typography.Text style={{ fontSize: 14 }}>{conv.title}</Typography.Text>
-                <Typography.Text type='secondary' style={{ fontSize: 12 }}>{conv.time}</Typography.Text>
+                <Typography.Text type='secondary' style={{ fontSize: 12 }}>
+                  {conv.time}
+                </Typography.Text>
               </div>
             ))}
           </div>

@@ -11,7 +11,9 @@
   - 采用 LLM(抽取时打标) + 规则(兜底归一) 的混合，无需人工审核：
       * policy_parser 让 LLM 在抽取时直接产出 board/input_kind/requires_evidence；
       * 本模块 annotate_policy 负责：LLM 值合法则保留，缺失/非法则用规则补齐；
-      * 存量已入库、没有这些字段的 JSON，用本模块 --backfill 一次性回填。
+      * 少数"合法但高确定性错放"由 _correct_board 纠偏层统一修正（两条路径均生效）；
+      * 存量回填/纠偏用本模块 CLI：默认全量按规则重推（force=True）；
+        仅需"补缺失 + 纠偏、保留其余 LLM 值"时加 --no-force。
 
 关于"一票否决(veto)"为何不能只靠关键词：同一个"处分/不及格/作弊"
 在推免细则里是"一票否决"，在综合素质测评里是"扣 X 分"。因此规则里
@@ -153,12 +155,43 @@ def classify_condition(c: Dict[str, Any]) -> Tuple[str, str, bool, str]:
     return board, kind, _needs_evidence(board, c), rule
 
 
+def _correct_board(c: Dict[str, Any], board: str) -> Tuple[str, bool]:
+    """在给定 board 上做"规则可断言的错放"纠偏，返回 (board, 是否改动)。
+
+    只修三类高确定性问题（其余与规则不一致但语义可辩护的合法值，一律尊重 LLM）：
+      C1 部队立功等非量化"独有成就"被标成 base：类目属加分族且规则判 bonus
+         ——它不提供也不影响申请，不应在前端基础板要求人人交材料；
+      C2 计分口径/行政信息被标成 base：规则判 other 且文案命中 INFO/ADMIN
+         ——没有任何学生"需要满足"它；
+      C3 外语要求中的"满足其一"备选路径（TOEFL/IELTS）与特定主体分支
+         （外语类专业条款）被标成 base：前端基础板只承载"必须逐条满足"的点，
+         备选项全部并列会显示成多条未达标。
+    """
+    if board != "base":
+        return board, False
+    cat = c.get("category")
+    rule_board, _ = _decide_board(c)
+    text = _text_of(c)
+    if rule_board == "bonus" and cat in BONUS_CATS:  # C1
+        return "bonus", True
+    if rule_board == "other" and (INFO_PAT.search(text) or ADMIN_PAT.search(text)):  # C2
+        return "other", True
+    if cat == "foreign_language":  # C3
+        item = str(c.get("item") or "")
+        up = item.upper()
+        if "TOEFL" in up or "IELTS" in up or "外语类专业" in item:
+            return "other", True
+    return board, False
+
+
 def annotate_condition(c: Dict[str, Any], force: bool = False) -> None:
     """就地给单条 condition 打字段。
 
     force=False 时保留合法的 LLM 值，仅补缺失/非法；且当 LLM 只给了 board 而
     input_kind 缺失/非法时，控件类型必须按"最终采用的 board"推导——避免出现
     LLM 标 bonus/veto 而规则按 other 分支给出 none 的控件错配。
+    两条路径（force / 非 force）都会叠加 _correct_board 纠偏层：LLM 值"合法但
+    高确定性错放"（部队立功类成就、计分口径、外语"满足其一"备选）也会被修正。
     """
     llm_board = c.get("board")
     llm_kind = c.get("input_kind")
@@ -168,11 +201,21 @@ def annotate_condition(c: Dict[str, Any], force: bool = False) -> None:
         and llm_kind in VALID_KINDS
         and isinstance(c.get("requires_evidence"), bool)
     ):
-        return  # LLM 已给全且合法，尊重之
+        # LLM 已给全且合法：其余字段尊重之，仅叠加确定性纠偏（详见 _correct_board）
+        board, corrected = _correct_board(c, llm_board)
+        if corrected:
+            c["board"] = board
+            if board == "other":
+                c["input_kind"] = "none"  # 须知项不承载输入控件（与 parser 约定一致）
+        return
 
     rule_board, _ = _decide_board(c)
     board = rule_board if force or llm_board not in VALID_BOARDS else llm_board
-    kind = _decide_kind(board, c) if force or llm_kind not in VALID_KINDS else llm_kind
+    board, corrected = _correct_board(c, board)
+    if force or llm_kind not in VALID_KINDS or (corrected and board == "other"):
+        kind = _decide_kind(board, c)
+    else:
+        kind = llm_kind
 
     c["board"] = board
     c["input_kind"] = kind

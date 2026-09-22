@@ -21,6 +21,8 @@ export interface Course {
   /** 先修课程 ID 列表 */
   prerequisites: string[];
   description?: string;
+  /** Grade point for completed courses; absent before a grade is recorded. */
+  gpa?: number;
 }
 
 /** 培养方案（决定有哪些课、学分、先修关系） */
@@ -57,7 +59,7 @@ export interface StudentProgress {
 }
 
 /** 学业路径页面视图状态 */
-export type PathView = 'empty' | 'parsing' | 'confirm' | 'workbench' | 'history';
+export type PathView = 'empty' | 'parsing' | 'confirm' | 'workbench' | 'profile' | 'history';
 
 /** 筛选条件 */
 export type CourseFilter = 'all' | 'required' | 'elective' | 'core' | 'available' | 'locked';

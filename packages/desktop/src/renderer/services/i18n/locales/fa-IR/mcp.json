@@ -46,6 +46,8 @@
   "curriculumCohortPlaceholder": "Cohort year (e.g. 2026)",
   "curriculumVersionPlaceholder": "Version (e.g. 2026.1)",
   "curriculumStoreButton": "Parse and generate course graph",
+  "curriculumMyInfo": "اطلاعات من",
+  "curriculumBackToPath": "بازگشت به مسیر تحصیلی",
   "integration": {
     "title": "یکپارچگی MCP",
     "description": "مدیریت سرورها و ابزارهای Model Context Protocol"

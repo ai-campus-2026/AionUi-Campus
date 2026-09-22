@@ -148,7 +148,9 @@
   color: #fff;
   background: linear-gradient(135deg, #7f9d78, #648b80);
   border-bottom-right-radius: 6px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 3px 10px rgba(70, 100, 84, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 3px 10px rgba(70, 100, 84, 0.18);
 }
 
 .ra-bubble--ai {
@@ -332,7 +334,10 @@
   background: none;
   border: none;
   cursor: pointer;
-  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
   white-space: nowrap;
 }
 
@@ -371,7 +376,10 @@
   background: color-mix(in srgb, var(--color-bg-2) 55%, transparent);
   color: var(--color-text-3);
   cursor: pointer;
-  transition: color 0.18s ease, background 0.18s ease, transform 0.12s ease;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    transform 0.12s ease;
 }
 
 .ra-topnav__iconbtn:hover {
@@ -448,7 +456,9 @@
   justify-content: center;
   color: #fff;
   background: linear-gradient(135deg, #8aa67e, #6d9389);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 3px 10px rgba(70, 100, 84, 0.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 3px 10px rgba(70, 100, 84, 0.25);
   flex-shrink: 0;
 }
 
@@ -493,7 +503,9 @@
   color: var(--color-text-2);
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.16s ease, color 0.16s ease;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease;
 }
 
 .ra-taskswitch__item:hover {
@@ -578,9 +590,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-.ra-summary__num--met { color: #2f9e44; }
-.ra-summary__num--missing { color: #d97917; }
-.ra-summary__num--notmet { color: #d9480f; }
+.ra-summary__num--met {
+  color: #2f9e44;
+}
+.ra-summary__num--missing {
+  color: #d97917;
+}
+.ra-summary__num--notmet {
+  color: #d9480f;
+}
 
 .ra-summary__unit {
   font-size: 12px;
@@ -595,9 +613,15 @@
   letter-spacing: 0.2px;
 }
 
-.ra-summary__sub--met { color: #2f9e44; }
-.ra-summary__sub--missing { color: #d97917; }
-.ra-summary__sub--notmet { color: #d9480f; }
+.ra-summary__sub--met {
+  color: #2f9e44;
+}
+.ra-summary__sub--missing {
+  color: #d97917;
+}
+.ra-summary__sub--notmet {
+  color: #d9480f;
+}
 
 .ra-summary__label {
   font-size: 12px;
@@ -624,7 +648,11 @@
   background: color-mix(in srgb, var(--color-bg-2) 50%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-border-2) 42%, transparent);
   cursor: pointer;
-  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.12s ease;
 }
 
 .ra-groupnav__chip:hover {
@@ -643,10 +671,18 @@
   background: var(--color-fill-4);
 }
 
-.ra-groupnav__dot--met { background: #2f9e44; }
-.ra-groupnav__dot--missing { background: #d97917; }
-.ra-groupnav__dot--notmet { background: #d9480f; }
-.ra-groupnav__dot--mix { background: linear-gradient(90deg, #2f9e44 0 33%, #d97917 33% 66%, #d9480f 66% 100%); }
+.ra-groupnav__dot--met {
+  background: #2f9e44;
+}
+.ra-groupnav__dot--missing {
+  background: #d97917;
+}
+.ra-groupnav__dot--notmet {
+  background: #d9480f;
+}
+.ra-groupnav__dot--mix {
+  background: linear-gradient(90deg, #2f9e44 0 33%, #d97917 33% 66%, #d9480f 66% 100%);
+}
 
 .ra-groupnav__count {
   font-size: 11.5px;
@@ -681,7 +717,11 @@
 
 .ra-chain__link--bridge {
   flex-basis: 34px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--color-border-2) 72%, transparent), color-mix(in srgb, var(--color-border-3) 65%, transparent));
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-border-2) 72%, transparent),
+    color-mix(in srgb, var(--color-border-3) 65%, transparent)
+  );
 }
 
 .ra-chain__node {
@@ -715,7 +755,10 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
     0 2px 6px rgba(22, 24, 29, 0.06);
-  transition: transform 0.16s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .ra-chain__dot--met {
@@ -890,7 +933,9 @@
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: background 0.18s ease, border-color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
 }
 
 .ra-entry__recent-item:hover {
@@ -919,7 +964,12 @@
 .ra-entry__dock {
   flex-shrink: 0;
   padding: 14px 28px 20px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--color-bg-1) 0%, transparent), color-mix(in srgb, var(--color-bg-1) 62%, transparent) 34%, color-mix(in srgb, var(--color-bg-1) 82%, transparent));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-bg-1) 0%, transparent),
+    color-mix(in srgb, var(--color-bg-1) 62%, transparent) 34%,
+    color-mix(in srgb, var(--color-bg-1) 82%, transparent)
+  );
   -webkit-backdrop-filter: blur(18px) saturate(1.4);
   backdrop-filter: blur(18px) saturate(1.4);
   border-top: 1px solid color-mix(in srgb, var(--color-border-2) 34%, transparent);
@@ -940,7 +990,9 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
     0 18px 50px rgba(22, 24, 29, 0.08);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .ra-entry__box:focus-within {
@@ -979,8 +1031,12 @@
   cursor: pointer;
   color: #fff;
   background: linear-gradient(135deg, #7f9d78, #648b80);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 4px 14px rgba(70, 100, 84, 0.25);
-  transition: transform 0.12s ease, opacity 0.16s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 4px 14px rgba(70, 100, 84, 0.25);
+  transition:
+    transform 0.12s ease,
+    opacity 0.16s ease;
 }
 
 .ra-entry__send:hover {
@@ -1023,7 +1079,9 @@
   line-height: 1;
   border: 1px solid color-mix(in srgb, var(--color-border-2) 34%, transparent);
   background: color-mix(in srgb, var(--color-bg-2) 48%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 4px 14px rgba(22, 24, 29, 0.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 4px 14px rgba(22, 24, 29, 0.05);
   -webkit-backdrop-filter: blur(14px) saturate(1.4);
   backdrop-filter: blur(14px) saturate(1.4);
 }
@@ -1132,7 +1190,10 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
     0 3px 10px rgba(22, 24, 29, 0.07);
-  transition: transform 0.18s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
 }
 
 .ra-atlas__node--met .ra-atlas__node-dot {
@@ -1161,7 +1222,9 @@
 }
 
 .ra-atlas__node--busy .ra-atlas__node-dot {
-  animation: ra-node-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both, ra-breathe 1.7s ease-in-out 0.4s infinite;
+  animation:
+    ra-node-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both,
+    ra-breathe 1.7s ease-in-out 0.4s infinite;
   animation-delay: calc(var(--i) * 0.12s), 0.4s;
   border-color: color-mix(in srgb, var(--color-primary-6) 50%, transparent);
 }
@@ -1205,7 +1268,9 @@
   font-size: 12.5px;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.18s ease, background 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease;
 }
 
 .ra-atlas__foot:hover {
@@ -1243,7 +1308,11 @@
   padding: 12px 16px;
   margin-bottom: 14px;
   border-radius: 14px;
-  background: linear-gradient(120deg, color-mix(in srgb, #d97917 6%, transparent), color-mix(in srgb, var(--color-bg-2) 55%, transparent));
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, #d97917 6%, transparent),
+    color-mix(in srgb, var(--color-bg-2) 55%, transparent)
+  );
   border: 1px solid color-mix(in srgb, #d97917 26%, transparent);
   animation: ra-fade-slide 0.3s ease-out;
 }
@@ -1282,7 +1351,9 @@
   border: 1px solid color-mix(in srgb, var(--color-border-2) 40%, transparent);
   cursor: pointer;
   font-family: inherit;
-  transition: border-color 0.16s ease, transform 0.12s ease;
+  transition:
+    border-color 0.16s ease,
+    transform 0.12s ease;
 }
 
 .ra-priority__item:hover {
@@ -1311,7 +1382,9 @@
   color: var(--color-text-3);
   cursor: pointer;
   font-family: inherit;
-  transition: color 0.16s ease, border-color 0.16s ease;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease;
 }
 
 .ra-group__mettoggle:hover {
@@ -1370,7 +1443,10 @@
   border-radius: 14px;
   background: color-mix(in srgb, var(--color-bg-2) 34%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-border-2) 32%, transparent);
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.15s ease;
 }
 
 .ra-cond:hover {
@@ -1443,7 +1519,10 @@
   border-radius: 999px;
   font-size: 11.5px;
   font-weight: 600;
-  transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.2s ease;
 }
 
 .ra-cond__badge--met {
@@ -1526,7 +1605,9 @@
   border: 1px solid color-mix(in srgb, var(--color-border-2) 42%, transparent);
   background: color-mix(in srgb, var(--color-fill-2) 34%, transparent);
   outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .ra-cond__input::placeholder {
@@ -1547,11 +1628,15 @@
   cursor: pointer;
   color: #fff;
   background: linear-gradient(135deg, #7f9d78, #648b80);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 8px rgba(70, 100, 84, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 8px rgba(70, 100, 84, 0.2);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.12s ease, opacity 0.16s ease;
+  transition:
+    transform 0.12s ease,
+    opacity 0.16s ease;
 }
 
 .ra-cond__send:hover {
@@ -1574,7 +1659,11 @@
   background: color-mix(in srgb, var(--color-fill-2) 45%, transparent);
   color: var(--color-text-2);
   cursor: pointer;
-  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.12s ease;
   white-space: nowrap;
 }
 
@@ -1592,7 +1681,9 @@
   color: #fff;
   background: linear-gradient(135deg, #7f9d78, #648b80);
   border-color: transparent;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 8px rgba(70, 100, 84, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 8px rgba(70, 100, 84, 0.22);
 }
 
 .ra-btn--primary:hover {
@@ -1661,7 +1752,10 @@
   background: color-mix(in srgb, var(--color-bg-2) 55%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-border-2) 45%, transparent);
   cursor: pointer;
-  transition: color 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease;
 }
 
 .ra-chip:hover {
@@ -1680,12 +1774,16 @@
   backdrop-filter: blur(24px) saturate(1.5);
   border: 1px solid color-mix(in srgb, var(--color-border-2) 50%, transparent);
   box-shadow: 0 6px 24px rgba(22, 24, 29, 0.06);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .ra-compose__box:focus-within {
   border-color: color-mix(in srgb, var(--color-primary-6) 42%, var(--color-border-2));
-  box-shadow: 0 6px 28px rgba(22, 24, 29, 0.09), 0 0 0 3px color-mix(in srgb, var(--color-primary-6) 10%, transparent);
+  box-shadow:
+    0 6px 28px rgba(22, 24, 29, 0.09),
+    0 0 0 3px color-mix(in srgb, var(--color-primary-6) 10%, transparent);
 }
 
 .ra-compose__label {
@@ -1726,8 +1824,12 @@
   cursor: pointer;
   color: #fff;
   background: linear-gradient(135deg, #7f9d78, #648b80);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 8px rgba(70, 100, 84, 0.22);
-  transition: transform 0.12s ease, opacity 0.16s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 8px rgba(70, 100, 84, 0.22);
+  transition:
+    transform 0.12s ease,
+    opacity 0.16s ease;
   flex-shrink: 0;
 }
 
@@ -1826,14 +1928,22 @@
   padding: 12px 14px;
   margin-bottom: 14px;
   border-radius: 14px;
-  background: linear-gradient(120deg, color-mix(in srgb, #f3f7ef 55%, transparent), color-mix(in srgb, var(--color-bg-2) 55%, transparent));
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, #f3f7ef 55%, transparent),
+    color-mix(in srgb, var(--color-bg-2) 55%, transparent)
+  );
   border: 1px solid color-mix(in srgb, #7f9d78 38%, transparent);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
   animation: ra-fade-slide 0.34s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 [data-theme='dark'] .ra-change {
-  background: linear-gradient(120deg, color-mix(in srgb, #2c3a2a 55%, transparent), color-mix(in srgb, var(--color-bg-2) 55%, transparent));
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, #2c3a2a 55%, transparent),
+    color-mix(in srgb, var(--color-bg-2) 55%, transparent)
+  );
 }
 
 .ra-change__icon {
@@ -1993,7 +2103,9 @@
   align-items: center;
   gap: 4px;
   opacity: 0.45;
-  transition: opacity 0.25s ease, color 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    color 0.25s ease;
 }
 
 .ra-analyzing__step--active {
@@ -2128,7 +2240,9 @@
   background: color-mix(in srgb, var(--color-bg-2) 50%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-border-2) 42%, transparent);
   cursor: pointer;
-  transition: color 0.16s ease, border-color 0.16s ease;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease;
 }
 
 .ra-rep-hist:hover {
@@ -2157,7 +2271,9 @@
   font-size: 12.5px;
   color: var(--color-text-2);
   cursor: pointer;
-  transition: color 0.16s ease, background 0.16s ease;
+  transition:
+    color 0.16s ease,
+    background 0.16s ease;
 }
 
 .ra-detail__back:hover {
@@ -2423,7 +2539,9 @@
   background: transparent;
   color: var(--color-text-4);
   cursor: pointer;
-  transition: color 0.16s ease, background 0.16s ease;
+  transition:
+    color 0.16s ease,
+    background 0.16s ease;
   flex-shrink: 0;
 }
 
@@ -2546,52 +2664,99 @@
 
 /* ---------- 动画 ---------- */
 @keyframes ra-rotate {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes ra-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes ra-fade-slide {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes ra-modal-in {
-  from { opacity: 0; transform: translateY(10px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes ra-pop {
-  0% { transform: scale(0.82); }
-  55% { transform: scale(1.08); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0.82);
+  }
+  55% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes ra-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.62; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.62;
+  }
 }
 
 @keyframes ra-breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.045); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
 }
 
 @keyframes ra-node-in {
-  from { opacity: 0; transform: translateY(6px) scale(0.92); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes ra-flow {
-  to { stroke-dashoffset: -22; }
+  to {
+    stroke-dashoffset: -22;
+  }
 }
 
 @keyframes ra-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 /* 减少动效偏好 */
@@ -2968,7 +3133,6 @@
   color: var(--color-text-1);
 }
 
-
 /* ---------- 调试：角落浮动按钮 ---------- */
 .ra-debug-fab {
   position: fixed;
@@ -2990,7 +3154,10 @@
   justify-content: center;
   z-index: 9998;
   opacity: 0.4;
-  transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+  transition:
+    opacity 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -3104,7 +3271,6 @@
   font-style: italic;
 }
 
-
 /* ===== 重新分析按钮 ===== */
 .ra-interpret__reanalyze {
   margin-left: auto;
@@ -3142,8 +3308,14 @@
   animation: raSupplyFadeIn 0.3s ease;
 }
 @keyframes raSupplyFadeIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .ra-supply-banner__icon {
   flex-shrink: 0;
@@ -3194,21 +3366,19 @@
   white-space: nowrap;
 }
 
-
 /* ===== 规则分析页：隐藏聊天框里的 MCP 工具结果渲染卡片 =====
    政策解读只在左侧展示，聊天框只保留纯文本对话 */
 .ra-workbench--hide-toolcards .tool-group-summary,
 .ra-workbench--hide-toolcards .tool-group,
-.ra-workbench--hide-toolcards [class*="tool-call-card"],
-.ra-workbench--hide-toolcards [class*="message-tool"] {
+.ra-workbench--hide-toolcards [class*='tool-call-card'],
+.ra-workbench--hide-toolcards [class*='message-tool'] {
   display: none !important;
 }
 
-
 /* ===== 政策依据/建议：轻量卡片样式 ===== */
 .ra-mcp-analysis__card {
-  background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(240,240,240,0.4));
-  border: 1px solid rgba(0,0,0,0.05);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(240, 240, 240, 0.4));
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 14px;
   padding: 16px 20px;
   margin-top: 16px;
@@ -3224,7 +3394,7 @@
 .ra-mcp-analysis__card .ra-mcp-analysis__evidences li,
 .ra-mcp-analysis__card .ra-mcp-analysis__suggestions li {
   padding: 8px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.04);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 .ra-mcp-analysis__card .ra-mcp-analysis__evidences li:last-child,
 .ra-mcp-analysis__card .ra-mcp-analysis__suggestions li:last-child {
@@ -3241,7 +3411,6 @@
   color: #9aa5a0;
   margin-top: 4px;
 }
-
 
 /* ===== 调试弹窗：任务名称输入 ===== */
 .ra-debug__taskname {
@@ -3267,7 +3436,6 @@
 .ra-debug__taskname-input:focus {
   border-color: #7f9d78;
 }
-
 
 /* ===== 我的报告：排序选择 ===== */
 .ra-reports__sort {

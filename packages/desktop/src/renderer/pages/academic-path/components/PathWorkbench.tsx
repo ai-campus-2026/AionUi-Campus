@@ -22,6 +22,7 @@ interface Props {
   onCourseStatusChange: (courseId: string, status: CourseStatus) => void;
   onSync: () => Promise<boolean>;
   onClearProgress: () => Promise<boolean>;
+  onViewProfile: () => void;
   onViewHistory: () => void;
   onReupload: () => void;
   onBack: () => void;
@@ -64,6 +65,7 @@ const PathWorkbench: React.FC<Props> = ({
   onCourseStatusChange,
   onSync,
   onClearProgress,
+  onViewProfile,
   onViewHistory,
   onReupload,
   onBack,
@@ -343,6 +345,9 @@ const PathWorkbench: React.FC<Props> = ({
           >
             <Home size={15} theme='outline' fill='currentColor' />
           </button>
+          <Button type='primary' onClick={onViewProfile}>
+            {t('mcp.curriculumMyInfo')}
+          </Button>
           <button type='button' className='ap-btn ap-btn--primary' onClick={onViewHistory}>
             培养方案历史
           </button>

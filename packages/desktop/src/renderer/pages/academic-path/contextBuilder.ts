@@ -20,7 +20,8 @@ function statusLabel(status: string | undefined): string {
 export function buildAcademicContext(
   plan: ProgramPlan,
   progress: StudentProgress,
-  selectedCourse: Course | null
+  selectedCourse: Course | null,
+  userInfo?: Record<string, string>
 ): string {
   const totalCourses = plan.courses.length;
   const listedCredits = plan.courses.reduce((sum, c) => sum + c.credits, 0);
@@ -83,6 +84,16 @@ export function buildAcademicContext(
     if (followups) ctx += `，后续课程：${followups}`;
   }
 
-  ctx += '\n\n请基于以上学业路径数据回答用户问题。\n用户问题：';
+  if (userInfo && typeof userInfo === 'object') {
+    const entries = Object.entries(userInfo).filter(([_, value]) => value && String(value).trim() !== '');
+    if (entries.length > 0) {
+      ctx += '\n我的信息：\n';
+      entries.forEach(([key, value]) => {
+        ctx += `  ${key}: ${value}\n`;
+      });
+    }
+  }
+
+  ctx += '\n\n请基于以上学业路径和个人信息回答用户问题。\n用户问题：';
   return ctx;
 }

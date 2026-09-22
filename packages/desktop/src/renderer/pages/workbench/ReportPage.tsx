@@ -236,11 +236,7 @@ const ReportPage: React.FC = () => {
                   </Grid.Col>
                   <Grid.Col xs={8}>
                     <Card style={{ borderRadius: 16 }}>
-                      <Statistic
-                        title={t('report.missingLabel')}
-                        value={stats.missing}
-                        groupSeparator={false}
-                      />
+                      <Statistic title={t('report.missingLabel')} value={stats.missing} groupSeparator={false} />
                     </Card>
                   </Grid.Col>
                   <Grid.Col xs={8}>

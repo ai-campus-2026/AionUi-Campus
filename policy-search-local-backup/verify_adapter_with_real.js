@@ -2,8 +2,13 @@
 const ts = require('D:/AI-Campus-Workspace/AionUi-Campus-SSH/node_modules/typescript');
 const fs = require('fs');
 
-const src = fs.readFileSync('D:/AI-Campus-Workspace/AionUi-Campus-SSH/packages/desktop/src/renderer/components/campus-rule/adaptPolicyResult.ts', 'utf8');
-const js = ts.transpileModule(src, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
+const src = fs.readFileSync(
+  'D:/AI-Campus-Workspace/AionUi-Campus-SSH/packages/desktop/src/renderer/components/campus-rule/adaptPolicyResult.ts',
+  'utf8'
+);
+const js = ts.transpileModule(src, {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+}).outputText;
 const m = { exports: {} };
 new Function('exports', 'module', 'require', js)(m.exports, m, require);
 

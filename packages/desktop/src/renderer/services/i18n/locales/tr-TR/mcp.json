@@ -46,6 +46,8 @@
   "curriculumCohortPlaceholder": "Cohort year (e.g. 2026)",
   "curriculumVersionPlaceholder": "Version (e.g. 2026.1)",
   "curriculumStoreButton": "Parse and generate course graph",
+  "curriculumMyInfo": "Bilgilerim",
+  "curriculumBackToPath": "Akademik yola dön",
   "integration": {
     "title": "MCP Entegrasyonu",
     "description": "Model Bağlam Protokolü sunucularını ve araçlarını yönet"

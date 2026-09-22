@@ -70,6 +70,7 @@ import { useTranslation } from 'react-i18next';
 
 // Styles
 import 'uno.css';
+import './styles/fonts.css';
 import './styles/arco-override.css';
 import './styles/themes/index.css';
 import './styles/markdown.css';
@@ -94,6 +95,7 @@ import { bootstrapRendererConfig } from '@renderer/services/bootstrapRenderer';
 // Components and utilities
 import BackendStartingView from './components/layout/BackendStartingView';
 import BackendStartupGate from './components/layout/BackendStartupGate';
+import CampusApiKeyDialog from './components/layout/CampusApiKeyDialog';
 import GpuAutoDisableNotice from './components/layout/GpuAutoDisableNotice';
 import Layout from './components/layout/Layout';
 import Router from './components/layout/Router';
@@ -294,6 +296,7 @@ const AppProviders: React.FC<PropsWithChildren> = ({ children }) =>
                 null,
                 React.createElement(RuntimeFailureDialogs, null),
                 React.createElement(GpuAutoDisableNotice, null),
+                React.createElement(CampusApiKeyDialog, null),
                 children
               )
             )

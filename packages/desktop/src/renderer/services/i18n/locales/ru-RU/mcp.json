@@ -46,6 +46,8 @@
   "curriculumCohortPlaceholder": "Cohort year (e.g. 2026)",
   "curriculumVersionPlaceholder": "Version (e.g. 2026.1)",
   "curriculumStoreButton": "Parse and generate course graph",
+  "curriculumMyInfo": "Мои данные",
+  "curriculumBackToPath": "Вернуться к учебному плану",
   "integration": {
     "title": "Интеграция MCP",
     "description": "Управление серверами и инструментами Model Context Protocol"

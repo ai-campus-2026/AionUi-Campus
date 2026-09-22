@@ -15,7 +15,11 @@ import { AnswerTemplate, mockCourseRuleSuccessResult } from '@renderer/component
 import type { CampusRuleToolResult } from '@renderer/components/campus-rule';
 import { tryParseCampusRuleResult } from '@renderer/components/campus-rule/adaptPolicyResult';
 import RuleErrorBox from '@renderer/components/campus-rule/RuleErrorBox';
-import { usePolicyChecklistPanel, type ChecklistDocKey, type ChecklistHints } from '@renderer/pages/policy-checklist/checklistPanelStore';
+import {
+  useOptionalPolicyChecklistPanel,
+  type ChecklistDocKey,
+  type ChecklistHints,
+} from '@renderer/pages/policy-checklist/checklistPanelStore';
 import type { BackendPolicyResult } from '@renderer/pages/policy-checklist/adaptQueryPolicyResult';
 import { parseUserHints, extractUserInfoHints } from '@renderer/pages/policy-checklist/parseUserHints';
 import './MessageToolGroupSummary.css';
@@ -178,7 +182,7 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
   // 同一会话会积累多条 query_policy（新旧问题各一条），取【最后一条】命中为准，
   // 否则历史旧问题会覆盖新问题（如奖学金→推免切换失效）。
   // 同时把该次调用的【原始返回 results[0]】传给清单面板，实现"每次问答实时更新"。
-  const { openChecklist } = usePolicyChecklistPanel();
+  const openChecklist = useOptionalPolicyChecklistPanel()?.openChecklist;
 
   // 同步解析失败（output 被截断/非 JSON）时，记录待回源的 key/hints，由 loadFull 兜底
   const pendingChecklistRef = useRef<{ key: ChecklistDocKey; hints: ChecklistHints } | null>(null);
@@ -218,7 +222,7 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
     }
     // 同步没解析出 raw 但确实调用了清单类工具：记录待回源，loadFull 拿到完整 output 后补齐
     pendingChecklistRef.current = latestKey && !latestRaw ? { key: latestKey, hints: latestHints } : null;
-    if (latestKey) openChecklist(latestKey, latestHints, latestRaw);
+    if (latestKey) openChecklist?.(latestKey, latestHints, latestRaw);
   }, [tools, openChecklist]);
 
   // 提取校园规则/政策检索结果，在折叠面板外层直接渲染（默认可见，无需展开 View Steps）
@@ -258,7 +262,7 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
               try {
                 const out = JSON.parse(next.output) as { results?: BackendPolicyResult[] };
                 if (Array.isArray(out?.results) && out.results.length > 0) {
-                  openChecklist(pending.key, pending.hints, out.results);
+                  openChecklist?.(pending.key, pending.hints, out.results);
                 }
               } catch {
                 // 完整 output 仍非 JSON：清单保持同步解析的结果（可能为固化数据）
@@ -288,9 +292,7 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
   const hasTruncatedOutput = useMemo(
     () =>
       tools.some(
-        (item) =>
-          item.truncated ||
-          (typeof item.output === 'string' && /\[truncated|…\[truncated/i.test(item.output))
+        (item) => item.truncated || (typeof item.output === 'string' && /\[truncated|…\[truncated/i.test(item.output))
       ),
     [tools]
   );
@@ -359,4 +361,3 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
 };
 
 export default React.memo(MessageToolGroupSummary);
-

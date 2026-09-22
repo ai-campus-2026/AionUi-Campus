@@ -13,7 +13,9 @@ function loadHistory(): ComparisonHistoryRecord[] {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
     if (raw) return JSON.parse(raw) as ComparisonHistoryRecord[];
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   // 首次进入：展示示例历史记录
   return mockHistory;
 }
@@ -35,7 +37,11 @@ const PolicyComparisonPage: React.FC = () => {
 
   // 历史数据持久化
   useEffect(() => {
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch {
+      /* ignore */
+    }
   }, [history]);
 
   /** 从入口页开始对比 → 进入 Diff */
@@ -45,6 +51,16 @@ const PolicyComparisonPage: React.FC = () => {
     setNewFile(newF);
     setDiffReturnView('entry');
     setView('diff');
+  };
+
+  const handleDeleteRecord = (recordId: string) => {
+    setHistory((prev) => prev.filter((r) => r.id !== recordId));
+  };
+
+  /** 批量删除历史记录 */
+  const handleBatchDeleteRecords = (recordIds: string[]) => {
+    const idSet = new Set(recordIds);
+    setHistory((prev) => prev.filter((r) => !idSet.has(r.id)));
   };
 
   /** 保存历史记录（带完整 Diff 快照） */
@@ -85,6 +101,8 @@ const PolicyComparisonPage: React.FC = () => {
         onBack={() => setView('entry')}
         onNewCompare={() => setView('entry')}
         onSelectRecord={handleSelectHistory}
+        onDelete={handleDeleteRecord}
+        onBatchDelete={handleBatchDeleteRecords}
       />
     );
   }

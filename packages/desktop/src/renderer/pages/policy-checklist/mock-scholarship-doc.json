@@ -8,14 +8,7 @@
     "title": "重庆邮电大学普通本科学生奖助学金评审办法",
     "source_file": "重庆邮电大学奖助学金评审办法_重邮2016-84号.txt",
     "effective_date": "2016-01-01",
-    "tags": [
-      "本科",
-      "奖学金",
-      "助学金",
-      "国家奖学金",
-      "国家励志奖学金",
-      "学业奖学金"
-    ]
+    "tags": ["本科", "奖学金", "助学金", "国家奖学金", "国家励志奖学金", "学业奖学金"]
   },
   "requirements": {
     "gpa": {
@@ -807,157 +800,103 @@
       "group_id": "group_basic",
       "description": "基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001"
-      ]
+      "condition_ids": ["condition_001"]
     },
     {
       "group_id": "group_basic",
       "description": "基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001",
-        "condition_002",
-        "condition_003",
-        "condition_004"
-      ]
+      "condition_ids": ["condition_001", "condition_002", "condition_003", "condition_004"]
     },
     {
       "group_id": "group_basic_eligibility",
       "description": "基本申请资格与规则",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001",
-        "condition_002",
-        "condition_003"
-      ]
+      "condition_ids": ["condition_001", "condition_002", "condition_003"]
     },
     {
       "group_id": "group_basic",
       "description": "基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001",
-        "condition_002"
-      ]
+      "condition_ids": ["condition_001", "condition_002"]
     },
     {
       "group_id": "group_basic",
       "description": "国家奖学金及8000元以上社会奖学金基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001",
-        "condition_002"
-      ]
+      "condition_ids": ["condition_001", "condition_002"]
     },
     {
       "group_id": "group_basic",
       "description": "基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001",
-        "condition_002"
-      ]
+      "condition_ids": ["condition_001", "condition_002"]
     },
     {
       "group_id": "group_basic",
       "description": "国家励志奖学金、郭长波奖学金基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001",
-        "condition_002",
-        "condition_003"
-      ]
+      "condition_ids": ["condition_001", "condition_002", "condition_003"]
     },
     {
       "group_id": "group_basic",
       "description": "基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001",
-        "condition_002"
-      ]
+      "condition_ids": ["condition_001", "condition_002"]
     },
     {
       "group_id": "group_basic",
       "description": "基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001",
-        "condition_002"
-      ]
+      "condition_ids": ["condition_001", "condition_002"]
     },
     {
       "group_id": "group_basic",
       "description": "基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001"
-      ]
+      "condition_ids": ["condition_001"]
     },
     {
       "group_id": "group_basic",
       "description": "基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001"
-      ]
+      "condition_ids": ["condition_001"]
     },
     {
       "group_id": "group_basic",
       "description": "基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001"
-      ]
+      "condition_ids": ["condition_001"]
     },
     {
       "group_id": "group_basic",
       "description": "国家助学金基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001",
-        "condition_002",
-        "condition_003"
-      ]
+      "condition_ids": ["condition_001", "condition_002", "condition_003"]
     },
     {
       "group_id": "group_procedural_basic",
       "description": "基本流程性要求",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001",
-        "condition_002",
-        "condition_003"
-      ]
+      "condition_ids": ["condition_001", "condition_002", "condition_003"]
     },
     {
       "group_id": "group_disqualification",
       "description": "取消评定资格的否定性条件（满足任一即取消）",
       "logic": "OR",
-      "condition_ids": [
-        "condition_001",
-        "condition_002",
-        "condition_003",
-        "condition_004"
-      ]
+      "condition_ids": ["condition_001", "condition_002", "condition_003", "condition_004"]
     },
     {
       "group_id": "group_basic",
       "description": "基本申请条件",
       "logic": "AND",
-      "condition_ids": [
-        "condition_001"
-      ]
+      "condition_ids": ["condition_001"]
     },
     {
       "group_id": "group_bonus_volunteer",
       "description": "义工服务与学生干部履职相关加分项",
       "logic": "OR",
-      "condition_ids": [
-        "condition_001",
-        "condition_002"
-      ]
+      "condition_ids": ["condition_001", "condition_002"]
     }
   ]
 }

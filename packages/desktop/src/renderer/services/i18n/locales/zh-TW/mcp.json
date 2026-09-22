@@ -46,6 +46,8 @@
   "curriculumCohortPlaceholder": "入學年級，例如 2026",
   "curriculumVersionPlaceholder": "版本，例如 2026.1",
   "curriculumStoreButton": "解析並產生課程圖",
+  "curriculumMyInfo": "我的資訊",
+  "curriculumBackToPath": "返回學業路徑",
   "integration": {
     "title": "MCP 整合",
     "description": "管理模型上下文協議伺服器和工具"

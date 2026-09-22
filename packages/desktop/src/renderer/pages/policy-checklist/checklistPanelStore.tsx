@@ -64,9 +64,7 @@ export const PolicyChecklistPanelProvider: React.FC<{ children: React.ReactNode 
     [docKey, hints, rawResults, selectedDocs, setSelectedDocs, openChecklist, closeChecklist]
   );
 
-  return (
-    <PolicyChecklistPanelContext.Provider value={value}>{children}</PolicyChecklistPanelContext.Provider>
-  );
+  return <PolicyChecklistPanelContext.Provider value={value}>{children}</PolicyChecklistPanelContext.Provider>;
 };
 
 export const usePolicyChecklistPanel = (): PolicyChecklistPanelState => {
@@ -76,3 +74,6 @@ export const usePolicyChecklistPanel = (): PolicyChecklistPanelState => {
   }
   return context;
 };
+
+export const useOptionalPolicyChecklistPanel = (): PolicyChecklistPanelState | null =>
+  useContext(PolicyChecklistPanelContext);

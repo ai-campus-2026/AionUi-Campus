@@ -2,6 +2,7 @@
 
 import json
 import asyncio
+import re
 import sys
 import logging
 from typing import Any, Dict, List, Optional
@@ -29,6 +30,7 @@ from policy_store import PolicyStore
 from policy_parser import PolicyParser
 from policy_matcher import PolicyMatcher
 from checklist_annotator import annotate_policy
+from contract_view import build_contract_view
 
 
 # ============================================================
@@ -157,14 +159,47 @@ TOOLS = [
             "- 我能不能申请、我是否符合条件、政策eligibility\n"
             "- 帮我看看、帮我查一下、匹配一下\n"
             "适用场景：用户提供了个人信息，想知道自己符合哪些政策条件。\n"
+            "\n"
+            "=== 字段填写规范（重要，直接影响判定准确性） ===\n"
+            "1. 数值字段分制：GPA/绩点填 gpa（4分/5分制小数）；百分制平均成绩填 average_score（如 90）；"
+            "排名百分比填 gpa_rank_percent（前12.5% 填 12.5）。用户给百分制平均分时不要塞进 gpa。\n"
+            "2. 所有数值字段接受数字或数字字符串（\"90\"、\"90分\"、\"前12.5%\"均可识别），按用户原话如实填写。\n"
+            "3. 志愿时长/社会实践/培训学时等非标准项放入 extra，键名用中文或标准英文均可（如 "
+            "{\"extra\": {\"志愿服务时长\": 25}} 或 {\"extra\": {\"volunteer_hours\": 25}}）；"
+            "凡是对话里已提供的信息都必须填入对应字段，不要只停留在自然语言。\n"
+            "4. 【一票否决必须显式申报】用户自述存在违纪处分/作弊/学术不端/挂科（不及格）等情形时，"
+            "必须在字段里申报，否则会被误判为\"未触发\"。任选其一：\n"
+            "   - 布尔字段：disciplinary_action: true（违纪处分）、cheating: true（作弊/学术不端）、"
+            "plagiarism: true（抄袭）、failed_courses: 门数（挂科）；\n"
+            "   - declared_vetoes 列出：[\"违纪\", \"挂科\"] 或 {\"违纪\": true}；\n"
+            "   - answers 回填：[{\"id\": \"否决条件id\", \"value\": true}]。\n"
+            "   用户明确表示\"没有\"的否决情形不要申报（不要传 false 项，留空即可）。\n"
+            "5. 前端申请清单回填的答案放 answers：[{\"id\": \"条件id\", \"value\": 是/否/数值}]。\n"
+            "6. 缺失信息如实留空（返回 missing_info）；严禁凭猜测填充数值、排名或否决申报。\n"
+            "\n"
+            "=== 路由规则 ===\n"
+            "- 用户询问\"我是否符合XX政策/能不能申请/差多少\"等资格判定时必须调用本工具，不得凭常识直接作答；\n"
+            "- 用户问的具体政策若不在知识库（先用 list_policies 或按本工具返回确认），如实告知\"未收录该政策\"，"
+            "不得用知识库中其它学校/其它类型的政策顶替，也不得凭训练语料编造条款或分数线；\n"
+            "- 同一轮对话中政策上下文应与上一轮一致（以返回的 policyFileName 为准）；若用户明确指定政策文件，"
+            "将文件名传给 policy_name 参数以锁定匹配范围。\n"
             "返回结果包含：\n"
             "- overall_verdict：总体判定（disqualified/not_eligible/needs_more_info/needs_review/likely_eligible）\n"
             "- veto_blocked / triggered_vetoes：是否被一票否决及命中项（附带原文引用）\n"
             "- board_matches：按 veto/base/bonus/other 分组的精简索引（含 id/item/match）\n"
             "- condition_matches：逐条匹配全量明细（含 board/input_kind/requires_evidence 与逐条对比）\n"
+            "- procedural_notes：流程性事项备档（材料提交/承诺类等；不进任何板块、不参与判定，仅供对话参考）\n"
+            "- 契约 v3 顶层字段：type/toolName/status/summary/conclusion/conditionGroups/policyVersionId/policyFileName"
+            "（\"规则分析\"页与对话内联卡片直接渲染；conditionGroups 只含 门槛/红线/加分，match 为契约四态；"
+            "每行含 sourceFile（政策来源文件），可补充信息的条件行含 control（输入控件配置：type/fieldKey/placeholder/options））\n"
+            "- evidences/risks/suggestions：政策依据（≤5 条）、风险/缺失信息、建议下一步\n"
             "- source_quote：原文引用（必须展示给用户）\n"
             "- missing_info：缺失信息\n"
-            "示例：用户说'我的GPA3.7，有1篇SCI论文，符合哪些保研政策？'时调用此工具。"
+            "示例：用户说'我的GPA3.7，有1篇SCI论文，符合哪些保研政策？'时调用此工具。\n"
+            "【调用顺序】本工具应作为本轮对话的最后一次工具调用：调用后请直接基于返回结果组织回答，"
+            "不要再调用通用知识库检索工具（search）重复查找同一政策内容——本工具结果已覆盖该政策全部门槛/红线/加分条款"
+            "及原文引用（source_quote/evidences），重复检索通常不会返回新的政策信息。"
+            "如确需配合通用检索，请安排在本工具之前调用。"
         ),
         inputSchema={
             "type": "object",
@@ -179,6 +214,10 @@ TOOLS = [
                         "gpa_rank_percent": {
                             "type": "number",
                             "description": "GPA 排名百分比，例如 12.5 表示前12.5%",
+                        },
+                        "average_score": {
+                            "type": ["number", "string"],
+                            "description": "百分制平均成绩（如 90 或 \"90分\"）。与 gpa 分制不同，勿混填",
                         },
                         "english": {
                             "type": "object",
@@ -226,9 +265,41 @@ TOOLS = [
                                 },
                             },
                         },
+                        "declared_vetoes": {
+                            "type": ["array", "object"],
+                            "description": (
+                                "用户申报的一票否决事实（存在即申报，不存在不要填）。"
+                                "数组形式 [\"违纪\", \"挂科\"]；对象形式 {\"违纪\": true}。"
+                                "键/词可用条件id、条件名称或口语说法"
+                            ),
+                            "items": {"type": "string"},
+                        },
+                        "disciplinary_action": {
+                            "type": "boolean",
+                            "description": "用户是否受过违纪处分（true=有，触发相关一票否决）",
+                        },
+                        "cheating": {
+                            "type": "boolean",
+                            "description": "用户是否发生过考试作弊/学术不端（true=有，触发相关一票否决）",
+                        },
+                        "failed_courses": {
+                            "type": ["number", "boolean"],
+                            "description": "挂科（不及格）门数；有挂科记为 >0 数字或 true",
+                        },
+                        "answers": {
+                            "type": "array",
+                            "description": "申请清单回填的答案列表（按条件 id）",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {"type": "string", "description": "条件 id"},
+                                    "value": {"description": "答案：是/否/数值"},
+                                },
+                            },
+                        },
                         "extra": {
                             "type": "object",
-                            "description": "自定义扩展字段，如志愿服务时长等",
+                            "description": "自定义扩展字段，如志愿服务时长/社会实践/培训学时等（键名中英文均可）",
                         },
                     },
                     "required": [],
@@ -237,6 +308,13 @@ TOOLS = [
                     "type": "string",
                     "description": "筛选分类（可选），不填则查询所有分类",
                     "enum": list(Config.CATEGORIES.keys()),
+                },
+                "policy_name": {
+                    "type": "string",
+                    "description": (
+                        "锁定匹配的政策文件名/标题（可选）。用户明确指定了某份政策时传入，"
+                        "匹配范围将锁定到该文件；找不到时返回警告而不会用其它政策顶替"
+                    ),
                 },
             },
             "required": ["user_info"],
@@ -419,6 +497,7 @@ async def _handle_query_policy(arguments: Dict[str, Any]) -> List[TextContent]:
     """查询匹配政策"""
     user_info = arguments.get("user_info", {})
     category_filter = arguments.get("category")
+    policy_name = str(arguments.get("policy_name") or "").strip()
 
     if not user_info:
         return [TextContent(type="text", text=json.dumps({"error": "user_info 不能为空"}, ensure_ascii=False))]
@@ -433,13 +512,65 @@ async def _handle_query_policy(arguments: Dict[str, Any]) -> List[TextContent]:
             for cat in Config.CATEGORIES:
                 policies.extend(store.get_all_policies_in_category(cat))
 
+        # 1.5) policy_name 路由锁定：明确指定了政策文件时只在该文件内匹配，
+        #      命中不到绝不回退全库（防止"拿别的政策顶替回答"）
+        if policy_name and policies:
+            def _norm_key(s: Any) -> str:
+                # 归一：去空白/连接符/全半角括号，忽略大小写与扩展名
+                t = re.sub(r"[\s_\-—－–·（）()【】\[\]]+", "", str(s or "")).lower()
+                return re.sub(r"\.(pdf|docx?|html?|xlsx|txt|md)$", "", t)
+
+            key = _norm_key(policy_name)
+            matched = []
+            if key:
+                for p in policies:
+                    meta = p.get("meta") or {}
+                    cands = (_norm_key(meta.get("title")), _norm_key(meta.get("source_file")))
+                    if any(c and (key in c or c in key) for c in cands):
+                        matched.append(p)
+            if matched:
+                policies = matched
+            else:
+                titles = [str((p.get("meta") or {}).get("title", "")) for p in policies]
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "type": "campus_rule_analysis",
+                                "toolName": "query_policy",
+                                "status": "error",
+                                "summary": f"知识库中未收录与“{policy_name}”匹配的政策文件，请勿使用其它政策顶替回答。",
+                                "error": {
+                                    "type": "warning",
+                                    "title": "未找到指定政策",
+                                    "description": "已收录政策：" + "；".join(t for t in titles if t),
+                                },
+                            },
+                            ensure_ascii=False,
+                            separators=(",", ":"),
+                        ),
+                    )
+                ]
+
         if not policies:
             return [
                 TextContent(
                     type="text",
                     text=json.dumps(
-                        {"error": "知识库中没有找到相关政策，请先使用 load_policy_document 加载政策文档"},
+                        {
+                            "type": "campus_rule_analysis",
+                            "toolName": "query_policy",
+                            "status": "error",
+                            "summary": "知识库中没有可匹配的政策文件。",
+                            "error": {
+                                "type": "warning",
+                                "title": "未找到相关政策",
+                                "description": "请先使用 load_policy_document 加载政策文档后再查询。",
+                            },
+                        },
                         ensure_ascii=False,
+                        separators=(",", ":"),
                     ),
                 )
             ]
@@ -456,7 +587,32 @@ async def _handle_query_policy(arguments: Dict[str, Any]) -> List[TextContent]:
         verdict_order = {"likely_eligible": 0, "needs_review": 1, "needs_more_info": 2, "not_eligible": 3}
         results.sort(key=lambda x: verdict_order.get(x["overall_verdict"], 99))
 
+        # 5. 组装契约 v2 超集输出：
+        #    顶层直接携带"规则分析"页/对话内联卡片消费的契约字段（以 results[0] 为主政策视图），
+        #    results[] 原样保留供右侧"申请清单"面板使用——两条前端链路均零改动
+        if not results:
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "type": "campus_rule_analysis",
+                            "toolName": "query_policy",
+                            "status": "error",
+                            "summary": "政策文件暂未解析出可匹配的条件。",
+                            "error": {
+                                "type": "warning",
+                                "title": "暂无可匹配条件",
+                                "description": "请确认政策文档已正确解析（含条件拆解）后重试。",
+                            },
+                        },
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    ),
+                )
+            ]
         output = {
+            **build_contract_view(results[0]),
             "total_policies": len(results),
             "results": results,
         }

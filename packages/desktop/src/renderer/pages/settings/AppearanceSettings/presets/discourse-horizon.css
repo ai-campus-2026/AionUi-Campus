@@ -235,7 +235,7 @@
 }
 
 body {
-  font-family: 'Georgia', 'Palatino Linotype', 'Book Antiqua', 'Source Han Serif', serif;
+  font-family: 'Georgia', 'Palatino Linotype', 'Book Antiqua', 'Noto Serif SC', serif;
   letter-spacing: 0.003em;
   background: linear-gradient(180deg, var(--horizon-shell-bg) 0%, var(--bg-1) 100%) !important;
   color: var(--text-primary);

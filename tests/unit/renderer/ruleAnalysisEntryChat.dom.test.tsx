@@ -72,7 +72,10 @@ describe('rule-analysis entry chat (sendEntryMessage)', () => {
     });
     await flushAsync();
 
-    expect(ensureConversationMock).toHaveBeenCalledWith(ENTRY_TASK_ID, '政策解读助手');
+    expect(ensureConversationMock).toHaveBeenCalledWith(ENTRY_TASK_ID, '政策解读助手', {
+      assistantId: null,
+      model: undefined,
+    });
     expect(sendToConversationMock).toHaveBeenCalledWith('conv-entry-1', '你好，能帮我解释一下综测加分规则吗');
     const msgs = result.current.entryConversation?.messages ?? [];
     expect(msgs.some((m) => m.kind === 'user' && m.text === '你好，能帮我解释一下综测加分规则吗')).toBe(true);
@@ -103,7 +106,10 @@ describe('rule-analysis entry chat (sendEntryMessage)', () => {
 
     // 目标问题走真实 AI 管线，停留在入口会话
     expect(result.current.ui.view).toBe('entry');
-    expect(ensureConversationMock).toHaveBeenCalledWith(ENTRY_TASK_ID, '政策解读助手');
+    expect(ensureConversationMock).toHaveBeenCalledWith(ENTRY_TASK_ID, '政策解读助手', {
+      assistantId: null,
+      model: undefined,
+    });
     const msgs = result.current.entryConversation?.messages ?? [];
     expect(msgs.some((m) => m.kind === 'user' && m.text === '我想看看国家奖学金')).toBe(true);
   });

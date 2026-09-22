@@ -47,6 +47,8 @@
   "curriculumVersionPlaceholder": "Version (e.g. 2026.1)",
   "curriculumStoreButton": "Parse and generate course graph",
   "label": "MCP",
+  "curriculumMyInfo": "Minhas informações",
+  "curriculumBackToPath": "Voltar ao percurso acadêmico",
   "integration": {
     "title": "Integração MCP",
     "description": "Gerenciar servidores e ferramentas do Model Context Protocol"

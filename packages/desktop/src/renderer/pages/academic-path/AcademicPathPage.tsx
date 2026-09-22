@@ -1,5 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@arco-design/web-react';
+import { ArrowLeft } from '@icon-park/react';
 import { useTranslation } from 'react-i18next';
 import type { PathView, ProgramPlan, StudentProgress, CourseStatus, CourseCategory } from './types';
 import { parseProgramPlan, adaptMcpPlan } from './programParser';
@@ -8,6 +10,8 @@ import EmptyState from './components/EmptyState';
 import ConfirmPlan from './components/ConfirmPlan';
 import PathWorkbench from './components/PathWorkbench';
 import PlanHistory from './components/PlanHistory';
+import MyInfo from './components/MyInfo';
+import FloatingAIAssistant from './components/FloatingAIAssistant';
 import './academic-path.css';
 
 const PLAN_KEY = 'academic-path:current-plan';
@@ -324,6 +328,22 @@ const AcademicPathPage: React.FC = () => {
     );
   }
 
+  if (view === 'profile') {
+    return (
+      <div className='ap-page'>
+        <div className='px-24px pt-16px'>
+          <Button type='text' icon={<ArrowLeft size={16} />} onClick={() => setView('workbench')}>
+            {t('mcp.curriculumBackToPath')}
+          </Button>
+        </div>
+        <div className='ap-scroll'>
+          <MyInfo plan={plan} progress={progress} />
+        </div>
+        {plan && <FloatingAIAssistant selectedCourse={null} plan={plan} progress={progress} />}
+      </div>
+    );
+  }
+
   // workbench
   if (plan) {
     return (
@@ -333,6 +353,7 @@ const AcademicPathPage: React.FC = () => {
         onCourseStatusChange={handleCourseStatusChange}
         onSync={handleSync}
         onClearProgress={handleClearProgress}
+        onViewProfile={() => setView('profile')}
         onViewHistory={handleViewHistory}
         onReupload={handleReupload}
         onBack={() => setView(returnView)}

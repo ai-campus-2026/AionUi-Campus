@@ -18,20 +18,12 @@ const OtherNotice: React.FC<OtherNoticeProps> = ({ conditions }) => {
       <Typography.Title heading={6} style={{ marginBottom: 0 }}>
         {t('policyChecklist.other.title')}
       </Typography.Title>
-      <Collapse
-        defaultActiveKey={[]}
-        bordered={false}
-        style={{ background: 'transparent', opacity: 0.75 }}
-      >
+      <Collapse defaultActiveKey={[]} bordered={false} style={{ background: 'transparent', opacity: 0.75 }}>
         {conditions.map((condition) => (
           <Collapse.Item
             key={condition.id}
             name={condition.id}
-            header={
-              <Typography.Text style={{ fontSize: 13, fontWeight: 500 }}>
-                {condition.item}
-              </Typography.Text>
-            }
+            header={<Typography.Text style={{ fontSize: 13, fontWeight: 500 }}>{condition.item}</Typography.Text>}
           >
             <div className='flex flex-col gap-6px'>
               <Typography.Text type='secondary' style={{ fontSize: 13 }}>
@@ -40,7 +32,13 @@ const OtherNotice: React.FC<OtherNoticeProps> = ({ conditions }) => {
               {condition.source_quote && (
                 <Typography.Text
                   type='secondary'
-                  style={{ fontSize: 12, lineHeight: 1.7, background: 'var(--color-fill-2)', padding: '8px 12px', borderRadius: 8 }}
+                  style={{
+                    fontSize: 12,
+                    lineHeight: 1.7,
+                    background: 'var(--color-fill-2)',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                  }}
                 >
                   “{condition.source_quote}”
                 </Typography.Text>

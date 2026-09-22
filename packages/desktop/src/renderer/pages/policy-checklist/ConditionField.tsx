@@ -80,9 +80,7 @@ const ConditionField: React.FC<ConditionFieldProps> = ({
           uncheckedText={t('policyChecklist.field.no')}
         />
         <Typography.Text type='secondary' style={{ fontSize: 13 }}>
-          {vetoMode
-            ? t('policyChecklist.field.vetoHint')
-            : t('policyChecklist.field.baseConfirmHint')}
+          {vetoMode ? t('policyChecklist.field.vetoHint') : t('policyChecklist.field.baseConfirmHint')}
         </Typography.Text>
         {met !== undefined && checked && (
           <span
@@ -123,7 +121,8 @@ const ConditionField: React.FC<ConditionFieldProps> = ({
         </Upload>
         {evidence.length > 0 && (
           <Typography.Text style={{ fontSize: 12, color: 'var(--color-success-6)' }}>
-            {t('policyChecklist.field.uploaded')} {evidence.length}{t('policyChecklist.field.uploadedUnit')}
+            {t('policyChecklist.field.uploaded')} {evidence.length}
+            {t('policyChecklist.field.uploadedUnit')}
           </Typography.Text>
         )}
       </div>

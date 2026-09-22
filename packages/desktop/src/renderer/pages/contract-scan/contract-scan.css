@@ -1,0 +1,2036 @@
+/* ============================================================
+   合同扫描 · 入口页样式
+   ============================================================ */
+
+.cs-entry {
+  min-height: 100vh;
+  background: #f5f3ec;
+  color: #2c3e2e;
+  position: relative;
+}
+
+/* ===== 背景光晕装饰 ===== */
+.cs-entry__bg-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cs-entry__bg-glow--1 {
+  width: 400px;
+  height: 400px;
+  background: #a8c5b0;
+  top: -100px;
+  right: -100px;
+}
+
+.cs-entry__bg-glow--2 {
+  width: 300px;
+  height: 300px;
+  background: #d4c9a8;
+  bottom: -50px;
+  left: -50px;
+}
+
+/* ===== 顶部导航 ===== */
+.cs-entry__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.cs-entry__header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.cs-entry__back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  color: #555;
+  transition: all 0.16s ease;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.cs-entry__back-btn:hover {
+  color: #2c3e2e;
+  border-color: rgba(107, 158, 120, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.cs-entry__header-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.cs-entry__page-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #2c3e2e;
+}
+
+.cs-entry__page-subtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #8a8f8a;
+}
+
+/* ===== 主体内容 ===== */
+.cs-entry__main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 32px 40px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== 中心图标 ===== */
+.cs-entry__hero {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.cs-entry__hero-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(107, 158, 120, 0.15), rgba(107, 158, 120, 0.05));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b9e78;
+  box-shadow: 0 4px 20px rgba(107, 158, 120, 0.15);
+}
+
+/* ===== 章节标题 ===== */
+.cs-entry__section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e2e;
+  margin-bottom: 12px;
+}
+
+.cs-entry__section-bar {
+  width: 4px;
+  height: 18px;
+  background: #6b9e78;
+  border-radius: 2px;
+}
+
+/* ===== 卡片通用 ===== */
+.cs-entry__card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.cs-entry__card--focused {
+  box-shadow: 0 4px 24px rgba(107, 158, 120, 0.15);
+  border: 1px solid rgba(107, 158, 120, 0.3);
+}
+
+.cs-entry__card--dragging {
+  border: 2px dashed #6b9e78;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* ===== 输入卡片 ===== */
+.cs-entry__input-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.cs-entry__input-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px 8px;
+  color: #8a8f8a;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.cs-entry__input {
+  width: 100%;
+  padding: 8px 20px 16px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  line-height: 1.75;
+  color: #2c3e2e;
+  resize: vertical;
+  min-height: 160px;
+  font-family: inherit;
+}
+
+.cs-entry__input::placeholder {
+  color: #b0b5b0;
+}
+
+.cs-entry__input-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.cs-entry__upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #f0f0ee;
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cs-entry__upload-btn:hover {
+  background: #e8e8e4;
+}
+
+.cs-entry__footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cs-entry__clear-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #999;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cs-entry__clear-btn:hover {
+  background: rgba(232, 165, 152, 0.15);
+  color: #b85c4c;
+}
+
+.cs-entry__char-count {
+  font-size: 13px;
+  color: #999;
+}
+
+/* ===== 上传文件卡片 ===== */
+.cs-entry__file-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px 20px;
+}
+
+.cs-entry__file-icon {
+  font-size: 20px;
+}
+
+.cs-entry__file-info {
+  flex: 1;
+}
+
+.cs-entry__file-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c3e2e;
+}
+
+.cs-entry__file-size {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.cs-entry__file-remove {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(232, 165, 152, 0.15);
+  color: #b85c4c;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cs-entry__file-remove:hover {
+  background: rgba(232, 165, 152, 0.25);
+}
+
+/* ===== 输入过短提示 ===== */
+.cs-entry__short-warning {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(232, 165, 152, 0.12);
+  border: 1px solid rgba(212, 139, 122, 0.25);
+  color: #b85c4c;
+  font-size: 13px;
+}
+
+/* ===== 合同类型选择 ===== */
+.cs-entry__type-section {
+  margin-top: 24px;
+}
+
+.cs-entry__type-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+.cs-entry__type-capsules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cs-entry__type-capsule {
+  padding: 9px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cs-entry__type-capsule:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: #6b9e78;
+  color: #6b9e78;
+}
+
+.cs-entry__type-capsule--active {
+  background: #6b9e78;
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(107, 158, 120, 0.3);
+}
+
+/* ===== 开始扫描按钮 ===== */
+.cs-entry__action-area {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.cs-entry__scan-btn {
+  padding: 14px 48px;
+  border-radius: 12px;
+  border: none;
+  background: #6b9e78;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 20px rgba(107, 158, 120, 0.3);
+}
+
+.cs-entry__scan-btn:hover:not(:disabled) {
+  background: #5c8f69;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(107, 158, 120, 0.4);
+}
+
+.cs-entry__scan-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.cs-entry__privacy-note {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   扫描状态样式
+   ============================================================ */
+
+.cs-entry__scanning-card {
+  padding: 36px 32px;
+  text-align: center;
+}
+
+/* AI 核心 */
+.cs-scan-core {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+}
+
+.cs-scan-core-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(107, 158, 120, 0.3);
+  animation: cs-scan-pulse 2s ease-in-out infinite;
+}
+
+.cs-scan-core-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(107, 158, 120, 0.2), rgba(107, 158, 120, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b9e78;
+  animation: cs-scan-breathe 3s ease-in-out infinite;
+}
+
+@keyframes cs-scan-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.3;
+  }
+}
+
+@keyframes cs-scan-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(107, 158, 120, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(107, 158, 120, 0.35);
+  }
+}
+
+.cs-scan-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 650;
+  color: #2c3e2e;
+}
+
+.cs-scan-subtitle {
+  margin: 0 0 32px;
+  font-size: 14px;
+  color: #8a8f8a;
+}
+
+/* 扫描步骤 */
+.cs-scan-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 280px;
+  margin: 0 auto 16px;
+  text-align: left;
+}
+
+.cs-scan-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #b0b5b0;
+  transition: all 0.3s ease;
+}
+
+.cs-scan-step-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.cs-scan-step--completed {
+  color: #6b9e78;
+}
+
+.cs-scan-step--running {
+  color: #2c3e2e;
+  font-weight: 500;
+}
+
+.cs-scan-step--running .cs-scan-step-icon {
+  animation: cs-scan-pulse 1.5s ease-in-out infinite;
+}
+
+.cs-scan-step-label {
+  flex: 1;
+}
+
+/* 动态提示 */
+.cs-scan-hint {
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: #8a8f8a;
+  min-height: 20px;
+  animation: cs-scan-fade 0.4s ease;
+}
+
+@keyframes cs-scan-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 文件信息 */
+.cs-scan-file-info {
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 13px;
+  color: #8a8f8a;
+}
+
+.cs-scan-file-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #b0b5b0;
+}
+
+/* 合同类型显示 */
+.cs-entry__type-display {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: #8a8f8a;
+}
+
+/* 取消扫描 */
+.cs-entry__cancel-area {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.cs-entry__cancel-btn {
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #999;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cs-entry__cancel-btn:hover {
+  color: #666;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* 取消确认 */
+.cs-cancel-confirm {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+}
+
+.cs-cancel-confirm span {
+  display: block;
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+.cs-cancel-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.cs-cancel-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cs-cancel-btn--ghost {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: white;
+  color: #555;
+}
+
+.cs-cancel-btn--danger {
+  border: none;
+  background: rgba(232, 165, 152, 0.2);
+  color: #b85c4c;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+  .cs-entry__main {
+    padding: 16px 20px 60px;
+  }
+
+  .cs-entry__input {
+    min-height: 160px;
+  }
+
+  .cs-entry__hero-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .cs-entry__scanning-card {
+    padding: 32px 20px;
+  }
+}
+
+/* ============================================================
+   合同扫描 · 报告总览页样式
+   ============================================================ */
+
+/* ============================================================
+   合同扫描 · 报告总览页样式（重构版）
+   ============================================================ */
+
+.cs-report {
+  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  background: #f5f3ec;
+  color: #2c3e2e;
+  position: relative;
+}
+
+/* ===== 顶部导航 ===== */
+.cs-report__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.cs-report__header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.cs-report__header-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.cs-report__doc-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c3e2e;
+}
+
+.cs-report__doc-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #8a8f8a;
+}
+
+.cs-report__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cs-report__rescan-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(107, 158, 120, 0.3);
+  background: rgba(107, 158, 120, 0.08);
+  color: #6b9e78;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cs-report__rescan-btn:hover {
+  background: rgba(107, 158, 120, 0.15);
+}
+
+.cs-report__more-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  color: #555;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.cs-report__more-btn:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+/* ===== 主体内容 ===== */
+.cs-report__main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 32px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== 综合分析 Hero ===== */
+.cs-report__hero {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+  padding: 32px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(10px);
+  margin-bottom: 32px;
+}
+
+.cs-report__hero-left {
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.cs-score-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(107, 158, 120, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+}
+
+.cs-score-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: #2c3e2e;
+  line-height: 1;
+}
+
+.cs-score-grade {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b9e78;
+  margin-top: 2px;
+}
+
+.cs-score-label {
+  margin: 0;
+  font-size: 13px;
+  color: #8a8f8a;
+}
+
+.cs-report__hero-right {
+  flex: 1;
+}
+
+.cs-report__summary-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 650;
+  color: #2c3e2e;
+}
+
+.cs-report__summary-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #555;
+}
+
+/* ===== 风险概览统计 ===== */
+.cs-report__stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.cs-stat {
+  flex: 1;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+
+.cs-stat-number {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.cs-stat--high .cs-stat-number {
+  color: #c06c5a;
+}
+
+.cs-stat--medium .cs-stat-number {
+  color: #c4a968;
+}
+
+.cs-stat--good .cs-stat-number {
+  color: #6b9e78;
+}
+
+.cs-stat-label {
+  font-size: 13px;
+  color: #8a8f8a;
+}
+
+/* ===== 章节通用 ===== */
+.cs-report__section {
+  margin-bottom: 40px;
+}
+
+.cs-report__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.cs-report__section-title {
+  margin: 0 0 16px;
+  font-size: 17px;
+  font-weight: 650;
+  color: #2c3e2e;
+}
+
+.cs-report__section-header .cs-report__section-title {
+  margin-bottom: 0;
+}
+
+.cs-report__view-all {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #6b9e78;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cs-report__view-all:hover {
+  background: rgba(107, 158, 120, 0.08);
+}
+
+/* ===== 风险导航 + 详情 左右布局 ===== */
+.cs-risk-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .cs-risk-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cs-risk-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cs-risk-nav-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.cs-risk-nav-item:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.cs-risk-nav-item--active {
+  background: rgba(255, 255, 255, 0.95);
+  border-left-color: #6b9e78;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.cs-risk-nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.cs-risk-nav-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.cs-risk-nav-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c3e2e;
+  line-height: 1.4;
+}
+
+.cs-risk-nav-clause {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
+/* 右侧风险详情 */
+.cs-risk-detail-panel {
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+.cs-risk-detail-header {
+  margin-bottom: 20px;
+}
+
+.cs-risk-severity-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.cs-risk-detail-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  color: #2c3e2e;
+  line-height: 1.4;
+}
+
+.cs-risk-detail-block {
+  margin-bottom: 20px;
+}
+
+.cs-risk-block-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.cs-quote-inline {
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 10px;
+  border-left: 3px solid rgba(192, 108, 90, 0.3);
+}
+
+.cs-quote-inline p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #444;
+  font-style: italic;
+}
+
+.cs-risk-explanation {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #555;
+}
+
+.cs-risk-suggestion {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #555;
+}
+
+/* redline 块 */
+.cs-redline-block {
+  padding: 16px;
+  background: rgba(107, 158, 120, 0.08);
+  border-radius: 12px;
+}
+
+.cs-redline-content {
+  position: relative;
+}
+
+.cs-redline-content p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #444;
+}
+
+.cs-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(107, 158, 120, 0.3);
+  background: rgba(255, 255, 255, 0.8);
+  color: #6b9e78;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cs-copy-btn:hover {
+  background: rgba(107, 158, 120, 0.1);
+}
+
+/* ===== 一般隐患 ===== */
+.cs-warning-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cs-warning-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+}
+
+.cs-warning-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c4a968;
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+
+.cs-warning-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c3e2e;
+  margin-bottom: 4px;
+}
+
+.cs-warning-explanation {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #666;
+}
+
+/* ===== 做得不错 ===== */
+.cs-good-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cs-good-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+}
+
+.cs-good-check {
+  color: #6b9e78;
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+.cs-good-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c3e2e;
+  margin-bottom: 4px;
+}
+
+.cs-good-explanation {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #666;
+}
+
+/* ===== 还需要确认 ===== */
+.cs-missing-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cs-missing-chip {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 13px;
+  color: #666;
+}
+
+/* ===== 法规核查 ===== */
+.cs-statute-count {
+  font-size: 13px;
+  color: #8a8f8a;
+}
+
+.cs-statute-stats-bar {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.cs-statute-stat {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.cs-statute-stat--ok {
+  color: #6b9e78;
+}
+
+.cs-statute-stat--violation {
+  color: #c06c5a;
+}
+
+.cs-statute-stat--unknown {
+  color: #999;
+}
+
+.cs-statute-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cs-statute-row {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  overflow: hidden;
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.cs-statute-row--violation {
+  border-left-color: rgba(192, 108, 90, 0.3);
+}
+
+.cs-statute-row--ok {
+  border-left-color: rgba(107, 158, 120, 0.3);
+}
+
+.cs-statute-row--unknown {
+  border-left-color: rgba(153, 153, 153, 0.3);
+}
+
+.cs-statute-row-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.cs-statute-row-header:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.cs-statute-row-icon {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cs-statute-row--ok .cs-statute-row-icon {
+  color: #6b9e78;
+}
+
+.cs-statute-row--violation .cs-statute-row-icon {
+  color: #c06c5a;
+}
+
+.cs-statute-row--unknown .cs-statute-row-icon {
+  color: #999;
+}
+
+.cs-statute-row-title {
+  flex: 1;
+  font-size: 14px;
+  color: #2c3e2e;
+}
+
+.cs-statute-row-expand {
+  font-size: 12px;
+  color: #999;
+}
+
+.cs-statute-row-detail {
+  padding: 0 16px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding-top: 12px;
+}
+
+.cs-statute-detail-text {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #555;
+}
+
+.cs-statute-basis {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.cs-statute-basis-label {
+  color: #888;
+  font-weight: 500;
+}
+
+.cs-statute-source {
+  font-size: 12px;
+  color: #999;
+}
+
+/* ===== 底部信息 ===== */
+.cs-report__footer {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 12px;
+  color: #999;
+}
+
+/* ============================================================
+   合同扫描 · 异常状态样式
+   ============================================================ */
+
+.cs-entry__error-card {
+  text-align: center;
+  padding: 48px 32px;
+}
+
+.cs-error-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(196, 169, 104, 0.15);
+  color: #c4a968;
+  font-size: 24px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.cs-error-title {
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 650;
+  color: #2c3e2e;
+}
+
+.cs-error-desc {
+  margin: 0 auto 28px;
+  max-width: 400px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #8a8f8a;
+}
+
+.cs-error-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.cs-error-btn {
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.cs-error-btn--primary {
+  background: #6b9e78;
+  color: white;
+  min-width: 160px;
+}
+
+.cs-error-btn--primary:hover {
+  background: #5c8f69;
+}
+
+.cs-error-btn--ghost {
+  background: transparent;
+  color: #8a8f8a;
+  padding: 8px 16px;
+}
+
+.cs-error-btn--ghost:hover {
+  color: #555;
+}
+
+/* 取消扫描确认 */
+.cs-cancel-desc {
+  margin: 8px 0 16px;
+  font-size: 13px;
+  color: #8a8f8a;
+}
+
+/* ============================================================
+   合同扫描 · 历史扫描页样式
+   ============================================================ */
+
+.cs-history {
+  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  background: #f5f3ec;
+  color: #2c3e2e;
+  position: relative;
+}
+
+/* ===== 顶部导航 ===== */
+.cs-history__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.cs-history__header-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.cs-history__page-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #2c3e2e;
+}
+
+.cs-history__page-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #8a8f8a;
+}
+
+.cs-history__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cs-history__manage-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cs-history__manage-btn:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+.cs-history__batch-delete-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: #c06c5a;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cs-history__batch-delete-btn:hover:not(:disabled) {
+  background: #af5b4a;
+}
+
+.cs-history__batch-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cs-history__cancel-batch-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* 入口页历史按钮 */
+.cs-entry__history-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  color: #555;
+  transition: all 0.16s ease;
+  text-align: center;
+}
+
+.cs-entry__history-btn:hover {
+  color: #2c3e2e;
+  border-color: rgba(107, 158, 120, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* ===== 主体内容 ===== */
+.cs-history__main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 32px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== 空状态 ===== */
+.cs-history__empty {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.cs-history__empty-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.cs-history__empty h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  color: #2c3e2e;
+}
+
+.cs-history__empty p {
+  margin: 0 0 28px;
+  font-size: 14px;
+  color: #8a8f8a;
+}
+
+.cs-history__start-btn {
+  padding: 12px 28px;
+  border-radius: 12px;
+  border: none;
+  background: #6b9e78;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* ===== 历史列表 ===== */
+.cs-history__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cs-history-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.cs-history-item:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.cs-history-item--selected {
+  border-color: #6b9e78;
+}
+
+.cs-history-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  background: #6b9e78;
+  border-color: #6b9e78;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.cs-history-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.cs-history-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cs-history-item-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  color: #2c3e2e;
+}
+
+.cs-history-item-score {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b9e78;
+}
+
+.cs-history-item-summary {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #666;
+}
+
+.cs-history-item-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: #999;
+}
+
+.cs-history-delete-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #999;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.cs-history-delete-btn:hover {
+  background: rgba(192, 108, 90, 0.1);
+  color: #c06c5a;
+}
+
+/* ============================================================
+   合同扫描 · 统一按钮样式（与政策对比页一致）
+   ============================================================ */
+
+/* 通用按钮基类 */
+.cs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  color: #555;
+  transition: all 0.16s ease;
+  text-align: center;
+}
+
+.cs-btn:hover {
+  color: #2c3e2e;
+  border-color: rgba(107, 158, 120, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.cs-btn:active {
+  transform: scale(0.96);
+}
+
+/* 主按钮 */
+.cs-btn--primary {
+  color: #fff;
+  background: linear-gradient(135deg, #7f9d78, #648b80);
+  border-color: transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 8px rgba(70, 100, 84, 0.22);
+}
+
+.cs-btn--primary:hover:not(:disabled) {
+  color: #fff;
+  background: linear-gradient(135deg, #8aa67e, #6d9389);
+  border-color: transparent;
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 3px 12px rgba(70, 100, 84, 0.28);
+}
+
+.cs-btn--primary:disabled {
+  background: linear-gradient(135deg, #b8c4b0, #a3b0a0);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.7;
+}
+
+/* 大按钮 */
+.cs-btn--large {
+  padding: 11px 32px;
+  font-size: 14.5px;
+  border-radius: 11px;
+  font-weight: 600;
+}
+
+/* 幽灵按钮 */
+.cs-btn--ghost {
+  background: transparent;
+  color: #888;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.cs-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.6);
+  color: #555;
+}
+
+/* 危险按钮 */
+.cs-btn--danger {
+  color: #c06c5a;
+  background: rgba(192, 108, 90, 0.08);
+  border-color: rgba(192, 108, 90, 0.2);
+}
+
+.cs-btn--danger:hover {
+  background: rgba(192, 108, 90, 0.15);
+  color: #af5b4a;
+}
+
+/* ============================================================
+   合同扫描 · 所有按钮统一样式（与政策对比页一致）
+   ============================================================ */
+
+/* 返回按钮 */
+.cs-entry__back-btn,
+.cs-history__manage-btn,
+.cs-history__cancel-batch-btn,
+.cs-entry__history-btn,
+.cs-entry__cancel-btn,
+.cs-entry__upload-btn,
+.cs-entry__clear-btn,
+.cs-report__more-btn,
+.cs-cancel-btn,
+.cs-history-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  color: #555;
+  transition: all 0.16s ease;
+  text-align: center;
+}
+
+.cs-entry__back-btn:hover,
+.cs-history__manage-btn:hover,
+.cs-history__cancel-batch-btn:hover,
+.cs-entry__history-btn:hover,
+.cs-entry__cancel-btn:hover,
+.cs-entry__upload-btn:hover,
+.cs-entry__clear-btn:hover,
+.cs-report__more-btn:hover,
+.cs-cancel-btn:hover,
+.cs-history-delete-btn:hover {
+  color: #2c3e2e;
+  border-color: rgba(107, 158, 120, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* 主按钮 */
+.cs-entry__scan-btn,
+.cs-error-btn--primary,
+.cs-history__start-btn,
+.cs-report__rescan-btn {
+  color: #fff;
+  background: linear-gradient(135deg, #7f9d78, #648b80);
+  border-color: transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 8px rgba(70, 100, 84, 0.22);
+}
+
+.cs-entry__scan-btn:hover:not(:disabled),
+.cs-error-btn--primary:hover,
+.cs-history__start-btn:hover,
+.cs-report__rescan-btn:hover {
+  color: #fff;
+  background: linear-gradient(135deg, #8aa67e, #6d9389);
+  border-color: transparent;
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 3px 12px rgba(70, 100, 84, 0.28);
+}
+
+.cs-entry__scan-btn:disabled {
+  background: linear-gradient(135deg, #b8c4b0, #a3b0a0);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.7;
+}
+
+/* 大按钮 */
+.cs-entry__scan-btn,
+.cs-error-btn--primary {
+  padding: 11px 32px;
+  font-size: 14.5px;
+  border-radius: 11px;
+  font-weight: 600;
+}
+
+/* 幽灵/次要按钮 */
+.cs-error-btn--ghost,
+.cs-cancel-btn--ghost {
+  background: transparent;
+  color: #888;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.cs-error-btn--ghost:hover,
+.cs-cancel-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.6);
+  color: #555;
+}
+
+/* 危险按钮 */
+.cs-cancel-btn--danger,
+.cs-history__batch-delete-btn {
+  color: #c06c5a;
+  background: rgba(192, 108, 90, 0.08);
+  border-color: rgba(192, 108, 90, 0.2);
+}
+
+.cs-cancel-btn--danger:hover,
+.cs-history__batch-delete-btn:hover:not(:disabled) {
+  background: rgba(192, 108, 90, 0.15);
+  color: #af5b4a;
+}
+
+/* 类型选择胶囊 */
+.cs-entry__type-capsule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 20px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  color: #555;
+  transition: all 0.16s ease;
+}
+
+.cs-entry__type-capsule:hover {
+  color: #2c3e2e;
+  border-color: rgba(107, 158, 120, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.cs-entry__type-capsule--active {
+  color: #fff;
+  background: linear-gradient(135deg, #7f9d78, #648b80);
+  border-color: transparent;
+}
+
+/* 报告页历史报告按钮 */
+.cs-report__header-actions .cs-entry__history-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  color: #555;
+  transition: all 0.16s ease;
+  text-align: center;
+}
+
+.cs-report__header-actions .cs-entry__history-btn:hover {
+  color: #2c3e2e;
+  border-color: rgba(107, 158, 120, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* 完整的 pc-btn 样式（和政策对比页一致） */
+.pc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  color: #555;
+  transition: all 0.16s ease;
+  text-align: center;
+}
+
+.pc-btn:hover {
+  color: #2c3e2e;
+  border-color: rgba(107, 158, 120, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.pc-btn:active {
+  transform: scale(0.96);
+}
+
+/* ===== 调试弹窗 ===== */
+.cs-debug-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.cs-debug-modal {
+  width: 640px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cs-debug__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cs-debug__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.cs-debug__close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  color: #999;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cs-debug__close:hover {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.cs-debug__desc {
+  font-size: 13px;
+  color: #888;
+  margin: 0 0 12px 0;
+}
+
+.cs-debug__textarea {
+  flex: 1;
+  min-height: 200px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  resize: vertical;
+  outline: none;
+  line-height: 1.5;
+}
+
+.cs-debug__textarea:focus {
+  border-color: #6b9e78;
+}
+
+.cs-debug__error {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.cs-debug__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.cs-debug__cancel {
+  padding: 8px 16px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  color: #666;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cs-debug__cancel:hover {
+  background: #f9f9f9;
+}
+
+.cs-debug__confirm {
+  padding: 8px 16px;
+  border: none;
+  background: linear-gradient(135deg, #7f9d78, #648b80);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(70, 100, 84, 0.2);
+}
+
+.cs-debug__confirm:hover {
+  background: linear-gradient(135deg, #8aa67e, #6d9389);
+}

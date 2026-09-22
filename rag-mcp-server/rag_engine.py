@@ -3,7 +3,9 @@
 设计要点:
 - chunk ID 基于内容哈希 + upsert，重复/更新的文档不会静默丢失
 - 页码元数据贯穿始终（pymupdf4llm page_chunks，1-based；非 PDF 格式无页码）
-- 检索返回相似度分数并按阈值过滤，全被过滤时附带提示与最高分供 Agent 决策
+- 两阶段检索：向量 + BM25 混合粗召回 -> RRF 融合 -> DashScope TextReRank 精排，
+  以精排分数阈值过滤（rerank 不可用时自动降级为向量相似度过滤），
+  全被过滤时附带最高分与提示供 Agent 决策——宁可"没找到"，不返回低相关噪声
 - 文档路径统一归一化（normcase+normpath），避免 Windows 大小写/分隔符差异
   导致同一文档重复入库或删除失效
 - 日志只写 stderr，绝不碰 stdout（stdio MCP 协议通道）
@@ -12,13 +14,15 @@
 import hashlib
 import json
 import logging
+import math
 import os
+import re
 import threading
 import time
+from collections import Counter
 from typing import Any
 
 import chromadb
-import pymupdf4llm
 from chromadb.config import Settings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -31,6 +35,97 @@ _SEPARATORS = ["\n\n", "\n", "。", "！", "？", "；", "，", " ", ""]
 
 # 支持的文档格式
 SUPPORTED_EXTENSIONS = frozenset({".pdf", ".txt", ".md", ".markdown", ".docx"})
+
+# BM25 参数（业界常用默认值）
+_BM25_K1 = 1.5
+_BM25_B = 0.75
+
+# 轻量分词：ASCII 字母/数字 run（含小数）+ 汉字二元组
+_ASCII_TOKEN_RE = re.compile(r"[a-z0-9]+(?:\.[0-9]+)?")
+
+
+def _tokenize(text: str) -> list[str]:
+    """中英混合轻量分词：ASCII 字母数字 run + 汉字字符二元组（bigram）。
+
+    中文不引入外部分词库（免依赖、免维护词典）：相邻汉字对作词元，
+    对「文号/条款号/数字阈值」等精确 token（如 重邮教〔2025〕15号）同时保留
+    ASCII/数字 run，确保 BM25 能逐字命中；常见双字组合由 idf 自然降权。
+    """
+    lower = text.lower()
+    tokens = _ASCII_TOKEN_RE.findall(lower)
+    han = [ch for ch in lower if "\u4e00" <= ch <= "\u9fff"]
+    tokens.extend(han[i] + han[i + 1] for i in range(len(han) - 1))
+    if len(han) == 1:
+        tokens.append(han[0])
+    return tokens
+
+
+class _BM25Index:
+    """内存 BM25 倒排索引（Okapi BM25，k1=1.5，b=0.75）。
+
+    个人知识库规模（数十至数千块）下全量打分开销可忽略，
+    免去持久化与增量维护的复杂度；集合变更时由引擎整体失效重建。
+    """
+
+    def __init__(self, entries: list[tuple[str, str, dict[str, Any]]]):
+        """entries: [(chunk_id, text, metadata), ...]"""
+        self.entries = entries
+        self._tfs: list[Counter[str]] = []
+        self._dl: list[int] = []
+        self._df: Counter[str] = Counter()
+        for _cid, text, _meta in entries:
+            tf = Counter(_tokenize(text or ""))
+            self._tfs.append(tf)
+            self._dl.append(max(1, sum(tf.values())))
+            for term in tf:
+                self._df[term] += 1
+        self._n = len(entries)
+        self._avgdl = sum(self._dl) / self._n if self._n else 0.0
+
+    def search(self, question: str, limit: int) -> list[tuple[int, float]]:
+        """返回 [(entry_index, score), ...]，按分数降序，仅含正分条目"""
+        q_terms = set(_tokenize(question or ""))
+        if not q_terms or not self._n:
+            return []
+        avgdl = self._avgdl or 1.0
+        scores = [0.0] * self._n
+        for term in q_terms:
+            df = self._df.get(term, 0)
+            if not df:
+                continue
+            idf = math.log(1.0 + (self._n - df + 0.5) / (df + 0.5))
+            for i, tf in enumerate(self._tfs):
+                f = tf.get(term)
+                if not f:
+                    continue
+                scores[i] += idf * f * (_BM25_K1 + 1) / (
+                    f + _BM25_K1 * (1 - _BM25_B + _BM25_B * self._dl[i] / avgdl)
+                )
+        ranked = [(i, s) for i, s in enumerate(scores) if s > 0]
+        ranked.sort(key=lambda x: x[1], reverse=True)
+        return ranked[:limit]
+
+
+def _rrf_fuse(ranked_lists: list[list[str]], rrf_k: int) -> dict[str, float]:
+    """RRF（Reciprocal Rank Fusion）：多路召回按排名的倒数求和。
+
+    只依赖名次、不依赖分数刻度，天然解决向量余弦与 BM25 分数不可比的问题。
+    """
+    scores: dict[str, float] = {}
+    for ranked in ranked_lists:
+        for rank, key in enumerate(ranked, start=1):
+            scores[key] = scores.get(key, 0.0) + 1.0 / (rrf_k + rank)
+    return scores
+
+
+def _cosine_similarity(a: list[float] | None, b: list[float] | None) -> float:
+    """两个向量的余弦相似度（任一为空/长度不一致时返回 0）"""
+    if not a or not b or len(a) != len(b):
+        return 0.0
+    dot = sum(x * y for x, y in zip(a, b))
+    na = math.sqrt(sum(x * x for x in a))
+    nb = math.sqrt(sum(x * x for x in b))
+    return dot / (na * nb) if na and nb else 0.0
 
 
 class RAGEngine:
@@ -64,6 +159,9 @@ class RAGEngine:
         )
         # Chroma 写操作互斥（工具经 asyncio.to_thread 在线程池并发执行）
         self._write_lock = threading.Lock()
+        # BM25 索引懒构建缓存：集合变更（加载/删除/清空）时置 None 失效
+        self._bm25: _BM25Index | None = None
+        self._bm25_lock = threading.Lock()
 
         logger.info("RAGEngine 初始化完成，当前文档块数量: %d", self.collection.count())
 
@@ -101,6 +199,7 @@ class RAGEngine:
                 logger.info("检测到文档更新，已删除旧版本 %d 个块", len(existing))
 
             n_chunks = self._ingest(path, file_hash)
+            self._bm25 = None  # 集合已变更，BM25 索引失效
 
         return (
             f"成功加载文档: {_display_name(path)}，共 {n_chunks} 个文档块，"
@@ -147,52 +246,169 @@ class RAGEngine:
     # ------------------------------------------------------------------ #
 
     def search(self, question: str, top_k: int | None = None) -> dict[str, Any]:
-        """向量检索知识库，返回带相似度分数的文档块（低于阈值的结果被过滤）"""
+        """两阶段检索：向量+BM25 混合粗召回 -> RRF 融合 -> TextReRank 精排。
+
+        精排不可用（未启用/调用失败）时自动降级：按 RRF 顺序、以向量相似度
+        阈值过滤，并保留 BM25 命中的关键词块。返回带分数与来源的文档块，
+        全部低于阈值时携带最高分与提示（宁可"没找到"，不返回低相关噪声）。
+        """
         question = (question or "").strip()
         if not question:
             return {"results": [], "count": 0, "error": "问题不能为空"}
-        if self.collection.count() == 0:
+        total = self.collection.count()
+        if total == 0:
             return {"results": [], "count": 0, "error": "知识库为空，请先使用 load_document 加载文档"}
 
         k = max(1, min(top_k or Config.TOP_K, 20))
+        recall_n = max(k, Config.RECALL_TOP_N)
+
+        # ── 阶段一：混合粗召回（向量 + BM25）────────────────────────
         query_embedding = _embed_batch([question])[0]
-
         raw = self.collection.query(
-            query_embeddings=[query_embedding], n_results=min(k, self.collection.count())
+            query_embeddings=[query_embedding], n_results=min(recall_n, total)
         )
-
-        results: list[dict[str, Any]] = []
-        similarities: list[float] = []
+        ids = (raw.get("ids") or [[]])[0]
         metadatas = (raw.get("metadatas") or [[]])[0]
         documents = (raw.get("documents") or [[]])[0]
         distances = (raw.get("distances") or [[]])[0]
 
-        for metadata, text, distance in zip(metadatas, documents, distances):
-            similarity = round(1.0 - float(distance), 4)  # cosine distance -> similarity
-            similarities.append(similarity)
-            if similarity < Config.SCORE_THRESHOLD:
-                continue
-            results.append(
-                {
-                    "text": text,
-                    "source": metadata.get("source", ""),
-                    "page": metadata.get("page"),
-                    "similarity": similarity,
-                    "chunk_index": metadata.get("chunk_index"),
-                }
-            )
+        candidates: dict[str, dict[str, Any]] = {}
+        vector_ranking: list[str] = []
+        for cid, metadata, text, distance in zip(ids, metadatas, documents, distances):
+            metadata = metadata or {}
+            candidates[cid] = {
+                "id": cid,
+                "text": text,
+                "source": metadata.get("source", ""),
+                "page": metadata.get("page"),
+                "chunk_index": metadata.get("chunk_index"),
+                "similarity": round(1.0 - float(distance), 4),  # cosine distance -> similarity
+            }
+            vector_ranking.append(cid)
 
-        results.sort(key=lambda r: r["similarity"], reverse=True)
-        payload: dict[str, Any] = {"results": results, "count": len(results), "error": None}
-        if not results and similarities:
-            # 有候选但全被阈值过滤：附上最高分，帮调用方区分"不相关"与"库为空"
-            best = max(similarities)
-            payload["best_similarity"] = best
-            payload["hint"] = (
-                f"检索到 {len(similarities)} 个候选块，但最高相似度 {best} 仍低于阈值 "
-                f"{Config.SCORE_THRESHOLD}，已全部过滤。知识库中可能没有与该问题相关的内容。"
+        bm25_ranking: list[str] = []
+        bm25_index = self._get_bm25_index()
+        if bm25_index is not None:
+            for entry_i, score in bm25_index.search(question, limit=recall_n):
+                cid, text, metadata = bm25_index.entries[entry_i]
+                bm25_ranking.append(cid)
+                if cid in candidates:
+                    candidates[cid]["bm25_score"] = round(score, 4)
+                else:
+                    candidates[cid] = {
+                        "id": cid,
+                        "text": text,
+                        "source": metadata.get("source", ""),
+                        "page": metadata.get("page"),
+                        "chunk_index": metadata.get("chunk_index"),
+                        "similarity": None,  # 稍后补算，保证所有候选字段语义一致
+                        "bm25_score": round(score, 4),
+                    }
+
+        # BM25 独有候选补算向量余弦（本地计算，不消耗 API），使 similarity 始终可比
+        missing = [c["id"] for c in candidates.values() if c["similarity"] is None]
+        if missing:
+            try:
+                got = self.collection.get(ids=missing, include=["embeddings"])
+                emb_map = dict(zip(got.get("ids") or [], got.get("embeddings") or []))
+                for c in candidates.values():
+                    if c["similarity"] is None:
+                        c["similarity"] = round(
+                            _cosine_similarity(query_embedding, emb_map.get(c["id"])), 4
+                        )
+            except Exception:  # noqa: BLE001 - 补算失败不影响主链路，保持 None
+                logger.warning("BM25 候选相似度补算失败", exc_info=True)
+
+        # ── 阶段二：RRF 融合 ────────────────────────────────────────
+        ranked_lists = [vector_ranking]
+        if bm25_ranking:
+            ranked_lists.append(bm25_ranking)
+        fused_scores = _rrf_fuse(ranked_lists, Config.RRF_K)
+        fused = sorted(candidates.values(), key=lambda c: fused_scores.get(c["id"], 0.0), reverse=True)
+
+        # ── 阶段三：重排序精排（不可用则降级）───────────────────────
+        rerank_scores = _rerank_documents(question, [c["text"] for c in fused]) if fused else None
+        best_rerank: float | None = None
+        if rerank_scores is not None:
+            for c, score in zip(fused, rerank_scores):
+                c["rerank_score"] = round(float(score), 4)
+            threshold_used = Config.RERANK_THRESHOLD
+            passed = [c for c in fused if c["rerank_score"] >= threshold_used]
+            passed.sort(key=lambda c: c["rerank_score"], reverse=True)
+            best_rerank = max(rerank_scores) if rerank_scores else None
+        else:
+            # 降级：向量相似度过滤；BM25 命中的关键词块（如文号/条款号）直接保留
+            threshold_used = Config.SCORE_THRESHOLD
+            passed = [
+                c
+                for c in fused
+                if (c.get("similarity") or 0.0) >= threshold_used or c.get("bm25_score")
+            ]
+
+        results = [
+            {
+                "text": c["text"],
+                "source": c["source"],
+                "page": c["page"],
+                "similarity": c["similarity"],
+                "chunk_index": c["chunk_index"],
+                **({"rerank_score": c["rerank_score"]} if "rerank_score" in c else {}),
+            }
+            for c in passed[:k]
+        ]
+
+        payload: dict[str, Any] = {
+            "results": results,
+            "count": len(results),
+            "error": None,
+            "retrieval": {
+                "vector_candidates": len(vector_ranking),
+                "bm25_candidates": len(bm25_ranking),
+                "fused_candidates": len(fused),
+                "reranked": rerank_scores is not None,
+                "rerank_model": Config.RERANK_MODEL if rerank_scores is not None else None,
+                "threshold_used": threshold_used,
+            },
+        }
+        if not results and candidates:
+            # 有候选但全被过滤：附上最高分，帮调用方区分"不相关"与"库为空"
+            best_sim = max(
+                (c["similarity"] for c in candidates.values() if c.get("similarity") is not None),
+                default=None,
             )
+            if best_sim is not None:
+                payload["best_similarity"] = round(best_sim, 4)
+            if best_rerank is not None:
+                payload["best_rerank_score"] = best_rerank
+                payload["hint"] = (
+                    f"检索到 {len(fused)} 个候选块，但精排最高分 {best_rerank} 仍低于阈值 "
+                    f"{threshold_used}，已全部过滤。知识库中可能没有与该问题相关的内容。"
+                )
+            else:
+                payload["hint"] = (
+                    f"检索到 {len(fused)} 个候选块，但最高相似度 {payload.get('best_similarity')} "
+                    f"仍低于阈值 {threshold_used}，已全部过滤。知识库中可能没有与该问题相关的内容。"
+                )
         return payload
+
+    def _get_bm25_index(self) -> _BM25Index | None:
+        """懒构建/复用 BM25 索引（集合变更后由写路径置 None 失效重建）"""
+        if not Config.BM25_ENABLED:
+            return None
+        with self._bm25_lock:
+            if self._bm25 is None:
+                got = self.collection.get(include=["documents", "metadatas"])
+                entries = [
+                    (cid, text or "", meta or {})
+                    for cid, text, meta in zip(
+                        got.get("ids") or [],
+                        got.get("documents") or [],
+                        got.get("metadatas") or [],
+                    )
+                ]
+                self._bm25 = _BM25Index(entries)
+                logger.info("BM25 索引构建完成: %d 个块", len(entries))
+            return self._bm25
 
     # ------------------------------------------------------------------ #
     # 文档管理
@@ -231,6 +447,7 @@ class RAGEngine:
             if not existing:
                 return f"知识库中不存在该文档: {source}"
             self._delete_by_source(source)
+            self._bm25 = None  # 集合已变更，BM25 索引失效
 
         return f"已删除文档 {_display_name(source)}，共 {len(existing)} 个文档块"
 
@@ -245,6 +462,7 @@ class RAGEngine:
                 name=self.COLLECTION_NAME,
                 metadata={"hnsw:space": "cosine", "embedding_model": Config.EMBEDDING_MODEL},
             )
+            self._bm25 = None
         logger.info("知识库已清空")
         return "知识库已清空"
 
@@ -325,7 +543,9 @@ def _extract_pages(path: str) -> list[tuple[int | None, str]]:
 
 
 def _extract_pdf(path: str) -> list[tuple[int | None, str]]:
-    """PDF -> Markdown，逐页返回（pymupdf4llm 的 page_number 已是 1 基）"""
+    """PDF -> Markdown，逐页返回（pymupdf4llm 延迟导入，仅解析 PDF 时加载该重依赖）"""
+    import pymupdf4llm
+
     pages = pymupdf4llm.to_markdown(path, page_chunks=True)
     return [
         (int(item["metadata"].get("page_number", 1)), (item.get("text") or "").strip())
@@ -376,6 +596,62 @@ def _embed_batch(texts: list[str]) -> list[list[float]]:
             logger.warning("Embedding 调用失败（第 %d 次）: %s，%ds 后重试", attempt + 1, e, wait)
             time.sleep(wait)
     raise RuntimeError(f"Embedding API 连续 {Config.EMBED_MAX_RETRIES} 次调用失败: {last_error}")
+
+
+def _rerank_documents(query: str, documents: list[str]) -> list[float] | None:
+    """DashScope TextReRank 精排：返回与 documents 对齐的 relevance_score 列表。
+
+    任一环节不可用（未启用 / 无 API Key / SDK 缺失 / 调用失败）时返回 None，
+    由调用方降级为向量相似度过滤——检索主链路的健壮性优先于精排质量。
+    """
+    if not documents:
+        return []
+    if not Config.RERANK_ENABLED:
+        return None
+    if not Config.DASHSCOPE_API_KEY:
+        logger.info("未配置 DASHSCOPE_API_KEY，跳过精排（降级）")
+        return None
+    try:
+        from dashscope import TextReRank
+    except ImportError:
+        logger.warning("dashscope SDK 缺失，跳过精排（降级）")
+        return None
+
+    docs = documents[: max(1, Config.RERANK_MAX_DOCS)]
+    attempts = max(1, Config.RERANK_MAX_RETRIES)
+    last_error: Exception | None = None
+    for attempt in range(attempts):
+        try:
+            response = TextReRank.call(
+                model=Config.RERANK_MODEL,
+                query=query,
+                documents=docs,
+                top_n=len(docs),
+                return_documents=False,
+                # 必须用 request_timeout：直接传 timeout 会被塞进请求体被服务端忽略
+                request_timeout=Config.RERANK_TIMEOUT,
+            )
+            if getattr(response, "status_code", None) != 200:
+                raise RuntimeError(
+                    f"Rerank API 返回 {response.status_code}: {getattr(response, 'message', '')}"
+                )
+            results = (response.output or {}).get("results") or []
+            scores = [0.0] * len(docs)
+            for item in results:
+                idx = item.get("index")
+                if isinstance(idx, int) and 0 <= idx < len(scores):
+                    scores[idx] = float(item.get("relevance_score", 0.0))
+            return scores
+        except Exception as e:  # noqa: BLE001 - 统一记日志后重试
+            last_error = e
+            wait = 2**attempt
+            if attempt + 1 < attempts:
+                logger.warning(
+                    "Rerank 调用失败（第 %d/%d 次）: %s，%ds 后重试", attempt + 1, attempts, e, wait
+                )
+                time.sleep(wait)
+    logger.warning("Rerank 连续 %d 次失败，降级为向量相似度过滤: %s", attempts, last_error)
+    return None
 
 
 def results_to_text(payload: dict[str, Any]) -> str:

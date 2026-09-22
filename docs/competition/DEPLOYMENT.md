@@ -1,9 +1,8 @@
-
 ---
 
 ### `docs/competition/DEPLOYMENT.md`
 
-```md
+````md
 # 校园规则解码器——环境与部署说明
 
 ## 1. 文档目的
@@ -47,3 +46,5 @@
 
 ```powershell
 cd rag-mcp-server
+```
+````

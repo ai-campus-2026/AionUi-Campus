@@ -46,6 +46,8 @@
   "curriculumCohortPlaceholder": "Cohort year (e.g. 2026)",
   "curriculumVersionPlaceholder": "Version (e.g. 2026.1)",
   "curriculumStoreButton": "Parse and generate course graph",
+  "curriculumMyInfo": "내 정보",
+  "curriculumBackToPath": "학업 경로로 돌아가기",
   "integration": {
     "title": "MCP 통합",
     "description": "모델 컨텍스트 프로토콜 서버 및 도구 관리"

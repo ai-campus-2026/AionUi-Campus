@@ -14,6 +14,16 @@ export type ClientBusinessSettingMap = {
   'mcp.config': IMcpServer[] | undefined;
   'tools.imageGenerationModel': ImageGenerationModelSetting | undefined;
   'tools.speechToText': SpeechToTextConfig | undefined;
+  /**
+   * 校园规则解码器项目共用的 DashScope API Key。
+   *
+   * 由 CampusApiKeyDialog 在首次启动时弹窗收集，写入后由 runBackendMigrations
+   * 在下一次 bootstrap 时注入到**白名单内**的校园 MCP（policy_search、rag、
+   * contract-scan、policy-comparison，见 campusMcp.ts 的 CAMPUS_MCP_WHITELIST）
+   * 的 transport.env 中。`undefined` 表示从未配置过（弹窗会再次出现），空串表示
+   * 用户主动清空（视为已配置但禁用）。
+   */
+  'tools.campusMcp.dashscopeApiKey': string | undefined;
   'acp.promptTimeout': number | undefined;
   'acp.agentIdleTimeout': number | undefined;
   /**

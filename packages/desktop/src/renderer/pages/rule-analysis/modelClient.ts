@@ -153,7 +153,7 @@ export async function ensureConversation(
     assistantId?: string | null;
     /** 用户当前选中的模型（仅 aionrs 需要）；不传则回退默认选择 */
     model?: TProviderWithModel | undefined;
-  },
+  }
 ): Promise<{ id: string } | { error: string }> {
   const cached = convIds.get(taskId);
   if (cached) return { id: cached };
@@ -164,7 +164,7 @@ export async function ensureConversation(
     const list = await ipcBridge.assistants.list.invoke();
     // 优先用用户当前选中的 assistant（与首页一致），否则回退默认选择
     const picked = options?.assistantId
-      ? list.find((a) => a.id === options.assistantId && a.enabled !== false) ?? pickDefaultAssistant(list)
+      ? (list.find((a) => a.id === options.assistantId && a.enabled !== false) ?? pickDefaultAssistant(list))
       : pickDefaultAssistant(list);
     if (picked?.id) {
       assistant = {
@@ -193,7 +193,7 @@ export async function ensureConversation(
     if (conv && conv.id) {
       setConvId(taskId, conv.id);
       console.log(
-        `[rule-analysis] conversation created: id=${conv.id} assistant=${assistant?.id ?? 'none'} model=${resolvedModel?.use_model ?? 'none'} mcp=${mcp.userServerIds.length} user-servers`,
+        `[rule-analysis] conversation created: id=${conv.id} assistant=${assistant?.id ?? 'none'} model=${resolvedModel?.use_model ?? 'none'} mcp=${mcp.userServerIds.length} user-servers`
       );
       // 预热运行时：会话首次打开时后端才物化 session，主动 ensure 尽早暴露失败
       ipcBridge.conversation.ensureRuntime.invoke({ conversation_id: conv.id }).catch(() => {
@@ -211,7 +211,7 @@ export async function ensureConversation(
 /** 向真实对话发送一条消息（流式回复经 responseStream 回调）；失败返回具体错误 */
 export async function sendToConversation(
   convId: string,
-  text: string,
+  text: string
 ): Promise<{ ok: boolean; error?: string; isConflict?: boolean }> {
   try {
     await ipcBridge.conversation.sendMessage.invoke({ conversation_id: convId, input: text });
@@ -346,8 +346,7 @@ export async function loadLatestRuleResult(convId: string): Promise<LoadedRuleRe
   try {
     const page = await loadLatestConversationMessages(convId, { limit: 100, contentMode: 'full' });
     const toolMsgs = (page.items ?? []).filter(
-      (m): m is ToolMessage =>
-        m.type === 'tool_call' || m.type === 'tool_group' || m.type === 'acp_tool_call',
+      (m): m is ToolMessage => m.type === 'tool_call' || m.type === 'tool_group' || m.type === 'acp_tool_call'
     );
     if (toolMsgs.length === 0) return null;
     const normalized = normalizeToolMessages(toolMsgs);

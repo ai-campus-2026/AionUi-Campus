@@ -1,14 +1,7 @@
 // ========== 申请清单页：适配层（拍平 / 分组 / 判定） ==========
 // 数据来源：policy-search MCP 返回的 PolicyDoc。
 // 本文件是唯一解析入口：后续接入真实 MCP 返回时，只需保证数据结构符合 PolicyDoc，页面代码不变。
-import type {
-  Answers,
-  Board,
-  ChecklistVerdict,
-  EvidenceMap,
-  PolicyCondition,
-  PolicyDoc,
-} from './types';
+import type { Answers, Board, ChecklistVerdict, EvidenceMap, PolicyCondition, PolicyDoc } from './types';
 
 /** 拍平：requirements.xxx.conditions[] → 扁平条件数组 */
 export function flattenConditions(doc: PolicyDoc): PolicyCondition[] {
@@ -84,11 +77,7 @@ function compareValue(operator: string, input: number, threshold: number): boole
 }
 
 /** 单条基础门槛是否已达标（按 input_kind 分发，不做中文语义判断） */
-export function isBaseMet(
-  condition: PolicyCondition,
-  value: Answers[string],
-  evidence: EvidenceMap
-): boolean {
+export function isBaseMet(condition: PolicyCondition, value: Answers[string], evidence: EvidenceMap): boolean {
   switch (condition.input_kind) {
     case 'number': {
       if (typeof value !== 'number' || Number.isNaN(value)) return false;

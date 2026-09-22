@@ -27,27 +27,21 @@ const EvidenceCard: React.FC<Props> = ({ data }) => {
   return (
     <div className='cr-block'>
       <div className='cr-block-title'>
-        <span className='cr-dot' />
-        ② 依据 · 引用证据来源
+        <span className='cr-dot' />② 依据 · 引用证据来源
       </div>
       {data.map((item) => {
         const { text, relevance } = parseRelevance(item.quoteContent);
         const isLow = Boolean(item.lowRelevance);
 
         return (
-          <div
-            key={item.id}
-            className={`cr-evidence${isLow ? ' cr-evidence--low' : ''}`}
-          >
+          <div key={item.id} className={`cr-evidence${isLow ? ' cr-evidence--low' : ''}`}>
             {/* 头部：来源名称 + 类型 Tag */}
             <div className='cr-evidence__head'>
               <span className='cr-evidence__source'>
                 <span className='cr-evidence__source-icon'>📄</span>
                 {item.fileName}
               </span>
-              <span className='cr-evidence__tag'>
-                {item.pageNum > 0 ? `第 ${item.pageNum} 页` : '政策原文'}
-              </span>
+              <span className='cr-evidence__tag'>{item.pageNum > 0 ? `第 ${item.pageNum} 页` : '政策原文'}</span>
             </div>
 
             {/* 引用原文（正文剥离相关度标注，突出原文本身） */}

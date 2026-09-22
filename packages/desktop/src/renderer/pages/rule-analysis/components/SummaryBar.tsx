@@ -2,7 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { MatchSummary } from '../model';
 
 /** 平滑数字动画（count-up） */
-const CountUp: React.FC<{ value: number; duration?: number; className?: string }> = ({ value, duration = 520, className }) => {
+const CountUp: React.FC<{ value: number; duration?: number; className?: string }> = ({
+  value,
+  duration = 520,
+  className,
+}) => {
   const [display, setDisplay] = useState(value);
   const fromRef = useRef(value);
   const rafRef = useRef(0);
