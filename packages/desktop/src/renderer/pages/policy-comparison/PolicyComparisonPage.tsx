@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ComparisonHistoryRecord, PolicyDiffResult, SelectedPolicyFile } from './types';
 import { mockHistory } from './mockData';
@@ -13,7 +13,9 @@ function loadHistory(): ComparisonHistoryRecord[] {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
     if (raw) return JSON.parse(raw) as ComparisonHistoryRecord[];
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   // 首次进入：展示示例历史记录
   return mockHistory;
 }
@@ -35,7 +37,11 @@ const PolicyComparisonPage: React.FC = () => {
 
   // 历史数据持久化
   useEffect(() => {
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch {
+      /* ignore */
+    }
   }, [history]);
 
   /** 从入口页开始对比 → 进入 Diff */

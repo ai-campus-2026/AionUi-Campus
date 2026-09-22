@@ -21,10 +21,10 @@ export function buildAcademicContext(
   plan: ProgramPlan,
   progress: StudentProgress,
   selectedCourse: Course | null,
-  userInfo?: Record<string, string>,
+  userInfo?: Record<string, string>
 ): string {
   const totalCourses = plan.courses.length;
-  const totalCredits = plan.courses.reduce((sum, c) => sum + c.credits, 0);
+  const listedCredits = plan.courses.reduce((sum, c) => sum + c.credits, 0);
 
   let passed = 0;
   let failed = 0;
@@ -41,8 +41,8 @@ export function buildAcademicContext(
     .reduce((sum, c) => sum + c.credits, 0);
 
   let ctx = '【学业路径助手·上下文】\n';
-  ctx += `培养方案：${plan.major} ${plan.grade}级，共${totalCourses}门课，${totalCredits}学分。\n`;
-  ctx += `学生进度：已通过${passed}门，未通过${failed}门，未修读${notTaken}门，已获学分${earnedCredits}/${totalCredits}。\n`;
+  ctx += `培养方案：${plan.major} ${plan.grade}级，列出${totalCourses}门课，所列课程学分合计${listedCredits}。毕业最低学分要求：${plan.totalCredits ?? '来源未明确'}。不要把所列课程学分合计当作毕业要求。\n`;
+  ctx += `学生进度：已通过${passed}门，未通过${failed}门，未修读${notTaken}门，已通过课程学分合计${earnedCredits}。\n`;
 
   // 课程列表
   ctx += '\n课程列表（课程名 学分 类别 状态）：\n';
@@ -84,13 +84,12 @@ export function buildAcademicContext(
     if (followups) ctx += `，后续课程：${followups}`;
   }
 
-  // 我的信息（个人资料）—— 直接序列化所有非空字段
   if (userInfo && typeof userInfo === 'object') {
-    const entries = Object.entries(userInfo).filter(([_, v]) => v && String(v).trim() !== '');
+    const entries = Object.entries(userInfo).filter(([_, value]) => value && String(value).trim() !== '');
     if (entries.length > 0) {
       ctx += '\n我的信息：\n';
-      entries.forEach(([k, v]) => {
-        ctx += `  ${k}: ${v}\n`;
+      entries.forEach(([key, value]) => {
+        ctx += `  ${key}: ${value}\n`;
       });
     }
   }

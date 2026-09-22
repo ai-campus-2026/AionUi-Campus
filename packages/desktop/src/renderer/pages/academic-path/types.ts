@@ -1,10 +1,10 @@
-﻿/**
+/**
  * 学业路径模块数据类型
  * 培养方案版本 与 学生学业状态 严格区分
  */
 
 /** 课程类别 */
-export type CourseCategory = 'required' | 'elective' | 'core' | 'general' | 'practice';
+export type CourseCategory = 'required' | 'elective' | 'core' | 'general' | 'practice' | 'other';
 
 /** 课程修读状态 */
 export type CourseStatus = 'not_taken' | 'passed' | 'failed';
@@ -21,7 +21,7 @@ export interface Course {
   /** 先修课程 ID 列表 */
   prerequisites: string[];
   description?: string;
-  /** 绩点（未修读时为空） */
+  /** Grade point for completed courses; absent before a grade is recorded. */
   gpa?: number;
 }
 
@@ -32,8 +32,13 @@ export interface ProgramPlan {
   major: string;
   grade: string;
   version: string;
-  totalCredits: number;
+  /** Graduation requirement, null when the source has no verified total. */
+  totalCredits: number | null;
   courses: Course[];
+  /** Preview-only guidance; never used for enrollment eligibility. */
+  recommendedSequences?: { from: string; to: string; page: number }[];
+  /** False when imported from the unverified PDF preview. */
+  catalogVerified?: boolean;
   createdAt: string;
   confirmedAt?: string;
   isCurrent: boolean;
@@ -54,7 +59,7 @@ export interface StudentProgress {
 }
 
 /** 学业路径页面视图状态 */
-export type PathView = 'empty' | 'parsing' | 'confirm' | 'workbench' | 'history' | 'profile';
+export type PathView = 'empty' | 'parsing' | 'confirm' | 'workbench' | 'profile' | 'history';
 
 /** 筛选条件 */
 export type CourseFilter = 'all' | 'required' | 'elective' | 'core' | 'available' | 'locked';

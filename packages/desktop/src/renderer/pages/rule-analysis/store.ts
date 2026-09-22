@@ -12,6 +12,7 @@ import type { AnalysisTask, Conversation, ProfileField, ReportSnapshot, ViewName
 import {
   createSeedState,
   detectGoal,
+  dynamicFieldKey,
   fieldLabel,
   findPolicy,
   goalPolicyPrefix,
@@ -137,7 +138,11 @@ export interface WorkbenchApi {
   reanalyzeWithLatestPolicy: (taskId: string) => void;
   resetDemo: () => void;
   /** 调试：手动注入一条 MCP 结果 JSON，模拟真实返回（Ctrl+Shift+D 触发） */
-  debugInjectResult: (taskId: string, result: import('@renderer/components/campus-rule/types').CampusRuleToolResult, question?: string) => void;
+  debugInjectResult: (
+    taskId: string,
+    result: import('@renderer/components/campus-rule/types').CampusRuleToolResult,
+    question?: string
+  ) => void;
   /** 删除单个分析任务（同时删除其所有报告快照和对话记录） */
   deleteTask: (taskId: string) => void;
   /** 批量删除多个分析任务 */
@@ -200,13 +205,13 @@ export function useWorkbench(): WorkbenchApi {
   /** 入口页自由对话（不绑定分析任务） */
   const entryConversation = useMemo(
     () => state.conversations.find((c) => c.taskId === ENTRY_TASK_ID),
-    [state.conversations],
+    [state.conversations]
   );
 
   /** 当前解读视图对应的对话（可能是入口会话，也可能是历史任务会话） */
   const interpretConversation = useMemo(
     () => (ui.interpretTaskId ? state.conversations.find((c) => c.taskId === ui.interpretTaskId) : undefined),
-    [state.conversations, ui.interpretTaskId],
+    [state.conversations, ui.interpretTaskId]
   );
 
   /* ---- 真实 MCP 政策解读结果（key = taskId） ---- */
@@ -223,162 +228,166 @@ export function useWorkbench(): WorkbenchApi {
    * 从对话数据库加载某会话最近一条可解析的政策解读工具结果；
    * 有新结果（messageId 变化）时写入 ruleResults 并切换到解读视图。
    */
-  const refreshRuleResult = useCallback(async (taskId: string, convId: string, forceView = false, forceUpdate = false) => {
-    const loaded = await loadLatestRuleResult(convId);
-    if (!loaded) return;
+  const refreshRuleResult = useCallback(
+    async (taskId: string, convId: string, forceView = false, forceUpdate = false) => {
+      const loaded = await loadLatestRuleResult(convId);
+      if (!loaded) return;
 
-    // ===== ENTRY 页新结果 → 自动创建或恢复分析任务 =====
-    let actualTaskId = taskId;
-    let activeTask: AnalysisTask | null = null;
-    if (taskId === ENTRY_TASK_ID) {
-      const groups = groupsFromMcp(loaded.result);
-      if (groups.length > 0) {
-        const goal = detectGoal(loaded.question ?? '');
-        // 从 MCP 结果推导政策文件标识：优先 policyVersionId，其次 policyHits[0].source，最后默认
-        const mcpPolicyId = loaded.result?.policyVersionId
-          ?? loaded.result?.policyHits?.[0]?.source
-          ?? 'pv-default';
-        const goalKey = goal?.goalKey ?? `dynamic_${makeId('dyn')}`;
-        // 任务匹配：goalKey + policyVersionId（同一资格类别 + 同一查询文件才归为同一任务）
-        const existingTask = stateRef.current.tasks.find(
-          (t) => t.goalKey === goalKey && t.policyVersionId === mcpPolicyId,
-        );
+      // ===== ENTRY 页新结果 → 自动创建或恢复分析任务 =====
+      let actualTaskId = taskId;
+      let activeTask: AnalysisTask | null = null;
+      if (taskId === ENTRY_TASK_ID) {
+        const groups = groupsFromMcp(loaded.result);
+        if (groups.length > 0) {
+          const goal = detectGoal(loaded.question ?? '');
+          // 从 MCP 结果推导政策文件标识：优先 policyVersionId，其次 policyHits[0].source，最后默认
+          const mcpPolicyId = loaded.result?.policyVersionId ?? loaded.result?.policyHits?.[0]?.source ?? 'pv-default';
+          const goalKey = goal?.goalKey ?? `dynamic_${makeId('dyn')}`;
+          // 任务匹配：goalKey + policyVersionId（同一资格类别 + 同一查询文件才归为同一任务）
+          const existingTask = stateRef.current.tasks.find(
+            (t) => t.goalKey === goalKey && t.policyVersionId === mcpPolicyId
+          );
 
-        if (existingTask) {
-          actualTaskId = existingTask.id;
-          activeTask = existingTask;
-        } else {
-          const title = goal?.title ?? loaded.question ?? '政策资格分析';
-          const policyVersionId = mcpPolicyId;
-          const newTask: AnalysisTask = {
-            id: makeId('task'),
-            goalKey,
-            title,
-            policyVersionId,
-            createdAt: todayStr(),
-            updatedAt: todayStr(),
-            current: [],
-          };
-          setState((s) => ({ ...s, tasks: [...s.tasks, newTask] }));
-          actualTaskId = newTask.id;
-          activeTask = newTask;
-
-          const entryConvId = getConvId(ENTRY_TASK_ID);
-          if (entryConvId) {
-            setConvId(newTask.id, entryConvId);
-            removeConvId(ENTRY_TASK_ID);
-          }
-        }
-      }
-    }
-
-    const prev = ruleResultsRef.current[actualTaskId];
-    const isNew = forceUpdate || !prev || prev.messageId !== loaded.messageId;
-    if (isNew) {
-      const next: Record<string, RuleResultData> = { ...ruleResultsRef.current };
-      next[actualTaskId] = {
-        result: loaded.result,
-        question: loaded.question,
-        messageId: loaded.messageId,
-        updatedAt: todayStr(),
-      };
-      // 从 ENTRY 迁移后，清除 ENTRY 下的旧结果
-      if (actualTaskId !== taskId) delete next[taskId];
-      ruleResultsRef.current = next;
-      setRuleResults(next);
-
-      // ===== 从 MCP 结果自动同步「我的信息」 =====
-      // 遍历条件行，提取 userValue 非空的项，推断字段 key 后更新个人资料
-      const mcpGroups = groupsFromMcp(loaded.result);
-      const updatedFields: { key: string; label: string; value: string }[] = [];
-      for (const g of mcpGroups) {
-        for (const row of g.rows) {
-          const val = row.userValue?.trim();
-          if (!val || val === '未提供' || val === '-' || val === '—') continue;
-          // 优先用预设字段映射，不在映射里的条件自动生成动态 fieldKey
-          let fieldKey = guessFieldKey(row.item);
-          let fieldLabelStr: string;
-          if (!fieldKey) {
-            fieldKey = dynamicFieldKey(row.item);
-            fieldLabelStr = row.item; // 动态字段用条件名称作为标签
+          if (existingTask) {
+            actualTaskId = existingTask.id;
+            activeTask = existingTask;
           } else {
-            fieldLabelStr = fieldLabel(fieldKey);
-          }
-          const prevField = stateRef.current.profile.fields[fieldKey];
-          if (prevField?.value === val) continue; // 值未变，不重复更新
-          updatedFields.push({ key: fieldKey, label: fieldLabelStr, value: val });
-        }
-      }
-      if (updatedFields.length > 0) {
-        const now = todayStr();
-        setState((s) => {
-          const fields = { ...s.profile.fields };
-          for (const uf of updatedFields) {
-            const existing = fields[uf.key];
-            fields[uf.key] = {
-              key: uf.key,
-              label: existing?.label ?? uf.label,
-              category: existing?.category ?? 'other',
-              value: uf.value,
-              updatedAt: now,
+            const title = goal?.title ?? loaded.question ?? '政策资格分析';
+            const policyVersionId = mcpPolicyId;
+            const newTask: AnalysisTask = {
+              id: makeId('task'),
+              goalKey,
+              title,
+              policyVersionId,
+              createdAt: todayStr(),
+              updatedAt: todayStr(),
+              current: [],
             };
+            setState((s) => ({ ...s, tasks: [...s.tasks, newTask] }));
+            actualTaskId = newTask.id;
+            activeTask = newTask;
+
+            const entryConvId = getConvId(ENTRY_TASK_ID);
+            if (entryConvId) {
+              setConvId(newTask.id, entryConvId);
+              removeConvId(ENTRY_TASK_ID);
+            }
           }
-          return { ...s, profile: { ...s.profile, fields, updatedAt: now } };
-        });
+        }
       }
 
-      // MCP 新结果到达 → 更新任务当前结果 + 生成报告快照
-      if (actualTaskId !== ENTRY_TASK_ID) {
-        const task = activeTask ?? stateRef.current.tasks.find((t) => t.id === actualTaskId);
-        if (task) {
-          const groups = groupsFromMcp(loaded.result);
-          if (groups.length > 0) {
-            const summary = summaryFromGroups(groups);
-            // 更新任务当前结果
-            setState((s) => ({
-              ...s,
-              tasks: s.tasks.map((t) =>
-                t.id === actualTaskId ? { ...t, current: groups, updatedAt: todayStr() } : t,
-              ),
-            }));
-            // 生成报告快照
-            const prevReport = stateRef.current.reports
-              .filter((r) => r.analysisTaskId === actualTaskId)
-              .sort((a, b) => b.version - a.version)[0];
-            const changes: ReportSnapshot['changes'] = [];
-            if (prevReport) {
-              const diff = summary.met - prevReport.summary.met;
-              const diffMissing = summary.missing + summary.review - prevReport.summary.missing;
-              if (diff !== 0)
-                changes.push({ label: '结果变化', text: `${prevReport.summary.met} 项满足 → ${summary.met} 项满足` });
-              if (diffMissing !== 0)
-                changes.push({
-                  label: '待确认变化',
-                  text: `${prevReport.summary.missing} 项待确认 → ${summary.missing + summary.review} 项待确认`,
-                });
+      const prev = ruleResultsRef.current[actualTaskId];
+      const isNew = forceUpdate || !prev || prev.messageId !== loaded.messageId;
+      if (isNew) {
+        const next: Record<string, RuleResultData> = { ...ruleResultsRef.current };
+        next[actualTaskId] = {
+          result: loaded.result,
+          question: loaded.question,
+          messageId: loaded.messageId,
+          updatedAt: todayStr(),
+        };
+        // 从 ENTRY 迁移后，清除 ENTRY 下的旧结果
+        if (actualTaskId !== taskId) delete next[taskId];
+        ruleResultsRef.current = next;
+        setRuleResults(next);
+
+        // ===== 从 MCP 结果自动同步「我的信息」 =====
+        // 遍历条件行，提取 userValue 非空的项，推断字段 key 后更新个人资料
+        const mcpGroups = groupsFromMcp(loaded.result);
+        const updatedFields: { key: string; label: string; value: string }[] = [];
+        for (const g of mcpGroups) {
+          for (const row of g.rows) {
+            const val = row.userValue?.trim();
+            if (!val || val === '未提供' || val === '-' || val === '—') continue;
+            // 优先用预设字段映射，不在映射里的条件自动生成动态 fieldKey
+            let fieldKey = guessFieldKey(row.item);
+            let fieldLabelStr: string;
+            if (!fieldKey) {
+              fieldKey = dynamicFieldKey(row.item);
+              fieldLabelStr = row.item; // 动态字段用条件名称作为标签
             } else {
-              changes.push({
-                label: '首次分析',
-                text: `完成首次政策匹配：${summary.met} 项满足 · ${summary.missing + summary.review} 项待确认 · ${summary.notMet} 项未满足`,
-              });
+              fieldLabelStr = fieldLabel(fieldKey);
             }
-            pushReportRef.current?.(
-              { ...task, current: groups, updatedAt: todayStr() },
-              { groups, summary: { met: summary.met, missing: summary.missing + summary.review, notMet: summary.notMet } },
-              task.policyVersionId,
-              changes,
-            );
+            const prevField = stateRef.current.profile.fields[fieldKey];
+            if (prevField?.value === val) continue; // 值未变，不重复更新
+            updatedFields.push({ key: fieldKey, label: fieldLabelStr, value: val });
+          }
+        }
+        if (updatedFields.length > 0) {
+          const now = todayStr();
+          setState((s) => {
+            const fields = { ...s.profile.fields };
+            for (const uf of updatedFields) {
+              const existing = fields[uf.key];
+              fields[uf.key] = {
+                key: uf.key,
+                label: existing?.label ?? uf.label,
+                category: existing?.category ?? 'other',
+                value: uf.value,
+                updatedAt: now,
+              };
+            }
+            return { ...s, profile: { ...s.profile, fields, updatedAt: now } };
+          });
+        }
+
+        // MCP 新结果到达 → 更新任务当前结果 + 生成报告快照
+        if (actualTaskId !== ENTRY_TASK_ID) {
+          const task = activeTask ?? stateRef.current.tasks.find((t) => t.id === actualTaskId);
+          if (task) {
+            const groups = groupsFromMcp(loaded.result);
+            if (groups.length > 0) {
+              const summary = summaryFromGroups(groups);
+              // 更新任务当前结果
+              setState((s) => ({
+                ...s,
+                tasks: s.tasks.map((t) =>
+                  t.id === actualTaskId ? { ...t, current: groups, updatedAt: todayStr() } : t
+                ),
+              }));
+              // 生成报告快照
+              const prevReport = stateRef.current.reports
+                .filter((r) => r.analysisTaskId === actualTaskId)
+                .sort((a, b) => b.version - a.version)[0];
+              const changes: ReportSnapshot['changes'] = [];
+              if (prevReport) {
+                const diff = summary.met - prevReport.summary.met;
+                const diffMissing = summary.missing + summary.review - prevReport.summary.missing;
+                if (diff !== 0)
+                  changes.push({ label: '结果变化', text: `${prevReport.summary.met} 项满足 → ${summary.met} 项满足` });
+                if (diffMissing !== 0)
+                  changes.push({
+                    label: '待确认变化',
+                    text: `${prevReport.summary.missing} 项待确认 → ${summary.missing + summary.review} 项待确认`,
+                  });
+              } else {
+                changes.push({
+                  label: '首次分析',
+                  text: `完成首次政策匹配：${summary.met} 项满足 · ${summary.missing + summary.review} 项待确认 · ${summary.notMet} 项未满足`,
+                });
+              }
+              pushReportRef.current?.(
+                { ...task, current: groups, updatedAt: todayStr() },
+                {
+                  groups,
+                  summary: { met: summary.met, missing: summary.missing + summary.review, notMet: summary.notMet },
+                },
+                task.policyVersionId,
+                changes
+              );
+            }
           }
         }
       }
-    }
-    if (isNew || forceView) {
-      const view = uiRef.current.view;
-      if (forceView || view === 'entry' || view === 'analysis') {
-        setUi((u) => ({ ...u, view: 'analysis', interpretTaskId: actualTaskId }));
+      if (isNew || forceView) {
+        const view = uiRef.current.view;
+        if (forceView || view === 'entry' || view === 'analysis') {
+          setUi((u) => ({ ...u, view: 'analysis', interpretTaskId: actualTaskId }));
+        }
       }
-    }
-  }, []);
+    },
+    []
+  );
 
   /** 打开某任务的解读视图（快捷入口 / 最近分析 / 我的报告「继续完善」） */
   const openInterpret = useCallback(
@@ -392,7 +401,7 @@ export function useWorkbench(): WorkbenchApi {
         void refreshRuleResult(taskId, convId);
       }
     },
-    [refreshRuleResult],
+    [refreshRuleResult]
   );
 
   /** 追加对话消息（自动去重/限制长度）；会话不存在时自动创建（入口自由对话用） */
@@ -401,9 +410,7 @@ export function useWorkbench(): WorkbenchApi {
     setState((s) => {
       const exists = s.conversations.some((c) => c.taskId === taskId);
       const conversations = exists
-        ? s.conversations.map((c) =>
-            c.taskId === taskId ? { ...c, messages: [...c.messages, full].slice(-40) } : c,
-          )
+        ? s.conversations.map((c) => (c.taskId === taskId ? { ...c, messages: [...c.messages, full].slice(-40) } : c))
         : [...s.conversations, { id: makeId('conv'), taskId, messages: [full] }];
       return { ...s, conversations };
     });
@@ -475,7 +482,7 @@ export function useWorkbench(): WorkbenchApi {
       const t = setTimeout(() => void pollDbForReply(taskId, convId), 4000);
       pollTimersRef.current.set(taskId, t);
     },
-    [pushMessage, refreshRuleResult, stopPolling, clearAiTimers],
+    [pushMessage, refreshRuleResult, stopPolling, clearAiTimers]
   );
 
   /* ---- AI 对话：流式订阅（应用生命周期内单例） ---- */
@@ -515,7 +522,7 @@ export function useWorkbench(): WorkbenchApi {
     async (
       taskId: string,
       text: string,
-      name: string,
+      name: string
     ): Promise<{ ok: boolean; error?: string; isConflict?: boolean }> => {
       if (!taskId) return { ok: false, error: '当前没有分析任务' };
       clearAiTimers(taskId);
@@ -560,9 +567,7 @@ export function useWorkbench(): WorkbenchApi {
       stableCountRef.current.delete(taskId);
       loadLatestConversationMessages(conv.id, { limit: 10, contentMode: 'compact' })
         .then((p) => {
-          const prev = [...(p.items ?? [])]
-            .reverse()
-            .find((m) => m.type === 'text' && m.position === 'left');
+          const prev = [...(p.items ?? [])].reverse().find((m) => m.type === 'text' && m.position === 'left');
           prevAssistantMsgIdRef.current.set(taskId, prev?.msg_id ?? '');
         })
         .catch(() => {
@@ -574,7 +579,7 @@ export function useWorkbench(): WorkbenchApi {
 
       return res;
     },
-    [clearAiTimers, resetIdleTimer, pushMessage],
+    [clearAiTimers, resetIdleTimer, pushMessage]
   );
 
   /** AI 发送失败的可见提示（不静默吞掉） */
@@ -586,7 +591,7 @@ export function useWorkbench(): WorkbenchApi {
         text: `AI 暂时无法回复${error ? `：${error}` : ''}。你可以稍后再试。`,
       });
     },
-    [pushMessage],
+    [pushMessage]
   );
 
   /** 生成新报告快照（V 递增，不可变追加） */
@@ -595,7 +600,7 @@ export function useWorkbench(): WorkbenchApi {
       task: AnalysisTask,
       outcome: { groups: AnalysisTask['current']; summary: ReportSnapshot['summary'] },
       policyId: string,
-      changes: ReportSnapshot['changes'],
+      changes: ReportSnapshot['changes']
     ): ReportSnapshot => {
       const pv = findPolicy(stateRef.current, policyId);
       const version = stateRef.current.reports.filter((r) => r.analysisTaskId === task.id).length + 1;
@@ -609,8 +614,7 @@ export function useWorkbench(): WorkbenchApi {
         createdAt: todayStr(),
         analysisTaskId: task.id,
         profileSnapshot: snapshot,
-        policyVersion:
-          pv ?? { id: policyId, title: '未知政策文件', version: '—', publishedAt: '', latest: false },
+        policyVersion: pv ?? { id: policyId, title: '未知政策文件', version: '—', publishedAt: '', latest: false },
         matchResults: outcome.groups,
         summary: outcome.summary,
         changes,
@@ -618,31 +622,31 @@ export function useWorkbench(): WorkbenchApi {
       setState((s) => ({ ...s, reports: [...s.reports, report] }));
       return report;
     },
-    [],
+    []
   );
   pushReportRef.current = pushReport;
 
   /** 重建某任务的最新匹配 + 更新任务 */
-  const rerunTask = useCallback(
-    (taskId: string, policyId?: string) => {
-      const s = stateRef.current;
-      const task = s.tasks.find((t) => t.id === taskId);
-      if (!task) return null;
-      const def = GOALS.find((g) => g.goalKey === task.goalKey);
-      if (!def) return null;
-      const outcome = matchConditions(s.profile, def.conditions);
-      const mcpGroups = engineGroupsToMcp(outcome.groups);
-      const nextPolicyId = policyId ?? task.policyVersionId;
-      setState((st) => ({
-        ...st,
-        tasks: st.tasks.map((t) =>
-          t.id === taskId ? { ...t, current: mcpGroups, updatedAt: todayStr(), policyVersionId: nextPolicyId } : t,
-        ),
-      }));
-      return { task: { ...task, current: mcpGroups, updatedAt: todayStr(), policyVersionId: nextPolicyId }, outcome: { ...outcome, groups: mcpGroups } };
-    },
-    [],
-  );
+  const rerunTask = useCallback((taskId: string, policyId?: string) => {
+    const s = stateRef.current;
+    const task = s.tasks.find((t) => t.id === taskId);
+    if (!task) return null;
+    const def = GOALS.find((g) => g.goalKey === task.goalKey);
+    if (!def) return null;
+    const outcome = matchConditions(s.profile, def.conditions);
+    const mcpGroups = engineGroupsToMcp(outcome.groups);
+    const nextPolicyId = policyId ?? task.policyVersionId;
+    setState((st) => ({
+      ...st,
+      tasks: st.tasks.map((t) =>
+        t.id === taskId ? { ...t, current: mcpGroups, updatedAt: todayStr(), policyVersionId: nextPolicyId } : t
+      ),
+    }));
+    return {
+      task: { ...task, current: mcpGroups, updatedAt: todayStr(), policyVersionId: nextPolicyId },
+      outcome: { ...outcome, groups: mcpGroups },
+    };
+  }, []);
 
   /**
    * 聊天框发送（入口页 / 解读视图共用）：
@@ -668,7 +672,7 @@ export function useWorkbench(): WorkbenchApi {
         }
       });
     },
-    [pushMessage, sendToAi, aiFail],
+    [pushMessage, sendToAi, aiFail]
   );
 
   /** 解读视图内继续追问：沿用当前解读会话（入口会话或历史任务会话） */
@@ -692,7 +696,7 @@ export function useWorkbench(): WorkbenchApi {
         }
       });
     },
-    [pushMessage, sendToAi, aiFail],
+    [pushMessage, sendToAi, aiFail]
   );
 
   /** 快捷入口 / 最近分析：以真实问题发起 AI 对话（不再创建 mock 任务） */
@@ -702,22 +706,25 @@ export function useWorkbench(): WorkbenchApi {
       if (!def) return;
       sendEntryMessage(`我想了解${def.title}的申请条件，请帮我解读`);
     },
-    [sendEntryMessage],
+    [sendEntryMessage]
   );
 
   const viewReport = useCallback((reportId: string) => {
     setUi((u) => ({ ...u, view: 'report', viewingReportId: reportId }));
   }, []);
 
-  const openReportOfTask = useCallback((taskId: string) => {
-    const s = stateRef.current;
-    const latest = s.reports.filter((r) => r.analysisTaskId === taskId).toSorted((a, b) => b.version - a.version)[0];
-    if (latest) {
-      setUi((u) => ({ ...u, view: 'report', viewingReportId: latest.id }));
-    } else {
-      openInterpret(taskId);
-    }
-  }, [openInterpret]);
+  const openReportOfTask = useCallback(
+    (taskId: string) => {
+      const s = stateRef.current;
+      const latest = s.reports.filter((r) => r.analysisTaskId === taskId).toSorted((a, b) => b.version - a.version)[0];
+      if (latest) {
+        setUi((u) => ({ ...u, view: 'report', viewingReportId: latest.id }));
+      } else {
+        openInterpret(taskId);
+      }
+    },
+    [openInterpret]
+  );
 
   /** 旧报告 + 政策已更新 → 基于最新政策重新匹配并生成新快照（旧报告不变） */
   const reanalyzeWithLatestPolicy = useCallback(
@@ -728,11 +735,14 @@ export function useWorkbench(): WorkbenchApi {
       const def = GOALS.find((g) => g.goalKey === task.goalKey);
       const prefix = def ? goalPolicyPrefix(def.goalKey) : '';
       const latestPv =
-        s.policyVersions.find((p) => p.latest && p.id.startsWith(prefix)) ??
-        s.policyVersions.find((p) => p.latest);
+        s.policyVersions.find((p) => p.latest && p.id.startsWith(prefix)) ?? s.policyVersions.find((p) => p.latest);
       const beforeSummary = (() => {
         const sum = { met: 0, missing: 0, notMet: 0 };
-        task.current.forEach((g) => g.rows.forEach((r) => { sum[r.match === 'met' ? 'met' : r.match === 'not_met' ? 'notMet' : 'missing'] += 1; }));
+        task.current.forEach((g) =>
+          g.rows.forEach((r) => {
+            sum[r.match === 'met' ? 'met' : r.match === 'not_met' ? 'notMet' : 'missing'] += 1;
+          })
+        );
         return sum;
       })();
       const rerun = rerunTask(taskId, latestPv?.id);
@@ -744,7 +754,7 @@ export function useWorkbench(): WorkbenchApi {
       ].filter((c) => c.text !== '');
       pushReport(nextTask, outcome, nextTask.policyVersionId, changes);
     },
-    [pushReport, rerunTask],
+    [pushReport, rerunTask]
   );
 
   /** 「我的信息」页直接编辑字段 */
@@ -797,7 +807,11 @@ export function useWorkbench(): WorkbenchApi {
 
   /** 调试：手动注入 MCP 结果，走和真实返回完全一样的渲染+报告生成路径 */
   const debugInjectResult = useCallback(
-    (taskId: string, result: import('@renderer/components/campus-rule/types').CampusRuleToolResult, question?: string) => {
+    (
+      taskId: string,
+      result: import('@renderer/components/campus-rule/types').CampusRuleToolResult,
+      question?: string
+    ) => {
       const groups = groupsFromMcp(result);
       if (groups.length === 0) {
         console.warn('[debugInject] 解析后无分组，检查 JSON 结构是否包含 conditionGroups 或 conditionTable');
@@ -850,64 +864,62 @@ export function useWorkbench(): WorkbenchApi {
         stateRef.current = {
           ...stateRef.current,
           tasks: stateRef.current.tasks.map((t) =>
-            t.id === taskId ? { ...t, current: groups, updatedAt: todayStr() } : t,
+            t.id === taskId ? { ...t, current: groups, updatedAt: todayStr() } : t
           ),
         };
         setState((s) => ({
           ...s,
-          tasks: s.tasks.map((t) =>
-            t.id === taskId ? { ...t, current: groups, updatedAt: todayStr() } : t,
-          ),
+          tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, current: groups, updatedAt: todayStr() } : t)),
         }));
         const prevReport = stateRef.current.reports
           .filter((r) => r.analysisTaskId === taskId)
           .sort((a, b) => b.version - a.version)[0];
         const changes: ReportSnapshot['changes'] = prevReport
           ? [
-              { label: '调试注入', text: `手动注入 MCP 结果：${summary.met} 满足 · ${summary.missing + summary.review} 待确认 · ${summary.notMet} 未满足` },
+              {
+                label: '调试注入',
+                text: `手动注入 MCP 结果：${summary.met} 满足 · ${summary.missing + summary.review} 待确认 · ${summary.notMet} 未满足`,
+              },
             ]
           : [
-              { label: '首次分析', text: `完成首次政策匹配：${summary.met} 满足 · ${summary.missing + summary.review} 待确认 · ${summary.notMet} 未满足` },
+              {
+                label: '首次分析',
+                text: `完成首次政策匹配：${summary.met} 满足 · ${summary.missing + summary.review} 待确认 · ${summary.notMet} 未满足`,
+              },
             ];
         // 传 mcpPvId 而不是旧的 task.policyVersionId，确保 pushReport 能找到正确的政策文件
         pushReportRef.current?.(
           taskWithCurrent,
           { groups, summary: { met: summary.met, missing: summary.missing + summary.review, notMet: summary.notMet } },
           mcpPvId,
-          changes,
+          changes
         );
       }
       console.log('[debugInject] 已注入，分组:', groups.length, '汇总:', summaryFromGroups(groups));
-  },
-  [],
-);
+    },
+    []
+  );
 
   /** 删除单个分析任务（同时删除其所有报告快照和对话记录） */
-  const deleteTask = useCallback(
-    (taskId: string) => {
-      setState((s) => ({
-        ...s,
-        tasks: s.tasks.filter((t) => t.id !== taskId),
-        reports: s.reports.filter((r) => r.analysisTaskId !== taskId),
-        conversations: s.conversations.filter((conv) => !s.tasks.find((t) => t.id === taskId && t.conversationId === conv.id)),
-      }));
-    },
-    [],
-  );
+  const deleteTask = useCallback((taskId: string) => {
+    setState((s) => ({
+      ...s,
+      tasks: s.tasks.filter((t) => t.id !== taskId),
+      reports: s.reports.filter((r) => r.analysisTaskId !== taskId),
+      conversations: s.conversations.filter((conv) => conv.taskId !== taskId),
+    }));
+  }, []);
 
   /** 批量删除多个分析任务 */
-  const deleteTasks = useCallback(
-    (taskIds: string[]) => {
-      const ids = new Set(taskIds);
-      setState((s) => ({
-        ...s,
-        tasks: s.tasks.filter((t) => !ids.has(t.id)),
-        reports: s.reports.filter((r) => !ids.has(r.analysisTaskId)),
-        conversations: s.conversations.filter((conv) => !s.tasks.find((t) => ids.has(t.id) && t.conversationId === conv.id)),
-      }));
-    },
-    [],
-  );
+  const deleteTasks = useCallback((taskIds: string[]) => {
+    const ids = new Set(taskIds);
+    setState((s) => ({
+      ...s,
+      tasks: s.tasks.filter((t) => !ids.has(t.id)),
+      reports: s.reports.filter((r) => !ids.has(r.analysisTaskId)),
+      conversations: s.conversations.filter((conv) => !ids.has(conv.taskId)),
+    }));
+  }, []);
 
   return {
     state,

@@ -9,7 +9,11 @@
 // 核心原则：分析永不结束，报告永远是快照。
 // ============================================================
 
-import type { CampusRuleToolResult, ConditionGroup as McpConditionGroup, ConditionRow as McpConditionRow } from '@renderer/components/campus-rule/types';
+import type {
+  CampusRuleToolResult,
+  ConditionGroup as McpConditionGroup,
+  ConditionRow as McpConditionRow,
+} from '@renderer/components/campus-rule/types';
 
 // ---------- MCP 数据驱动的条件行（扩展后端控件字段） ----------
 /** 后端指定的控件类型（前端只渲染，不做语义判断） */
@@ -23,6 +27,7 @@ export interface RowControl {
 /** MCP 条件行（兼容后端可能返回的 control 字段和 sourceFile） */
 export type AnalysisConditionRow = McpConditionRow & {
   control?: RowControl;
+  category?: string;
   /** 来源政策文件（前端引擎转换时带入，MCP 原始数据可能没有） */
   sourceFile?: string;
 };
@@ -103,7 +108,10 @@ export function groupsFromMcp(result: CampusRuleToolResult): AnalysisConditionGr
 
 // ---------- 从分组纯计数汇总（不做任何语义判断） ----------
 export function summaryFromGroups(groups: AnalysisConditionGroup[]): AnalysisSummary {
-  let met = 0, missing = 0, notMet = 0, review = 0;
+  let met = 0,
+    missing = 0,
+    notMet = 0,
+    review = 0;
   for (const g of groups) {
     for (const r of g.rows) {
       if (r.match === 'met') met++;
@@ -121,14 +129,7 @@ export type ConditionState = 'met' | 'missing' | 'not_met';
 export type UiConditionState = ConditionState | 'analyzing';
 
 // ---------- 我的信息 ----------
-export type ProfileCategory =
-  | 'basic'
-  | 'academic'
-  | 'english'
-  | 'performance'
-  | 'awards'
-  | 'research'
-  | 'other';
+export type ProfileCategory = 'basic' | 'academic' | 'english' | 'performance' | 'awards' | 'research' | 'other';
 
 export interface ProfileCategoryMeta {
   key: ProfileCategory;
@@ -220,12 +221,7 @@ export interface AnalysisTask {
 }
 
 // ---------- 对话（补充信息交互） ----------
-export type ConversationMessageKind =
-  | 'user'
-  | 'system_info'
-  | 'system_goal'
-  | 'system_confirm'
-  | 'assistant';
+export type ConversationMessageKind = 'user' | 'system_info' | 'system_goal' | 'system_confirm' | 'assistant';
 
 export interface ConversationMessage {
   id: string;

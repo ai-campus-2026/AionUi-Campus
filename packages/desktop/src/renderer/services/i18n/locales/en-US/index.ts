@@ -1,4 +1,4 @@
-﻿/**
+/**
  * en-US locale module index
  * Exports all translation modules for English (US)
  */

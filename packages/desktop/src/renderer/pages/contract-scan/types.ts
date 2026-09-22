@@ -19,6 +19,7 @@ export interface RedFlag {
   id: string;
   title: string;
   clauseQuote: string;
+  clause?: string;
   explanation: string;
   suggestion: string;
   redline?: string;
@@ -36,6 +37,7 @@ export interface Warning {
 export interface GoodClause {
   id: string;
   title: string;
+  clause?: string;
   explanation?: string;
 }
 
@@ -55,6 +57,7 @@ export interface StatuteCheck {
   explanation: string;
   source: EvidenceSource;
   regulationRef?: string;
+  quote?: string;
 }
 
 /** 法条依据 */
@@ -90,11 +93,4 @@ export interface ContractReport {
 }
 
 /** 扫描状态 */
-export type ScanStatus =
-  | 'idle'
-  | 'scanning'
-  | 'success'
-  | 'no_mcp'
-  | 'timeout'
-  | 'parse_failed'
-  | 'error';
+export type ScanStatus = 'idle' | 'scanning' | 'success' | 'no_mcp' | 'timeout' | 'parse_failed' | 'error';
