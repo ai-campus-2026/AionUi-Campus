@@ -103,9 +103,9 @@
       "check_logic": "合同期限<3月→无试用期；3月~1年→≤1月；1年~3年→≤2月；≥3年→≤6月",
       "regex_extract": "合同期限[：:\\s]*([0-9]+)\\s*(?:年|个月|月).*?试用期[：:\\s]*([0-9]+)\\s*(?:个月|月)",
       "threshold_table": [
-        {"contract_months_min": 3, "contract_months_max": 12, "max_trial_months": 1},
-        {"contract_months_min": 12, "contract_months_max": 36, "max_trial_months": 2},
-        {"contract_months_min": 36, "contract_months_max": 999, "max_trial_months": 6}
+        { "contract_months_min": 3, "contract_months_max": 12, "max_trial_months": 1 },
+        { "contract_months_min": 12, "contract_months_max": 36, "max_trial_months": 2 },
+        { "contract_months_min": 36, "contract_months_max": 999, "max_trial_months": 6 }
       ],
       "violation_msg": "合同期限{}个月，试用期{}个月，超过法定上限{}个月",
       "reference_source_id": "cn-law-labor-art19"
