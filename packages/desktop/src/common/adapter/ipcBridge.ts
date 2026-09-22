@@ -679,6 +679,159 @@ export const dialog = {
   },
 };
 
+export type CurriculumIngestRequest = {
+  attachmentPath: string;
+  major?: string;
+  cohort?: string;
+  version?: string;
+};
+
+export type CurriculumIngestResponse = {
+  ok: boolean;
+  created?: boolean;
+  documentId?: string;
+  storageStatus?: string;
+  extractionStatus?: string;
+  ragStatus?: string;
+  errorCode?: string;
+  errorMessage?: string;
+  plan?: CurriculumPlanPreview;
+};
+
+export type CurriculumPlanPreview = {
+  success: true;
+  major: string;
+  grade: string;
+  version?: string;
+  totalCredits: number;
+  courses: Array<{
+    id: string;
+    name: string;
+    credits: number;
+    category: 'required' | 'elective' | 'core' | 'general' | 'practice';
+    categoryLabel: string;
+    suggestedSemester: number;
+    prerequisites: string[];
+  }>;
+  recommendedSequences?: Array<{ from: string; to: string; page: number }>;
+  warnings?: string[];
+};
+
+export type CurriculumPlanPreviewResponse = {
+  ok: boolean;
+  plan?: CurriculumPlanPreview;
+  errorCode?: string;
+};
+
+export type CurriculumGraphCourse = {
+  id: string;
+  name: string;
+  credits: number;
+  category_label: string;
+  suggested_semester: number;
+  prerequisites: string[];
+  page: number | null;
+  section: string | null;
+};
+
+export type CurriculumGraph = {
+  document_id: string;
+  catalog_id: string;
+  document: string;
+  major: string;
+  cohort: string;
+  version: string;
+  total_credits: number | null;
+  courses: CurriculumGraphCourse[];
+};
+
+export type CurriculumGraphResponse = {
+  ok: boolean;
+  graph?: CurriculumGraph;
+  processingStatus?: string;
+  errorCode?: string;
+  failedPage?: number;
+  failureCode?: string;
+  failureStage?: string;
+  failureReason?: string;
+};
+
+export type CurriculumProbeMode = {
+  reachable: boolean;
+  errorCode?: string;
+  reason?: string;
+  elapsedMs: number;
+};
+
+export type CurriculumProbeResponse = {
+  ok: boolean;
+  documentId?: string;
+  page?: number;
+  model?: string;
+  inputCharacters?: number;
+  nonStream?: CurriculumProbeMode;
+  stream?: CurriculumProbeMode;
+  errorCode?: string;
+};
+
+export type CurriculumProgressRequest = {
+  profileId: string;
+  documentId: string;
+  courseStatuses: Record<string, 'not_taken' | 'passed' | 'failed'>;
+};
+
+export type CurriculumProgressResponse = {
+  ok: boolean;
+  courseStatuses?: Record<string, 'passed' | 'failed'>;
+  updatedAt?: string;
+  errorCode?: string;
+};
+
+export type CurriculumProgressClearResponse = {
+  ok: boolean;
+  removed?: boolean;
+  errorCode?: string;
+};
+
+export type CurriculumCoursePlanRequest = {
+  documentId: string;
+  major: string;
+  cohort: string;
+  targetCourse: string;
+  completedCourses: string[];
+};
+
+export type CurriculumCoursePlanResponse = {
+  ok: boolean;
+  documentId?: string;
+  status?: 'ELIGIBLE' | 'NOT_ELIGIBLE';
+  missingCourses?: { courseCode: string; courseName: string }[];
+  missingDirectPrerequisites?: { courseCode: string; courseName: string }[];
+  source?: { document?: string; page?: number | null; section?: string | null };
+  warnings?: string[];
+  errorCode?: string;
+};
+
+/** Fixed-purpose bridge: the renderer cannot choose an arbitrary MCP tool. */
+export const curriculum = {
+  ingestAttachment: bridge.buildProvider<CurriculumIngestResponse, CurriculumIngestRequest>(
+    'curriculum.ingest-attachment'
+  ),
+  previewPlan: bridge.buildProvider<CurriculumPlanPreviewResponse, { filePath: string }>('curriculum.preview-plan'),
+  prepareGraph: bridge.buildProvider<CurriculumGraphResponse, { documentId: string }>('curriculum.prepare-graph'),
+  probeExtraction: bridge.buildProvider<CurriculumProbeResponse, { documentId: string; page: number }>(
+    'curriculum.probe-extraction'
+  ),
+  saveProgress: bridge.buildProvider<CurriculumProgressResponse, CurriculumProgressRequest>('curriculum.save-progress'),
+  loadProgress: bridge.buildProvider<CurriculumProgressResponse, { profileId: string; documentId: string }>(
+    'curriculum.load-progress'
+  ),
+  clearProgress: bridge.buildProvider<CurriculumProgressClearResponse, { profileId: string; documentId: string }>(
+    'curriculum.clear-progress'
+  ),
+  planCourse: bridge.buildProvider<CurriculumCoursePlanResponse, CurriculumCoursePlanRequest>('curriculum.plan-course'),
+};
+
 // ---------------------------------------------------------------------------
 // File System — routed to /api/fs/* and /api/skills/*
 // ---------------------------------------------------------------------------
