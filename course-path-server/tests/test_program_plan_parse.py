@@ -272,7 +272,7 @@ def test_handler_returns_visual_sequence_without_promoting_it_to_prerequisite(
     source = tmp_path / "curriculum-2026.pdf"
     source.write_bytes(b"%PDF-1.7 test")
     pages = _pages()
-    pages[1] += "\n五、课程体系配置流程图"
+    pages[1] += "\n四、课程体系配置流程图"
     monkeypatch.setattr(server, "curriculum_store", SimpleNamespace(list_documents=lambda: []))
     monkeypatch.setattr(server, "native_pdf_pages_for_plan", lambda _path: pages)
     monkeypatch.setattr(server, "rendered_plan_flow_page", lambda _path, _page: nullcontext({"type": "image_url"}))

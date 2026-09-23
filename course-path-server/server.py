@@ -120,7 +120,7 @@ def handle_parse_program_plan(
         if include_flow:
             result["recommendedSequences"] = []
             flow_page = next(
-                (number for number, text in enumerate(pages, start=1) if "五、课程体系配置流程图" in text),
+                (number for number, text in enumerate(pages, start=1) if "课程体系配置流程图" in text),
                 None,
             )
             if flow_page is None:

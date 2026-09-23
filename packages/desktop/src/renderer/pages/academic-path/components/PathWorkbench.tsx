@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Message } from '@arco-design/web-react';
+import { useTranslation } from 'react-i18next';
 import type {
   Course,
   CourseCategory,
@@ -14,7 +16,7 @@ interface Props {
   plan: ProgramPlan;
   progress: StudentProgress;
   onCourseStatusChange: (courseId: string, status: CourseStatus) => void;
-  onSync: () => void;
+  onSync: () => Promise<boolean>;
   onViewHistory: () => void;
   onReupload: () => void;
   onBack: () => void;
@@ -39,6 +41,17 @@ const STATUS_META: Record<CourseStatus, { label: string; icon: string; color: st
   not_taken: { label: '未修读', icon: '○', color: '#868e96' },
 };
 
+type DagLine = {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  key: string;
+  from: string;
+  to: string;
+  kind: 'prerequisite' | 'recommended';
+};
+
 const FILTERS: { key: CourseFilter; label: string }[] = [
   { key: 'all', label: '全部课程' },
   { key: 'required', label: '必修' },
@@ -61,6 +74,7 @@ const PathWorkbench: React.FC<Props> = ({
   onBack,
   onCourseEdit,
 }) => {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<CourseFilter>('all');
   const [search, setSearch] = useState('');
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
@@ -70,7 +84,7 @@ const PathWorkbench: React.FC<Props> = ({
   const dagRef = useRef<HTMLDivElement>(null);
   const dagContainerRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const [lines, setLines] = useState<{ x1: number; y1: number; x2: number; y2: number; key: string }[]>([]);
+  const [lines, setLines] = useState<DagLine[]>([]);
 
   const statuses = progress.courseStatuses;
 
@@ -164,20 +178,29 @@ const PathWorkbench: React.FC<Props> = ({
     plan.courses.forEach((c) => {
       if (c.prerequisites.includes(selectedCourse.id)) ids.add(c.id);
     });
+    plan.recommendedSequences?.forEach((edge) => {
+      if (edge.from === selectedCourse.id || edge.to === selectedCourse.id) {
+        ids.add(edge.from);
+        ids.add(edge.to);
+      }
+    });
     return ids;
-  }, [selectedCourse, plan.courses]);
+  }, [selectedCourse, plan.courses, plan.recommendedSequences]);
 
   useEffect(() => {
     if (!dagRef.current) return;
     const container = dagRef.current;
     const containerRect = container.getBoundingClientRect();
-    const newLines: { x1: number; y1: number; x2: number; y2: number; key: string }[] = [];
+    const newLines: DagLine[] = [];
+    const prerequisiteKeys = new Set<string>();
 
     filteredCourses.forEach((course) => {
       course.prerequisites.forEach((pid) => {
         const prereqNode = nodeRefs.current.get(pid);
         const courseNode = nodeRefs.current.get(course.id);
         if (prereqNode && courseNode) {
+          const pairKey = `${pid}\u0000${course.id}`;
+          prerequisiteKeys.add(pairKey);
           const pr = prereqNode.getBoundingClientRect();
           const cr = courseNode.getBoundingClientRect();
           newLines.push({
@@ -185,23 +208,53 @@ const PathWorkbench: React.FC<Props> = ({
             y1: pr.top + pr.height / 2 - containerRect.top,
             x2: cr.left - containerRect.left,
             y2: cr.top + cr.height / 2 - containerRect.top,
-            key: `${pid}-${course.id}`,
+            key: `prerequisite:${pairKey}`,
+            from: pid,
+            to: course.id,
+            kind: 'prerequisite',
           });
         }
       });
     });
+    plan.recommendedSequences?.forEach((edge) => {
+      const pairKey = `${edge.from}\u0000${edge.to}`;
+      if (prerequisiteKeys.has(pairKey)) return;
+      const fromNode = nodeRefs.current.get(edge.from);
+      const toNode = nodeRefs.current.get(edge.to);
+      if (!fromNode || !toNode) return;
+      const fromRect = fromNode.getBoundingClientRect();
+      const toRect = toNode.getBoundingClientRect();
+      newLines.push({
+        x1: fromRect.right - containerRect.left,
+        y1: fromRect.top + fromRect.height / 2 - containerRect.top,
+        x2: toRect.left - containerRect.left,
+        y2: toRect.top + toRect.height / 2 - containerRect.top,
+        key: `recommended:${pairKey}`,
+        from: edge.from,
+        to: edge.to,
+        kind: 'recommended',
+      });
+    });
     setLines(newLines);
-  }, [filteredCourses, coursesBySemester, filter, search]);
+  }, [filteredCourses, coursesBySemester, filter, search, plan.recommendedSequences]);
 
-  const handleSync = useCallback(() => {
+  const handleSync = useCallback(async () => {
     setSyncState('syncing');
-    setTimeout(() => {
-      onSync();
+    try {
+      const saved = await onSync();
+      if (!saved) {
+        Message.error(t('mcp.curriculumProgressSaveFailed'));
+        setSyncState('idle');
+        return;
+      }
       setOriginalStatuses({ ...statuses });
       setSyncState('success');
       setTimeout(() => setSyncState('idle'), 3000);
-    }, 1200);
-  }, [onSync, statuses]);
+    } catch {
+      Message.error(t('mcp.curriculumProgressSaveFailed'));
+      setSyncState('idle');
+    }
+  }, [onSync, statuses, t]);
 
   const handleCancelChanges = useCallback(() => {
     Object.entries(originalStatuses).forEach(([id, s]) => onCourseStatusChange(id, s));
@@ -310,9 +363,10 @@ const PathWorkbench: React.FC<Props> = ({
               {lines.map((l) => {
                 const isHighlighted =
                   selectedCourseId &&
-                  (l.key.includes(selectedCourseId) ||
-                    relatedIds.has(l.key.split('-')[0]) ||
-                    relatedIds.has(l.key.split('-')[1]));
+                  (l.from === selectedCourseId ||
+                    l.to === selectedCourseId ||
+                    relatedIds.has(l.from) ||
+                    relatedIds.has(l.to));
                 const midX = (l.x1 + l.x2) / 2;
                 return (
                   <path
@@ -321,6 +375,7 @@ const PathWorkbench: React.FC<Props> = ({
                     fill='none'
                     stroke={isHighlighted ? '#5f8575' : '#c5cdd6'}
                     strokeWidth={isHighlighted ? 2 : 1.2}
+                    strokeDasharray={l.kind === 'recommended' ? '6 4' : undefined}
                     opacity={selectedCourseId && !isHighlighted ? 0.2 : 0.7}
                   />
                 );
@@ -342,6 +397,7 @@ const PathWorkbench: React.FC<Props> = ({
                       key={course.id}
                       ref={(el) => {
                         if (el) nodeRefs.current.set(course.id, el);
+                        else nodeRefs.current.delete(course.id);
                       }}
                       className={`ap-course-node ap-course-node--${status} ${isSelected ? 'ap-course-node--selected' : ''} ${dimmed ? 'ap-course-node--dimmed' : ''}`}
                       onClick={() => setSelectedCourseId(isSelected ? null : course.id)}

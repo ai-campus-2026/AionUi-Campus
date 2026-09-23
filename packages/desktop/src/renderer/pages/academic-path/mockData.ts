@@ -315,12 +315,3 @@ export const mockStudentProgress: StudentProgress = {
   },
   lastSyncedAt: '2026-09-10T16:00:00.000Z',
 };
-
-/** 解析步骤（用于解析中状态） */
-export const parsingSteps = [
-  '正在识别专业信息',
-  '正在识别课程列表',
-  '正在识别学分要求',
-  '正在识别课程类别',
-  '正在分析课程先修关系',
-];

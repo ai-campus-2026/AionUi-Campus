@@ -1,14 +1,14 @@
 import React from 'react';
 import { Table, Tag, Typography, Divider, Card } from '@arco-design/web-react';
 import {
-  AnswerTemplate,
   mockUserQuestions,
   mockCourseRuleSuccessResult,
   mockPolicyRetrievalSuccessResult,
   mockToolFailResult,
   mockMissingDocResult,
   mockOutOfScopeResult,
-} from '../../components/campus-rule';
+} from '../../components/campus-rule/mock';
+import { AnswerTemplate } from '../../components/campus-rule';
 import type { UserQuestionSample } from '../../components/campus-rule';
 
 const scenarioColorMap: Record<UserQuestionSample['scenario'], string> = {

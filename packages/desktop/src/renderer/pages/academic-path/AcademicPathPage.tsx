@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { PathView, ProgramPlan, StudentProgress, CourseStatus, CourseCategory } from './types';
-import { mockCurrentPlan, mockHistoryPlans, mockStudentProgress } from './mockData';
-import { parseProgramPlan, adaptMcpPlan } from './programParser';
+import { parseProgramPlan, adaptMcpPlan, loadProgramGraph } from './programParser';
+import { loadCourseStatuses, saveCourseStatuses } from './progressClient';
 import EmptyState from './components/EmptyState';
 import MyInfo from './components/MyInfo';
 import ConfirmPlan from './components/ConfirmPlan';
@@ -42,38 +43,29 @@ function loadHistory(): ProgramPlan[] {
   } catch {
     /* ignore */
   }
-  return mockHistoryPlans;
+  return [];
+}
+
+function createEmptyProgress(plan: ProgramPlan | null): StudentProgress {
+  return {
+    planId: plan?.id ?? '',
+    courseStatuses: Object.fromEntries(plan?.courses.map((course) => [course.id, 'not_taken' as const]) ?? []),
+  };
 }
 
 const AcademicPathPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [view, setView] = useState<PathView>('empty');
-  const [plan, setPlan] = useState<ProgramPlan | null>(() => {
-    const existing = loadPlan();
-    if (existing) return existing;
-    // 首次进入时，把 mock plan 保存到 localStorage
-    try {
-      localStorage.setItem(PLAN_KEY, JSON.stringify(mockCurrentPlan));
-    } catch {
-      /* ignore */
-    }
-    return mockCurrentPlan;
-  });
+  const [plan, setPlan] = useState<ProgramPlan | null>(() => loadPlan());
   const [progress, setProgress] = useState<StudentProgress>(() => {
     const existing = loadProgress();
-    if (existing) return existing;
-    // 首次进入时，把 mock progress 保存到 localStorage
-    try {
-      localStorage.setItem(PROGRESS_KEY, JSON.stringify(mockStudentProgress));
-    } catch {
-      /* ignore */
-    }
-    return mockStudentProgress;
+    return existing && existing.planId === plan?.id ? existing : createEmptyProgress(plan);
   });
   const [history, setHistory] = useState<ProgramPlan[]>(() => loadHistory());
   const [pendingPlan, setPendingPlan] = useState<ProgramPlan | null>(null);
   const [parseWarnings, setParseWarnings] = useState<string[]>([]);
-  const [parseSource, setParseSource] = useState<'mock' | 'mcp'>('mock');
+  const [parseSource, setParseSource] = useState<'mock' | 'mcp'>('mcp');
   const [parseError, setParseError] = useState<{ code: string; message: string } | null>(null);
   const [returnView, setReturnView] = useState<'empty' | 'history'>('empty');
   const [isParsing, setIsParsing] = useState(false);
@@ -203,33 +195,44 @@ const AcademicPathPage: React.FC = () => {
 
   // ---- 上传培养方案 → 后台调用 MCP 解析，UI 内联显示解析动画 ----
   const handleUpload = useCallback(
-    async (fileName: string) => {
+    async (attachmentPath: string) => {
       if (isParsing) return;
       setParseError(null);
       setIsParsing(true);
       try {
-        const [result] = await Promise.all([
-          parseProgramPlan(fileName),
-          new Promise((resolve) => setTimeout(resolve, 3200)),
-        ]);
+        const result = await parseProgramPlan(attachmentPath);
         if (result.type === 'failed') {
-          setParseError({ code: result.errorCode, message: '解析失败' });
+          setParseError({ code: result.errorCode, message: t('mcp.curriculumImportFailed') });
           return;
         }
         if (result.plan) {
-          setPendingPlan(result.plan);
-          setParseWarnings(result.warnings ?? []);
+          const graphResult = await loadProgramGraph(result.plan.id);
+          if (graphResult.type === 'ready') {
+            setPendingPlan({
+              ...graphResult.plan,
+              recommendedSequences: result.plan.recommendedSequences,
+            });
+            setParseWarnings([...new Set([...(result.warnings ?? []), ...(graphResult.warnings ?? [])])]);
+          } else {
+            setPendingPlan(result.plan);
+            setParseWarnings([
+              ...new Set([
+                ...(result.warnings ?? []),
+                `${t('mcp.curriculumGraphUnavailable')} (${graphResult.errorCode})`,
+              ]),
+            ]);
+          }
           setParseSource('mcp');
           setParseError(null);
-          setIsParsing(false);
           setView('confirm');
         }
       } catch {
+        setParseError({ code: 'UNKNOWN', message: t('mcp.curriculumImportFailed') });
+      } finally {
         setIsParsing(false);
-        setParseError({ code: 'UNKNOWN', message: '解析过程中发生未知错误' });
       }
     },
-    [isParsing]
+    [isParsing, t]
   );
 
   // ---- 调试注入 ----
@@ -257,13 +260,7 @@ const AcademicPathPage: React.FC = () => {
         ? updatedHistory
         : [current, ...updatedHistory];
       setHistory(newHistory);
-      const newProgress: StudentProgress = {
-        planId: current.id,
-        courseStatuses: {},
-      };
-      current.courses.forEach((c) => {
-        newProgress.courseStatuses[c.id] = 'not_taken';
-      });
+      const newProgress = createEmptyProgress(current);
       setProgress(newProgress);
       try {
         localStorage.setItem(PLAN_KEY, JSON.stringify(current));
@@ -275,6 +272,21 @@ const AcademicPathPage: React.FC = () => {
       setPendingPlan(null);
       setReturnView('empty');
       setView('workbench');
+      void loadCourseStatuses(current.id)
+        .then((savedStatuses) => {
+          if (!savedStatuses) return;
+          setProgress((previous) => {
+            if (previous.planId !== current.id) return previous;
+            const restored = { ...previous, courseStatuses: { ...previous.courseStatuses, ...savedStatuses } };
+            try {
+              localStorage.setItem(PROGRESS_KEY, JSON.stringify(restored));
+            } catch {
+              /* ignore */
+            }
+            return restored;
+          });
+        })
+        .catch((): void => {});
     },
     [history]
   );
@@ -376,17 +388,23 @@ const AcademicPathPage: React.FC = () => {
   );
 
   // ---- 同步学业状态 ----
-  const handleSync = useCallback(() => {
-    setProgress((prev) => {
-      const updated = { ...prev, lastSyncedAt: new Date().toISOString() };
+  const handleSync = useCallback(async (): Promise<boolean> => {
+    if (!plan || progress.planId !== plan.id) return false;
+    try {
+      const saved = await saveCourseStatuses(plan.id, progress.courseStatuses);
+      if (!saved) return false;
+      const updated = { ...progress, lastSyncedAt: new Date().toISOString() };
+      setProgress(updated);
       try {
         localStorage.setItem(PROGRESS_KEY, JSON.stringify(updated));
       } catch {
         /* ignore */
       }
-      return updated;
-    });
-  }, []);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [plan, progress]);
 
   // ---- 重新上传 ----
   const handleReupload = useCallback(() => {
@@ -402,25 +420,36 @@ const AcademicPathPage: React.FC = () => {
   const handleSwitchPlan = useCallback(
     (target: ProgramPlan) => {
       const updated = history.map((p) => ({ ...p, isCurrent: p.id === target.id }));
+      const current = { ...target, isCurrent: true };
+      const newProgress = createEmptyProgress(current);
       setHistory(updated);
-      setPlan({ ...target, isCurrent: true });
-      // 保留当前的课程状态，不要重置成 mock
-      setProgress((prev) => {
-        const newProgress: StudentProgress = {
-          planId: target.id,
-          courseStatuses: { ...prev.courseStatuses },
-          lastSyncedAt: prev.lastSyncedAt,
-        };
-        try {
-          localStorage.setItem(PLAN_KEY, JSON.stringify({ ...target, isCurrent: true }));
-          localStorage.setItem(PROGRESS_KEY, JSON.stringify(newProgress));
-          localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
-        } catch {
-          /* ignore */
-        }
-        return newProgress;
-      });
+      setPlan(current);
+      setProgress(newProgress);
+      try {
+        localStorage.setItem(PLAN_KEY, JSON.stringify(current));
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(newProgress));
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+      } catch {
+        /* ignore */
+      }
+      void loadCourseStatuses(current.id)
+        .then((savedStatuses) => {
+          if (!savedStatuses) return;
+          setProgress((previous) => {
+            if (previous.planId !== current.id) return previous;
+            const restored = { ...previous, courseStatuses: { ...previous.courseStatuses, ...savedStatuses } };
+            try {
+              localStorage.setItem(PROGRESS_KEY, JSON.stringify(restored));
+            } catch {
+              /* ignore */
+            }
+            return restored;
+          });
+        })
+        .catch((): void => {});
       setReturnView('history');
+      setTempViewPlan(null);
+      setView('workbench');
     },
     [history]
   );

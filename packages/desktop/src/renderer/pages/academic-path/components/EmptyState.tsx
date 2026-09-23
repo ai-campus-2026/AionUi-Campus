@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ipcBridge } from '@/common';
-import { parsingSteps } from '../mockData';
+import { parsingSteps } from '../constants';
+
+type SelectedFile = {
+  name: string;
+  path: string;
+};
 
 interface Props {
   onUpload: (fileName: string) => void;
@@ -17,7 +22,7 @@ interface Props {
 
 const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasHistory, onViewHistory, onBack }) => {
   const [dragging, setDragging] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [parsing, setParsing] = useState(false);
   const [parseStep, setParseStep] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -35,7 +40,7 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
       if (files && files.length > 0) {
         const path = files[0];
         const name = path.split(/[\\/]/).pop() || path;
-        setSelectedFile(name);
+        setSelectedFile({ name, path });
       }
     } catch {
       /* ignore */
@@ -46,7 +51,9 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
     e.preventDefault();
     setDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setSelectedFile(e.dataTransfer.files[0].name);
+      const file = e.dataTransfer.files[0];
+      const path = window.electronAPI?.getPathForFile(file);
+      if (path) setSelectedFile({ name: file.name, path });
     }
   }, []);
 
@@ -55,7 +62,7 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
     if (!selectedFile) return;
     setParsing(true);
     setParseStep(0);
-    onUpload(selectedFile);
+    onUpload(selectedFile.path);
   }, [selectedFile, onUpload]);
 
   // 解析步骤动画
@@ -168,7 +175,7 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
           <div className='ap-empty__parse-card'>
             <div className='ap-parsing__spinner' />
             <h2 className='ap-parsing__title'>正在理解你的培养方案……</h2>
-            <div className='ap-empty__parse-filename'>{selectedFile}</div>
+            <div className='ap-empty__parse-filename'>{selectedFile.name}</div>
             <div className='ap-parsing__steps'>
               {parsingSteps.map((s, i) => (
                 <div
@@ -233,7 +240,7 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
           {selectedFile ? (
             <>
               <div className='ap-empty__dropzone-icon'>✓</div>
-              <div className='ap-empty__dropzone-title'>{selectedFile}</div>
+              <div className='ap-empty__dropzone-title'>{selectedFile.name}</div>
               <div className='ap-empty__dropzone-sub'>已选择，点击可重新选择</div>
             </>
           ) : (

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ComparisonHistoryRecord, PolicyDiffResult, SelectedPolicyFile } from './types';
-import { mockHistory } from './mockData';
 import PolicyEntryView from './PolicyEntryView';
 import PolicyDiffView from './PolicyDiffView';
 import PolicyHistoryView from './PolicyHistoryView';
@@ -16,8 +15,7 @@ function loadHistory(): ComparisonHistoryRecord[] {
   } catch {
     /* ignore */
   }
-  // 首次进入：展示示例历史记录
-  return mockHistory;
+  return [];
 }
 
 /**

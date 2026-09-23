@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { parsingSteps } from '../mockData';
+import { parsingSteps } from '../constants';
 
 interface Props {
   onDone: () => void;

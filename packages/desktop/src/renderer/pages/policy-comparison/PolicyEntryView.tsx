@@ -4,7 +4,6 @@ import { Home } from '@icon-park/react';
 import { ipcBridge } from '@/common';
 import { loadKnowledgeDocs, type KnowledgeDoc } from '@renderer/pages/rule-analysis/knowledgeBase';
 import type { SelectedPolicyFile, ComparisonHistoryRecord, PolicyDiffResult } from './types';
-import { mockDiffResult } from './mockData';
 import {
   ensureComparisonConversation,
   sendComparisonRequest,
@@ -247,33 +246,6 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
     }
   }, [oldFile, newFile, onSaveHistory, onStartCompare]);
 
-  // ---- 使用演示数据继续（降级） ----
-  const handleUseFallback = useCallback(() => {
-    if (!oldFile || !newFile) return;
-    const result: PolicyDiffResult = {
-      ...mockDiffResult,
-      document: {
-        name: oldFile.name.replace(/\.[^.]+$/, ''),
-        oldVersion: oldFile.version || '旧版',
-        newVersion: newFile.version || '新版',
-      },
-    };
-    const record: ComparisonHistoryRecord = {
-      id: `cmp_${Date.now()}`,
-      docName: result.document.name,
-      oldVersion: result.document.oldVersion,
-      newVersion: result.document.newVersion,
-      oldFile: oldFile.name,
-      newFile: newFile.name,
-      createdAt: new Date().toISOString(),
-      summary: result.summary,
-      diffSnapshot: result,
-    };
-    onSaveHistory(record);
-    setAnalyzing(false);
-    onStartCompare(result, oldFile, newFile);
-  }, [oldFile, newFile, onSaveHistory, onStartCompare]);
-
   // ---- 重新对比（回到确认状态） ----
   const handleRetry = useCallback(() => {
     setAnalyzing(false);
@@ -344,11 +316,11 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
         version: record.newVersion,
         source: 'knowledge',
       };
-      // 优先用保存的完整快照，没有则回退 mock
+      // 优先用保存的完整快照，旧记录没有快照时显示空变更集。
       const result: PolicyDiffResult = record.diffSnapshot ?? {
-        ...mockDiffResult,
         document: { name: record.docName, oldVersion: record.oldVersion, newVersion: record.newVersion },
-        summary: record.summary || mockDiffResult.summary,
+        summary: record.summary || { total: 0, modified: 0, added: 0, removed: 0 },
+        changes: [],
       };
       onStartCompare(result, oldF, newF);
     },
@@ -481,11 +453,6 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
                   {mcpAvailable === false ? 'MCP 未配置' : '开始政策对比'}
                 </button>
               </div>
-              {mcpAvailable === false && (
-                <div className='pc-confirm__mcp-hint'>
-                  ⚠ 未检测到可用的 MCP 服务器，点击后将使用演示数据。可在设置中配置政策对比 MCP 工具。
-                </div>
-              )}
             </div>
           )}
 
@@ -537,9 +504,6 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
                     <button type='button' className='pc-btn pc-btn--primary pc-btn--secondary' onClick={handleRetry}>
                       重新对比
                     </button>
-                    <button type='button' className='pc-btn pc-btn--primary' onClick={handleUseFallback}>
-                      使用演示数据继续
-                    </button>
                   </div>
                 </div>
               )}
@@ -553,9 +517,6 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
                   <div className='pc-analyzing__result-actions'>
                     <button type='button' className='pc-btn pc-btn--primary pc-btn--secondary' onClick={handleRetry}>
                       重新对比
-                    </button>
-                    <button type='button' className='pc-btn pc-btn--primary' onClick={handleUseFallback}>
-                      使用演示数据继续
                     </button>
                   </div>
                 </div>
@@ -571,9 +532,6 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
                     <button type='button' className='pc-btn pc-btn--primary pc-btn--secondary' onClick={handleRetry}>
                       重新对比
                     </button>
-                    <button type='button' className='pc-btn pc-btn--primary' onClick={handleUseFallback}>
-                      使用演示数据继续
-                    </button>
                   </div>
                 </div>
               )}
@@ -585,9 +543,6 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
                   <div className='pc-analyzing__result-actions'>
                     <button type='button' className='pc-btn pc-btn--primary pc-btn--secondary' onClick={handleRetry}>
                       重新对比
-                    </button>
-                    <button type='button' className='pc-btn pc-btn--primary' onClick={handleUseFallback}>
-                      使用演示数据继续
                     </button>
                   </div>
                 </div>

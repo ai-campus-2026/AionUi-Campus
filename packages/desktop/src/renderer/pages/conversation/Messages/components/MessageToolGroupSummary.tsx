@@ -11,7 +11,7 @@ import { normalizeToolMessages, hasRunningToolMessages } from '@/common/chat/nor
 import LocalImageView from '@/renderer/components/media/LocalImageView';
 import { downloadFileFromPath } from '@/renderer/utils/file/download';
 import Markdown from '@renderer/components/Markdown';
-import { AnswerTemplate, mockCourseRuleSuccessResult } from '@renderer/components/campus-rule';
+import { AnswerTemplate } from '@renderer/components/campus-rule';
 import type { CampusRuleToolResult } from '@renderer/components/campus-rule';
 import { tryParseCampusRuleResult } from '@renderer/components/campus-rule/adaptPolicyResult';
 import RuleErrorBox from '@renderer/components/campus-rule/RuleErrorBox';
@@ -23,19 +23,6 @@ import {
 import type { BackendPolicyResult } from '@renderer/pages/policy-checklist/adaptQueryPolicyResult';
 import { parseUserHints, extractUserInfoHints } from '@renderer/pages/policy-checklist/parseUserHints';
 import './MessageToolGroupSummary.css';
-
-// 测试开关，验证完成务必改为 false
-const ENABLE_CAMPUS_RULE_TEST = false;
-
-// Mock测试数据：统一回答模板（①结论 ②依据 ③风险缺失 ④建议下一步）
-const mockCampusRuleResult: CampusRuleToolResult = mockCourseRuleSuccessResult;
-
-/** 判断是否为校园规则/政策检索工具返回数据 */
-const isCampusRuleResult = (data: unknown): data is CampusRuleToolResult => {
-  if (typeof data !== 'object' || data === null) return false;
-  const type = (data as Record<string, unknown>).type;
-  return type === 'campus_rule_analysis' || type === 'policy_retrieval';
-};
 
 const statusToBadge = (status: NormalizedToolStatus): BadgeProps['status'] => {
   switch (status) {
@@ -229,7 +216,6 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
   // 兼容两种返回：1) 前端自己的结构化结果（type=campus_rule_analysis/policy_retrieval）
   //              2) 队友 policy.query_policy 的返回（经适配层映射）
   const campusRuleResult = useMemo<CampusRuleToolResult | null>(() => {
-    if (ENABLE_CAMPUS_RULE_TEST) return mockCampusRuleResult;
     for (const item of tools) {
       if (!item.output) continue;
       const parsed = tryParseCampusRuleResult(item.output);
@@ -244,7 +230,6 @@ const MessageToolGroupSummary: React.FC<{ messages: ToolMessage[] }> = ({ messag
   const [fullCampusResult, setFullCampusResult] = useState<CampusRuleToolResult | null>(null);
   useEffect(() => {
     let cancelled = false;
-    if (ENABLE_CAMPUS_RULE_TEST) return;
     const loadFull = async () => {
       for (const item of tools) {
         if (!item.conversationId || !item.messageId) continue;
