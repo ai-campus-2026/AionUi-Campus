@@ -425,6 +425,19 @@ ext-test-watch:
     bunx vitest tests/extensions/
 
 # ============================================================
+# Campus MCP (policy-search / rag / contract-scan / policy-comparison / course-path-server)
+# ============================================================
+
+# Generate missing .env files for the five campus MCP services from .env.example
+setup-campus-env:
+    node scripts/setup-campus-env.mjs
+
+# Same, but also write the given DashScope API key into every campus .env
+# Usage: just setup-campus-env-key sk-xxxx
+setup-campus-env-key key:
+    node scripts/setup-campus-env.mjs --key {{key}}
+
+# ============================================================
 # Utilities
 # ============================================================
 
