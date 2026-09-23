@@ -197,13 +197,13 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
               ))}
             </div>
 
-        <p className='ap-parsing__wait-hint'>
-          {elapsed < 15
-            ? 'AI 正在分析，请耐心等待…'
-            : elapsed < 45
-            ? `已等待 ${elapsed} 秒，AI 正在深度分析，预计还需 30-60 秒`
-            : `已等待 ${elapsed} 秒，分析时间较长，请耐心等待，不要关闭页面`}
-        </p>
+            <p className='ap-parsing__wait-hint'>
+              {elapsed < 15
+                ? 'AI 正在分析，请耐心等待…'
+                : elapsed < 45
+                  ? `已等待 ${elapsed} 秒，AI 正在深度分析，预计还需 30-60 秒`
+                  : `已等待 ${elapsed} 秒，分析时间较长，请耐心等待，不要关闭页面`}
+            </p>
             <button type='button' className='ap-btn ap-btn--ghost ap-empty__parse-cancel' onClick={handleCancel}>
               取消
             </button>

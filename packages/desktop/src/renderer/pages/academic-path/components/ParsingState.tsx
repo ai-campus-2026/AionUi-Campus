@@ -67,8 +67,8 @@ const ParsingState: React.FC<Props> = ({ onDone, error, onReupload }) => {
           {elapsed < 15
             ? 'AI 正在分析，请耐心等待…'
             : elapsed < 45
-            ? `已等待 ${elapsed} 秒，AI 正在深度分析，预计还需 30-60 秒`
-            : `已等待 ${elapsed} 秒，分析时间较长，请耐心等待，不要关闭页面`}
+              ? `已等待 ${elapsed} 秒，AI 正在深度分析，预计还需 30-60 秒`
+              : `已等待 ${elapsed} 秒，分析时间较长，请耐心等待，不要关闭页面`}
         </p>
       </div>
     </div>
