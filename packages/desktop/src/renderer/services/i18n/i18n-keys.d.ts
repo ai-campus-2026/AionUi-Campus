@@ -1068,6 +1068,8 @@ export type I18nKey =
   | 'mcp.curriculumStoreButton'
   | 'mcp.curriculumStoredDescription'
   | 'mcp.curriculumStoredTitle'
+  | 'mcp.curriculumSuggestedPrerequisites'
+  | 'mcp.curriculumSuggestedPrerequisitesHint'
   | 'mcp.curriculumSupportedFormats'
   | 'mcp.curriculumUploadDescription'
   | 'mcp.curriculumVersionPlaceholder'

@@ -33,6 +33,8 @@
   "curriculumGenerateGraph": "Extract and generate graph",
   "curriculumImportFailed": "Curriculum import failed. No course graph was generated.",
   "curriculumRecommendedSequenceLegend": "{{count}} dashed links show suggested course order, not formal prerequisites.",
+  "curriculumSuggestedPrerequisites": "Suggested prior courses",
+  "curriculumSuggestedPrerequisitesHint": "Consider completing these courses first. This order was recognized from the flowchart and is not a formal enrollment restriction.",
   "curriculumStoredTitle": "Curriculum file stored",
   "curriculumStoredDescription": "The source file is stored. Course extraction and graph generation have not run yet.",
   "curriculumDocumentId": "Document ID",

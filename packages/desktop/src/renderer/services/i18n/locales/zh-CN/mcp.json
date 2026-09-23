@@ -33,6 +33,8 @@
   "curriculumGenerateGraph": "提取并生成课程图",
   "curriculumImportFailed": "培养方案导入失败，未生成课程图。",
   "curriculumRecommendedSequenceLegend": "{{count}} 条虚线表示建议修读顺序，不是正式先修要求。",
+  "curriculumSuggestedPrerequisites": "建议前置课程",
+  "curriculumSuggestedPrerequisitesHint": "建议先完成以下课程；这是流程图识别的修读顺序，不是正式选课限制。",
   "curriculumStoredTitle": "培养方案文件已入库",
   "curriculumStoredDescription": "源文件已保存。课程提取和先修关系图尚未生成。",
   "curriculumDocumentId": "文档编号",

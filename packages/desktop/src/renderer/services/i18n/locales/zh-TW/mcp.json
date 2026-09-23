@@ -33,6 +33,8 @@
   "curriculumGenerateGraph": "擷取並產生課程圖",
   "curriculumImportFailed": "培養方案匯入失敗，未產生課程圖。",
   "curriculumRecommendedSequenceLegend": "{{count}} 條虛線表示建議修讀順序，不是正式先修要求。",
+  "curriculumSuggestedPrerequisites": "建議前置課程",
+  "curriculumSuggestedPrerequisitesHint": "建議先完成以下課程；這是流程圖識別的修讀順序，不是正式選課限制。",
   "curriculumStoredTitle": "培養方案檔案已入庫",
   "curriculumStoredDescription": "來源檔案已儲存。課程擷取和先修關係圖尚未產生。",
   "curriculumDocumentId": "文件編號",
