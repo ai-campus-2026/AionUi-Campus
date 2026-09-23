@@ -1,0 +1,232 @@
+{
+  "total_policies": 1,
+  "results": [
+    {
+      "policy_title": "重庆邮电大学学生手册（节选）",
+      "policy_category": "academic",
+      "overall_verdict": "needs_more_info",
+      "category_matches": {
+        "academic": {
+          "label": "学业表现要求",
+          "matches": [
+            {
+              "item": "课程出勤要求",
+              "requirement": "缺勤 ≤ 总课时的三分之一",
+              "source_quote": "学生缺勤累计达到该课程总课时的三分之一（含）以上的，取消该课程考核资格，该课程成绩记为不及格。",
+              "match": "missing_info",
+              "user_value": "未提供",
+              "detail": "缺少 fraction 信息"
+            },
+            {
+              "item": "毕业学分要求",
+              "requirement": "总学分 ≥ 160",
+              "source_quote": "学生须修满专业培养方案规定的学分方可毕业。计算机科学与技术专业毕业要求学分：160 学分。",
+              "match": "missing_info",
+              "user_value": "未提供",
+              "detail": "缺少 学分 信息"
+            },
+            {
+              "item": "必修课补考与重修要求",
+              "requirement": "必修课不及格须补考；补考仍不及格须重修；重修成绩按实际成绩记载",
+              "source_quote": "必修课不及格须参加补考；补考仍不及格的，须重修该课程。重修成绩按实际成绩记载。",
+              "match": "needs_manual_review",
+              "detail": "流程性要求需用户自行确认"
+            },
+            {
+              "item": "选修课学分要求",
+              "requirement": "修满规定选修学分",
+              "source_quote": "第六条 选修课学分不足会影响毕业资格，学生须在毕业前修满规定选修学分。",
+              "match": "missing_info",
+              "user_value": "未提供",
+              "detail": "缺少 学分 信息"
+            },
+            {
+              "item": "先修课程要求",
+              "requirement": "先修课程须考核通过",
+              "source_quote": "学生修读高阶课程前，须先修读并考核通过相应先修课程。",
+              "match": "missing_info",
+              "user_value": "未提供",
+              "detail": "缺少 none 信息"
+            },
+            {
+              "item": "先修课程要求",
+              "requirement": "须通过数据结构课程",
+              "source_quote": "第八条 数据结构是软件工程实践、算法设计与分析等课程的先修课程。未通过数据结构的，不得修读上述课程。",
+              "match": "missing_info",
+              "user_value": "未提供",
+              "detail": "缺少 none 信息"
+            },
+            {
+              "item": "原专业课程成绩要求",
+              "requirement": "无不及格记录",
+              "source_quote": "原专业课程成绩须无不及格记录。",
+              "match": "missing_info",
+              "user_value": "未提供",
+              "detail": "缺少 none 信息"
+            }
+          ]
+        },
+        "disciplinary": {
+          "label": "纪律/品行要求",
+          "matches": [
+            {
+              "item": "旷课处分门槛",
+              "requirement": "一学期内无故旷课累计 ≥ 20 学时",
+              "source_quote": "一学期内无故旷课累计达到 20 学时的，给予警告处分；达到 40 学时的，给予严重警告处分。",
+              "match": "missing_info",
+              "user_value": "未提供",
+              "detail": "缺少 学时 信息"
+            },
+            {
+              "item": "旷课处分升级门槛",
+              "requirement": "一学期内无故旷课累计 ≥ 40 学时",
+              "source_quote": "一学期内无故旷课累计达到 20 学时的，给予警告处分；达到 40 学时的，给予严重警告处分。",
+              "match": "missing_info",
+              "user_value": "未提供",
+              "detail": "缺少 学时 信息"
+            }
+          ]
+        },
+        "procedural": {
+          "label": "流程性要求",
+          "matches": [
+            {
+              "item": "转专业申请资格",
+              "requirement": "在校期间可申请",
+              "source_quote": "学生在校期间可申请转专业",
+              "match": "needs_manual_review",
+              "detail": "流程性要求需用户自行确认"
+            },
+            {
+              "item": "转入学院考核",
+              "requirement": "通过转入学院组织的考核",
+              "source_quote": "并通过转入学院组织的考核",
+              "match": "needs_manual_review",
+              "detail": "流程性要求需用户自行确认"
+            }
+          ]
+        },
+        "other": {
+          "label": "其他要求",
+          "matches": [
+            {
+              "item": "转入专业接收条件",
+              "requirement": "符合转入专业的接收条件",
+              "source_quote": "转专业须符合转入专业的接收条件",
+              "match": "missing_info",
+              "user_value": "未提供",
+              "detail": "缺少 none 信息"
+            }
+          ]
+        }
+      },
+      "condition_matches": [
+        {
+          "item": "课程出勤要求",
+          "requirement": "缺勤 ≤ 总课时的三分之一",
+          "source_quote": "学生缺勤累计达到该课程总课时的三分之一（含）以上的，取消该课程考核资格，该课程成绩记为不及格。",
+          "match": "missing_info",
+          "user_value": "未提供",
+          "detail": "缺少 fraction 信息"
+        },
+        {
+          "item": "毕业学分要求",
+          "requirement": "总学分 ≥ 160",
+          "source_quote": "学生须修满专业培养方案规定的学分方可毕业。计算机科学与技术专业毕业要求学分：160 学分。",
+          "match": "missing_info",
+          "user_value": "未提供",
+          "detail": "缺少 学分 信息"
+        },
+        {
+          "item": "必修课补考与重修要求",
+          "requirement": "必修课不及格须补考；补考仍不及格须重修；重修成绩按实际成绩记载",
+          "source_quote": "必修课不及格须参加补考；补考仍不及格的，须重修该课程。重修成绩按实际成绩记载。",
+          "match": "needs_manual_review",
+          "detail": "流程性要求需用户自行确认"
+        },
+        {
+          "item": "选修课学分要求",
+          "requirement": "修满规定选修学分",
+          "source_quote": "第六条 选修课学分不足会影响毕业资格，学生须在毕业前修满规定选修学分。",
+          "match": "missing_info",
+          "user_value": "未提供",
+          "detail": "缺少 学分 信息"
+        },
+        {
+          "item": "先修课程要求",
+          "requirement": "先修课程须考核通过",
+          "source_quote": "学生修读高阶课程前，须先修读并考核通过相应先修课程。",
+          "match": "missing_info",
+          "user_value": "未提供",
+          "detail": "缺少 none 信息"
+        },
+        {
+          "item": "先修课程要求",
+          "requirement": "须通过数据结构课程",
+          "source_quote": "第八条 数据结构是软件工程实践、算法设计与分析等课程的先修课程。未通过数据结构的，不得修读上述课程。",
+          "match": "missing_info",
+          "user_value": "未提供",
+          "detail": "缺少 none 信息"
+        },
+        {
+          "item": "原专业课程成绩要求",
+          "requirement": "无不及格记录",
+          "source_quote": "原专业课程成绩须无不及格记录。",
+          "match": "missing_info",
+          "user_value": "未提供",
+          "detail": "缺少 none 信息"
+        },
+        {
+          "item": "旷课处分门槛",
+          "requirement": "一学期内无故旷课累计 ≥ 20 学时",
+          "source_quote": "一学期内无故旷课累计达到 20 学时的，给予警告处分；达到 40 学时的，给予严重警告处分。",
+          "match": "missing_info",
+          "user_value": "未提供",
+          "detail": "缺少 学时 信息"
+        },
+        {
+          "item": "旷课处分升级门槛",
+          "requirement": "一学期内无故旷课累计 ≥ 40 学时",
+          "source_quote": "一学期内无故旷课累计达到 20 学时的，给予警告处分；达到 40 学时的，给予严重警告处分。",
+          "match": "missing_info",
+          "user_value": "未提供",
+          "detail": "缺少 学时 信息"
+        },
+        {
+          "item": "转专业申请资格",
+          "requirement": "在校期间可申请",
+          "source_quote": "学生在校期间可申请转专业",
+          "match": "needs_manual_review",
+          "detail": "流程性要求需用户自行确认"
+        },
+        {
+          "item": "转入学院考核",
+          "requirement": "通过转入学院组织的考核",
+          "source_quote": "并通过转入学院组织的考核",
+          "match": "needs_manual_review",
+          "detail": "流程性要求需用户自行确认"
+        },
+        {
+          "item": "转入专业接收条件",
+          "requirement": "符合转入专业的接收条件",
+          "source_quote": "转专业须符合转入专业的接收条件",
+          "match": "missing_info",
+          "user_value": "未提供",
+          "detail": "缺少 none 信息"
+        }
+      ],
+      "missing_info": [
+        "课程出勤要求",
+        "毕业学分要求",
+        "选修课学分要求",
+        "先修课程要求",
+        "先修课程要求",
+        "原专业课程成绩要求",
+        "旷课处分门槛",
+        "旷课处分升级门槛",
+        "转入专业接收条件"
+      ],
+      "needs_manual_review": ["必修课补考与重修要求", "转专业申请资格", "转入学院考核"]
+    }
+  ]
+}

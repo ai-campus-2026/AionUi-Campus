@@ -1,0 +1,8 @@
+{
+  "provider": "dashscope",
+  "chat_completions_url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+  "ocr_model": "qwen3.8-flash",
+  "review_model": "qwen3.8-flash",
+  "request_timeout_seconds": 45,
+  "max_pdf_pages": 5
+}

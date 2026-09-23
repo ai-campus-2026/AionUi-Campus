@@ -1,0 +1,184 @@
+{
+  "type": "campus_rule_analysis",
+  "toolName": "policy.query_policy",
+  "status": "success",
+  "policyVersionId": "gjjx-2026-v2",
+  "policyFileName": "《国家奖学金评定办法》2026版",
+  "summary": "根据你提供的学业成绩单，已完成国家奖学金资格匹配分析。你的学业成绩和综合表现总体良好，但在部分条件上仍有提升空间。",
+  "conclusion": "综合你的个人信息，你目前基本满足国家奖学金的大部分资格条件，但CET-6成绩和科研成果方面需要补充确认。建议补充相关材料后重新评估。",
+  "conditionGroups": [
+    {
+      "id": "gpa",
+      "label": "学业成绩",
+      "rows": [
+        {
+          "id": "gpa_main",
+          "item": "GPA要求",
+          "match": "met",
+          "userValue": "3.72",
+          "requirement": "GPA ≥ 3.50",
+          "sourceQuote": "第三条 申请国家奖学金的学生，GPA应达到3.50及以上。"
+        },
+        {
+          "id": "rank",
+          "item": "专业排名",
+          "match": "met",
+          "userValue": "8 / 120",
+          "requirement": "专业排名前10%",
+          "sourceQuote": "第四条 学习成绩排名应位于本专业年级前10%。"
+        }
+      ]
+    },
+    {
+      "id": "english",
+      "label": "英语成绩",
+      "rows": [
+        {
+          "id": "cet4",
+          "item": "CET-4成绩",
+          "match": "met",
+          "userValue": "520",
+          "requirement": "CET-4 ≥ 425",
+          "sourceQuote": "第五条 英语四级成绩不低于425分。"
+        },
+        {
+          "id": "cet6",
+          "item": "CET-6成绩",
+          "match": "missing_info",
+          "userValue": "480",
+          "requirement": "CET-6 ≥ 500",
+          "sourceQuote": "第五条 申请硕士研究生国家奖学金者，英语六级成绩不低于500分。"
+        }
+      ]
+    },
+    {
+      "id": "comprehensive",
+      "label": "综合表现",
+      "rows": [
+        {
+          "id": "overall_score",
+          "item": "综合测评成绩",
+          "match": "met",
+          "userValue": "89",
+          "requirement": "综合测评 ≥ 85",
+          "sourceQuote": "第六条 综合测评成绩应达到85分及以上。"
+        },
+        {
+          "id": "discipline",
+          "item": "纪律处分",
+          "match": "met",
+          "userValue": "无处分记录",
+          "requirement": "无纪律处分",
+          "sourceQuote": "第七条 申请学生在学期间无纪律处分记录。"
+        }
+      ]
+    },
+    {
+      "id": "honors",
+      "label": "奖励荣誉",
+      "rows": [
+        {
+          "id": "scholarship",
+          "item": "校级奖学金",
+          "match": "met",
+          "userValue": "2024年校级二等奖学金",
+          "requirement": "曾获校级及以上奖学金",
+          "sourceQuote": "第八条 申请人须曾获得校级及以上奖学金或荣誉称号。"
+        },
+        {
+          "id": "honor_title",
+          "item": "荣誉称号",
+          "match": "met",
+          "userValue": "2025年校级三好学生",
+          "requirement": "获得校级及以上荣誉称号",
+          "sourceQuote": "第八条 获得校级及以上荣誉称号者优先。"
+        }
+      ]
+    },
+    {
+      "id": "research",
+      "label": "科研成果",
+      "rows": [
+        {
+          "id": "project",
+          "item": "科研项目",
+          "match": "needs_manual_review",
+          "userValue": "校级大创项目1项（在研）",
+          "requirement": "至少1项校级及以上科研项目",
+          "sourceQuote": "第九条 鼓励有科研经历的学生申请，至少参与1项校级及以上科研项目。"
+        },
+        {
+          "id": "paper",
+          "item": "学术论文",
+          "match": "not_met",
+          "userValue": "暂无",
+          "requirement": "以第一作者发表学术论文",
+          "sourceQuote": "第十条 以第一作者发表与本专业相关的学术论文者优先推荐。"
+        }
+      ]
+    },
+    {
+      "id": "basic",
+      "label": "基本资格",
+      "rows": [
+        {
+          "id": "enrollment",
+          "item": "学籍状态",
+          "match": "met",
+          "userValue": "在读",
+          "requirement": "具有中华人民共和国国籍且在校注册",
+          "sourceQuote": "第二条 申请学生应具有中华人民共和国国籍，热爱社会主义祖国，拥护中国共产党的领导。"
+        },
+        {
+          "id": "morality",
+          "item": "思想品德",
+          "match": "met",
+          "userValue": "2024年优秀共青团员",
+          "requirement": "诚实守信，道德品质优良",
+          "sourceQuote": "第二条 诚实守信，道德品质优良，自觉遵守宪法和法律。"
+        }
+      ]
+    }
+  ],
+  "evidences": [
+    {
+      "id": "ev1",
+      "fileName": "《国家奖学金评定办法》2026版",
+      "fileType": "pdf",
+      "pageNum": 2,
+      "quoteContent": "第三条 申请国家奖学金的学生，GPA应达到3.50及以上。"
+    },
+    {
+      "id": "ev2",
+      "fileName": "《国家奖学金评定办法》2026版",
+      "fileType": "pdf",
+      "pageNum": 2,
+      "quoteContent": "第四条 学习成绩排名应位于本专业年级前10%。"
+    },
+    {
+      "id": "ev3",
+      "fileName": "《国家奖学金评定办法》2026版",
+      "fileType": "pdf",
+      "pageNum": 3,
+      "quoteContent": "第五条 英语四级成绩不低于425分；申请硕士研究生国家奖学金者，英语六级成绩不低于500分。"
+    }
+  ],
+  "risks": [
+    {
+      "level": "medium",
+      "title": "CET-6成绩待确认",
+      "description": "你的CET-6成绩为480分，略低于政策要求的500分线，差距20分。"
+    },
+    {
+      "level": "low",
+      "title": "学术论文缺失",
+      "description": "目前没有以第一作者发表的学术论文，这会影响竞争优势，但不是硬性要求。"
+    }
+  ],
+  "suggestions": [
+    "补充CET-6成绩单，确认是否达到500分要求",
+    "如有科研论文，补充发表论文信息",
+    "如有竞赛获奖，补充竞赛经历材料",
+    "确认综测成绩排名是否在专业前列"
+  ]
+}
