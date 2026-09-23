@@ -17,18 +17,27 @@ _project_root = Path(__file__).parent
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
-# 加载 .env 文件（如果存在）
+# .env 首次启动自愈：缺失时从 .env.example 自动生成一份（.env 被 .gitignore 忽略，
+# 换电脑 git clone 后不会带过来）。真实 Key 由应用侧注入宿主环境变量（override=False
+# 保证注入值优先），无需手工填写；占位符替换为空串，避免被当成真 Key 发出去。
 _env_file = _project_root / ".env"
-if _env_file.exists():
-    load_dotenv(_env_file)
-else:
-    # 尝试从 .env.example 复制一份（仅用于提示）
+if not _env_file.exists():
     _example_file = _project_root / ".env.example"
     if _example_file.exists():
-        print(
-            "⚠️  警告: 未找到 .env 文件，请复制 .env.example 为 .env 并填入 API Key。",
-            file=sys.stderr,
-        )
+        try:
+            _content = (
+                _example_file.read_text(encoding="utf-8")
+                .replace("your_api_key_here", "")
+                .replace("your_dashscope_api_key", "")
+            )
+            _env_file.write_text(_content, encoding="utf-8")
+            print(
+                "[server] .env not found, generated from .env.example (real key is injected by the app)",
+                file=sys.stderr,
+            )
+        except OSError:
+            pass
+load_dotenv(_env_file)
 
 # 日志只写 stderr
 logging.basicConfig(

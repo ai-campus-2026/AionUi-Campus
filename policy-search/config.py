@@ -1,9 +1,46 @@
 """配置管理模块"""
 
 import os
+import sys
+from pathlib import Path
+
 from dotenv import load_dotenv
 
-load_dotenv()
+# 模块根目录（始终解析为绝对路径，避免 MCP Server 被外部启动时 CWD 不对）
+_MODULE_DIR = Path(__file__).resolve().parent
+
+
+def _ensure_env_file() -> Path:
+    """首次启动自愈：.env 不存在时从 .env.example 自动生成一份。
+
+    .env 被 .gitignore 忽略，换电脑 git clone 后不会带过来；这里自动补一份
+    只含占位符/相对路径默认值的模板。真实 Key 由应用侧注入宿主环境变量
+    （override=False 保证注入值优先），无需手工填写。占位符替换为空串，
+    避免被当成真 Key 发出去。
+    """
+    env_file = _MODULE_DIR / ".env"
+    if not env_file.exists():
+        example_file = _MODULE_DIR / ".env.example"
+        if example_file.exists():
+            try:
+                content = (
+                    example_file.read_text(encoding="utf-8")
+                    .replace("your_api_key_here", "")
+                    .replace("your_dashscope_api_key", "")
+                )
+                env_file.write_text(content, encoding="utf-8")
+                print(
+                    f"[config] {env_file.name} not found, generated from .env.example "
+                    "(real key is injected by the app)",
+                    file=sys.stderr,
+                )
+            except OSError:
+                pass
+    return env_file
+
+
+# 显式按本文件所在目录定位 .env：stdio MCP 服务由宿主进程拉起，工作目录不可靠
+load_dotenv(_ensure_env_file())
 
 
 class Config:
@@ -18,16 +55,9 @@ class Config:
     # Embedding 模型
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "text-embedding-v4")
 
-    # 知识库根目录（始终解析为绝对路径，避免 MCP Server 被外部启动时 CWD 不对）
-    _KB_DIR_RAW: str = os.getenv(
-        "KNOWLEDGE_BASE_DIR",
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "knowledge_base")
-    )
-    KNOWLEDGE_BASE_DIR: str = (
-        _KB_DIR_RAW
-        if os.path.isabs(_KB_DIR_RAW)
-        else os.path.join(os.path.dirname(os.path.abspath(__file__)), _KB_DIR_RAW)
-    )
+    # 知识库根目录（相对路径一律按模块目录解析为绝对路径，避免 CWD 不对时找不到库）
+    _KB_DIR_RAW: str = os.getenv("KNOWLEDGE_BASE_DIR") or "knowledge_base"
+    KNOWLEDGE_BASE_DIR: str = str((_MODULE_DIR / _KB_DIR_RAW).resolve())
 
     # 文档分块参数（用于长文档解析）
     CHUNK_SIZE: int = int(os.getenv("CHUNK_SIZE", "2000"))

@@ -1,15 +1,44 @@
 """配置管理模块 — 政策对比 MCP Server"""
 
 import os
+import sys
 
 from dotenv import load_dotenv
 
 # 模块根目录（始终解析为绝对路径，避免 MCP Server 被外部启动时 CWD 不对）
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# 优先加载模块目录下的 .env（不随启动 CWD 变化），再兼容外部注入的环境变量
-load_dotenv(os.path.join(MODULE_DIR, ".env"))
-load_dotenv()
+
+def _ensure_env_file() -> str:
+    """首次启动自愈：.env 不存在时从 .env.example 自动生成一份。
+
+    .env 被 .gitignore 忽略，换电脑 git clone 后不会带过来；这里自动补一份
+    只含占位符/相对路径默认值的模板。真实 Key 由应用侧注入宿主环境变量
+    （override=False 保证注入值优先），无需手工填写。占位符替换为空串，
+    避免被当成真 Key 发出去。
+    """
+    env_path = os.path.join(MODULE_DIR, ".env")
+    if not os.path.exists(env_path):
+        example_path = os.path.join(MODULE_DIR, ".env.example")
+        if os.path.exists(example_path):
+            try:
+                with open(example_path, encoding="utf-8") as handle:
+                    content = handle.read()
+                content = content.replace("your_api_key_here", "").replace("your_dashscope_api_key", "")
+                with open(env_path, "w", encoding="utf-8") as handle:
+                    handle.write(content)
+                print(
+                    "[config] .env not found, generated from .env.example (real key is injected by the app)",
+                    file=sys.stderr,
+                )
+            except OSError:
+                pass
+    return env_path
+
+
+# 只加载模块目录下的 .env（不随启动 CWD 变化）；宿主注入的环境变量始终优先。
+# 不再从 CWD 向上搜索 .env —— 那会在任意目录下误加载无关 .env，是 CWD 依赖的来源。
+load_dotenv(_ensure_env_file())
 
 
 def _resolve_against_module(path: str) -> str:

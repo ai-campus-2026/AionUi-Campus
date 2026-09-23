@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
 from schemas.common import error_response, success_response
@@ -43,6 +44,31 @@ from tools.curriculum_search import (
     configured_semantic_fallback,
     rank_lexical_sources,
 )
+
+
+# .env 首次启动自愈：缺失时从 .env.example 自动生成一份（.env 被 .gitignore 忽略，
+# 换电脑 git clone 后不会带过来）。真实 Key 由应用侧注入宿主环境变量（override=False
+# 保证注入值优先），无需手工填写；占位符替换为空串，避免被当成真 Key 发出去。
+# 放在本地模块导入之后是有意为之：本项目所有工具模块都只在函数内读取环境变量，
+# 不在导入期读取，因此此处加载对全部调用方生效。
+_ENV_FILE = Path(__file__).resolve().parent / ".env"
+if not _ENV_FILE.exists():
+    _ENV_EXAMPLE = _ENV_FILE.with_name(".env.example")
+    if _ENV_EXAMPLE.exists():
+        try:
+            _env_content = (
+                _ENV_EXAMPLE.read_text(encoding="utf-8")
+                .replace("your_api_key_here", "")
+                .replace("your_dashscope_api_key", "")
+            )
+            _ENV_FILE.write_text(_env_content, encoding="utf-8")
+            print(
+                "[server] .env not found, generated from .env.example (real key is injected by the app)",
+                file=sys.stderr,
+            )
+        except OSError:
+            pass
+load_dotenv(_ENV_FILE)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
