@@ -1,37 +1,5 @@
 ﻿/* 打包进项目的中文字体 —— 确保不同系统/设备渲染一致 */
 
-@font-face {
-  font-family: 'ProjectYaHei';
-  src: url('../assets/fonts/msyh.ttc') format('truetype-collection');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'ProjectYaHei';
-  src: url('../assets/fonts/msyhbd.ttc') format('truetype-collection');
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'ProjectConsolas';
-  src: url('../assets/fonts/consola.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'ProjectConsolas';
-  src: url('../assets/fonts/consolab.ttf') format('truetype');
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-}
-
 /* 思源宋体（Noto Serif SC）—— 标题用衬线字体 */
 @font-face {
   font-family: 'Noto Serif SC';

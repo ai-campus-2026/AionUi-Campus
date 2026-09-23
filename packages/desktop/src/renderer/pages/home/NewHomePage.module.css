@@ -7,13 +7,7 @@
   position: relative;
   overflow-x: hidden;
   color: #3c5140;
-  font-family:
-    'ProjectYaHei',
-    'PingFang SC',
-    'Microsoft YaHei',
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
   /* 暖米灰浅色背景：纵向渐变 + 青/暖低饱和氛围光晕 + 顶部高光，与气泡主题色协调 */
   background:
     radial-gradient(760px 440px at 18% 62%, rgba(204, 228, 226, 0.42) 0%, rgba(204, 228, 226, 0) 60%),
