@@ -192,7 +192,7 @@ class PolicyParser:
         """
         try:
             from bs4 import BeautifulSoup
-            
+
             # 尝试多种编码读取
             encodings = ['utf-8', 'utf-8-sig', 'gbk', 'gb2312', 'gb18030', 'latin-1']
             html_content = None
@@ -203,32 +203,32 @@ class PolicyParser:
                     break
                 except (UnicodeDecodeError, UnicodeError):
                     continue
-            
+
             if not html_content:
                 with open(html_path, 'r', encoding='utf-8', errors='replace') as f:
                     html_content = f.read()
-            
+
             soup = BeautifulSoup(html_content, 'html.parser')
-            
+
             # 移除 script 和 style 标签
             for script in soup(['script', 'style']):
                 script.decompose()
-            
+
             # 提取文本，保留段落结构
             text_parts = []
             for element in soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'td', 'th']):
                 text = element.get_text(strip=True)
                 if text:
                     text_parts.append(text)
-            
+
             full_text = "\n\n".join(text_parts)
-            
+
             if full_text.strip():
                 logger.info(f"HTML 提取成功，文本长度: {len(full_text)}")
                 return full_text
             else:
                 raise ValueError(f"从 HTML 文件中未提取到有效文本: {html_path}")
-                
+
         except ImportError:
             raise ImportError(
                 "beautifulsoup4 未安装，无法解析 HTML 文件。"
@@ -245,29 +245,29 @@ class PolicyParser:
         """
         try:
             from openpyxl import load_workbook
-            
+
             wb = load_workbook(excel_path, read_only=True, data_only=True)
             text_parts = []
-            
+
             for sheet_name in wb.sheetnames:
                 ws = wb[sheet_name]
                 text_parts.append(f"=== {sheet_name} ===")
-                
+
                 for row in ws.iter_rows(values_only=True):
                     # 过滤空行
                     row_cells = [str(cell).strip() for cell in row if cell is not None]
                     if row_cells:
                         text_parts.append(" | ".join(row_cells))
-            
+
             wb.close()
             full_text = "\n".join(text_parts)
-            
+
             if full_text.strip():
                 logger.info(f"Excel 提取成功，文本长度: {len(full_text)}")
                 return full_text
             else:
                 raise ValueError(f"从 Excel 文件中未提取到有效文本: {excel_path}")
-                
+
         except ImportError:
             raise ImportError(
                 "openpyxl 未安装，无法解析 Excel 文件。"
@@ -647,17 +647,17 @@ yes_no=是/否开关 | number=数字输入 | range=区间选择 | select=下拉�
             simple_prompt = """从以下文本中提取政策条件，返回 JSON 格式：
 {"conditions":[{"category":"gpa","item":"条件名","description":"描述","type":"hard","quantifiable":false,"requirement":"要求","operator":"none","value":null,"unit":"none","source_quote":"原文引用","source_section":"章节"}],"logic_groups":[],"important_dates":[]}
 只返回 JSON。"""
-            
+
             for i, chunk in failed_chunks:
                 logger.info(f"重试第 {i + 1} 块（简化 prompt）...")
                 result = self.llm.extract_json(simple_prompt, chunk, max_retries=2)
-                
+
                 if result["success"]:
                     data = result["data"]
                     conditions = data.get("conditions") or []
                     if not isinstance(conditions, list):
                         conditions = [conditions] if isinstance(conditions, dict) else []
-                    
+
                     for cond in conditions:
                         if not isinstance(cond, dict):
                             continue
@@ -666,7 +666,7 @@ yes_no=是/否开关 | number=数字输入 | range=区间选择 | select=下拉�
                             cond["category"] = "other"
                         condition_counter += 1
                         all_conditions.append(cond)
-                    
+
                     logger.info(f"重试成功，第 {i + 1} 块提取 {len(conditions)} 个条件")
                 else:
                     logger.error(f"重试仍然失败，第 {i + 1} 块条件丢失")
