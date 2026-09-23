@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import {
   CAMPUS_MCP_WHITELIST,
   collectCampusMcpServers,
+  findStoredCampusApiKey,
   hasCampusEnvKey,
   isCampusMcp,
+  requiresCampusApiKey,
   withCampusApiKey,
 } from '@/common/config/campusMcp';
 import type { IMcpServer } from '@/common/config/storage';
@@ -20,26 +22,35 @@ const makeServer = (overrides: Partial<IMcpServer> & Pick<IMcpServer, 'name'>): 
 });
 
 describe('campusMcp whitelist', () => {
-  it('locks the whitelist to the four confirmed campus services', () => {
+  it('locks the whitelist to the five confirmed campus services', () => {
     expect(CAMPUS_MCP_WHITELIST.map((entry) => entry.name)).toEqual([
       'policy_search',
       'rag',
       'contract-scan',
       'policy-comparison',
+      'course_path_server',
     ]);
     expect(CAMPUS_MCP_WHITELIST.map((entry) => entry.scriptMarker)).toEqual([
       'policy-search/server.py',
       'rag-mcp-server/server.py',
       'contract-guard/server.py',
       'policy-comparison/server.py',
+      'course-path-server/server.py',
     ]);
+    // 只有课程规划的核心功能不依赖 DashScope Key（缺 Key 不算故障、注册时不禁用）
+    expect(CAMPUS_MCP_WHITELIST.map((entry) => entry.needsKey)).toEqual([true, true, true, true, false]);
+    // course-path-server 的连字符别名（FastMCP 自报名 / 手动导入形态）
+    expect(CAMPUS_MCP_WHITELIST.flatMap((entry) => entry.aliases ?? [])).toEqual(['course-path-server']);
   });
 
   it('matches whitelisted campus MCPs by their registered names (case-insensitive)', () => {
-    for (const name of ['policy_search', 'rag', 'contract-scan', 'policy-comparison']) {
+    for (const name of ['policy_search', 'rag', 'contract-scan', 'policy-comparison', 'course_path_server']) {
       expect(isCampusMcp(makeServer({ name }))).toBe(true);
     }
     expect(isCampusMcp(makeServer({ name: 'Policy_Search' }))).toBe(true);
+    // course-path-server 的连字符别名同样命中
+    expect(isCampusMcp(makeServer({ name: 'course-path-server' }))).toBe(true);
+    expect(isCampusMcp(makeServer({ name: 'Course-Path-Server' }))).toBe(true);
   });
 
   it('matches by server.py path marker when the entry name is custom', () => {
@@ -80,6 +91,20 @@ describe('campusMcp whitelist', () => {
         })
       )
     ).toBe(true);
+    // course-path-server 目录（课程规划）
+    expect(
+      isCampusMcp(
+        makeServer({
+          name: 'curriculum',
+          transport: {
+            type: 'stdio',
+            command: 'python',
+            args: ['D:\\AI-Campus-Workspace\\AionUi-Campus\\course-path-server\\server.py'],
+            env: {},
+          },
+        })
+      )
+    ).toBe(true);
   });
 
   it('ignores unrelated python stdio MCPs (no name or marker match)', () => {
@@ -111,6 +136,9 @@ describe('campusMcp whitelist', () => {
     expect(isCampusMcp(makeServer({ name: 'rag', transport: { type: 'http', url: 'https://example.test/mcp' } }))).toBe(
       false
     );
+    expect(
+      requiresCampusApiKey(makeServer({ name: 'rag', transport: { type: 'http', url: 'https://example.test/mcp' } }))
+    ).toBe(false);
   });
 
   it('collects only whitelisted servers and keeps the original order', () => {
@@ -125,13 +153,29 @@ describe('campusMcp whitelist', () => {
         transport: { type: 'stdio', command: 'python', args: ['C:/tools/helper.py'], env: {} },
       }),
       makeServer({ name: 'contract-scan' }),
+      makeServer({ name: 'course-path-server' }),
       makeServer({
         name: 'chrome-devtools',
         transport: { type: 'stdio', command: 'npx', args: ['-y', 'chrome-devtools-mcp@latest'], env: {} },
       }),
     ];
 
-    expect(collectCampusMcpServers(servers).map((server) => server.name)).toEqual(['policy_search', 'contract-scan']);
+    expect(collectCampusMcpServers(servers).map((server) => server.name)).toEqual([
+      'policy_search',
+      'contract-scan',
+      'course-path-server',
+    ]);
+  });
+
+  it('requiresCampusApiKey is true only for the four key-dependent services', () => {
+    for (const name of ['policy_search', 'rag', 'contract-scan', 'policy-comparison']) {
+      expect(requiresCampusApiKey(makeServer({ name }))).toBe(true);
+    }
+    // 课程规划两种写法都不算「缺 Key」
+    expect(requiresCampusApiKey(makeServer({ name: 'course_path_server' }))).toBe(false);
+    expect(requiresCampusApiKey(makeServer({ name: 'course-path-server' }))).toBe(false);
+    // 未命中白名单的条目一律 false（不要用它判断是否校园服务）
+    expect(requiresCampusApiKey(makeServer({ name: 'my-python-helper' }))).toBe(false);
   });
 
   it('hasCampusEnvKey only reports a non-empty DASHSCOPE_API_KEY', () => {
@@ -152,6 +196,35 @@ describe('campusMcp whitelist', () => {
         })
       )
     ).toBe(true);
+  });
+
+  it('findStoredCampusApiKey scans only whitelisted servers and returns the first non-empty key', () => {
+    expect(findStoredCampusApiKey([])).toBe('');
+
+    // 无关 Python MCP 里就算有同名变量也不能被误取
+    expect(
+      findStoredCampusApiKey([
+        makeServer({
+          name: 'my-python-helper',
+          transport: { type: 'stdio', command: 'python', args: [], env: { DASHSCOPE_API_KEY: 'sk-other' } },
+        }),
+      ])
+    ).toBe('');
+
+    // 取第一个非空 Key（含首尾空白清理）
+    expect(
+      findStoredCampusApiKey([
+        makeServer({ name: 'rag' }),
+        makeServer({
+          name: 'course_path_server',
+          transport: { type: 'stdio', command: 'python', args: [], env: { DASHSCOPE_API_KEY: '  sk-course  ' } },
+        }),
+        makeServer({
+          name: 'policy_search',
+          transport: { type: 'stdio', command: 'python', args: [], env: { DASHSCOPE_API_KEY: 'sk-later' } },
+        }),
+      ])
+    ).toBe('sk-course');
   });
 
   it('withCampusApiKey injects the key, enables the server and rebuilds original_json', () => {

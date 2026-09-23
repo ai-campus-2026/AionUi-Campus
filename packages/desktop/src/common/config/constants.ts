@@ -53,16 +53,20 @@ export const BUILTIN_BROWSER_MCP_NAME = 'aionui-browser';
  * 必须与 Python 侧 / 团队约定严格一致：policy-search/server.py 里
  * `Server("policy_search")`、rag-mcp-server README 的 mcpServers 配置键 `rag`、
  * contract-guard/server.py 里 `FastMCP("contract-scan")`、policy-comparison 的
- * mcp-config.json 键 `policy-comparison`。
+ * mcp-config.json 键 `policy-comparison`、course-path-server 的
+ * `FastMCP("course-path-server")`（CurriculumIngestService 两种写法都认，
+ * 见其 SERVER_NAMES）。
  *
- * 前两个名字还用于 main 进程的 campusMcpBootstrap 把仓库内的两个脚本注册成内置
- * 条目；检测哪些 MCP 需要 DashScope Key、以及注入 Key，统一走 campusMcp.ts 里的
- * 白名单（名称 + server.py 路径标记），不再按「是不是 Python 启动」泛化识别。
+ * 五个名字都用于 main 进程的 campusMcpBootstrap 把仓库内的脚本注册成内置条目
+ * （注册主名用这里的第一写法：course_path_server）；检测哪些 MCP 需要
+ * DashScope Key、以及注入 Key，统一走 campusMcp.ts 里的白名单
+ * （名称 + server.py 路径标记），不再按「是不是 Python 启动」泛化识别。
  */
 export const CAMPUS_POLICY_SEARCH_NAME = 'policy_search';
 export const CAMPUS_RAG_NAME = 'rag';
 export const CAMPUS_CONTRACT_SCAN_NAME = 'contract-scan';
 export const CAMPUS_POLICY_COMPARISON_NAME = 'policy-comparison';
+export const CAMPUS_COURSE_PATH_NAME = 'course_path_server';
 
 // ===== 文件处理相关常量 =====
 

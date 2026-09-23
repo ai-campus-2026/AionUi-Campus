@@ -5,15 +5,25 @@
  */
 
 /**
- * 校园规则解码器项目（policy-search / rag-mcp-server）的开发态 MCP 自动注册。
+ * 校园规则解码器项目的开发态 MCP 自动注册（白名单内的全部服务）。
  *
  * 设计目标：换一台电脑后 `git clone` 仓库 + 装好 Python 依赖，启动 AionUi 即可
- * 看到两个 MCP 已注册，不必再手动粘贴 mcp-config.json。
+ * 在 MCP 列表里看到全部校园 MCP（policy_search / rag / contract-scan /
+ * policy-comparison / course_path_server，以仓库里实际存在的源码为准），
+ * 不必再手动粘贴 mcp-config.json。
+ *
+ * 服务清单只认一个来源：common/config/campusMcp.ts 的 CAMPUS_MCP_WHITELIST
+ * （识别、注册、Key 注入三处口径统一，不再各自维护列表）。本模块只做
+ * 「仓库探测 + 按白名单注册」。
  *
  * 仅开发态生效：通过从 `__dirname` 向上查找仓库根（含 `policy-search/server.py`
  * 与 `rag-mcp-server/server.py` 两个标志文件）来判定。打包后的生产构建里这两个
  * 目录不会出现在 asar 内，探测自然失败，整段逻辑被跳过 —— 不会污染最终用户的
  * MCP 列表。
+ *
+ * 启用策略（enabled）：needsKey 的服务缺 Key 时注册为 disabled，避免 MCP 启动
+ * 时因缺 Key 反复抛错刷屏；course-path-server 核心功能不需要 Key，始终 enabled
+ * （CurriculumIngestService 按 enabled !== false 查找它）。
  *
  * Python 解释器走系统 PATH（`command: 'python'`），Windows 下若装的是 py launcher
  * 而 PATH 里没有 python，需要用户自行 `py -3 -m pip install ...` 后改 PATH，
@@ -23,12 +33,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import type { IMcpServer } from '@/common/config/storage';
-import { CAMPUS_POLICY_SEARCH_NAME, CAMPUS_RAG_NAME } from '@/common/config/constants';
-
-// 重新导出，方便 main 进程内的调用方从本模块一站式引入；
-// 规范定义在 @/common/config/constants，renderer 直接从那里引，
-// 避免把 node:fs / node:path 拖进 renderer bundle。
-export { CAMPUS_POLICY_SEARCH_NAME, CAMPUS_RAG_NAME };
+import { CAMPUS_MCP_WHITELIST, type CampusMcpWhitelistEntry } from '@/common/config/campusMcp';
 
 /** 两个标志文件都找到才算仓库根，避免误判 */
 const CAMPUS_MARKER_FILES = [
@@ -42,10 +47,6 @@ const MAX_WALK_UP = 10;
 export interface CampusRepoLayout {
   /** 仓库根绝对路径 */
   repoRoot: string;
-  /** policy-search/server.py 绝对路径 */
-  policySearchScript: string;
-  /** rag-mcp-server/server.py 绝对路径 */
-  ragScript: string;
 }
 
 /**
@@ -58,13 +59,9 @@ export function findCampusRepoLayout(startDir?: string): CampusRepoLayout | null
   let current = startDir ?? __dirname;
   // path.dirname('/') === '/'，用 parent === current 兜底防止死循环
   for (let i = 0; i < MAX_WALK_UP; i += 1) {
-    const candidates = CAMPUS_MARKER_FILES.map((rel) => path.join(current, rel));
-    if (candidates.every((abs) => existsSync(abs))) {
-      return {
-        repoRoot: current,
-        policySearchScript: candidates[0],
-        ragScript: candidates[1],
-      };
+    const markers = CAMPUS_MARKER_FILES.map((rel) => path.join(current, rel));
+    if (markers.every((abs) => existsSync(abs))) {
+      return { repoRoot: current };
     }
     const parent = path.dirname(current);
     if (parent === current) break;
@@ -73,16 +70,26 @@ export function findCampusRepoLayout(startDir?: string): CampusRepoLayout | null
   return null;
 }
 
+/**
+ * 由白名单条目算出服务入口脚本的绝对路径。
+ *
+ * scriptMarker 始终是 `/` 分隔的仓库相对路径（如 `policy-search/server.py`），
+ * 这里拆成段再用 path.join 拼，Windows 下得到规范的反斜杠路径。
+ */
+export function campusServiceScriptPath(layout: CampusRepoLayout, entry: CampusMcpWhitelistEntry): string {
+  return path.join(layout.repoRoot, ...entry.scriptMarker.split('/'));
+}
+
 /** bootstrap 阶段产出的 MCP 条目，与 runBackendMigrations 中的 McpImportServer 形状一致 */
 export type CampusMcpImportServer = Partial<IMcpServer> & Pick<IMcpServer, 'name' | 'transport'>;
 
 /**
- * 构造两个校园 MCP 的注册条目。
+ * 构造白名单内校园 MCP 的注册条目（仓库里没有对应源码的服务跳过）。
  *
  * @param layout    仓库布局，由 findCampusRepoLayout 给出
- * @param apiKey    DashScope API Key。空串表示用户尚未配置，此时 enabled=false，
- *                  避免 MCP 启动时因为缺 key 反复抛错刷屏；弹窗补齐 key 后会再
- *                  把 enabled 翻回 true（见 CampusApiKeyDialog）。
+ * @param apiKey    DashScope API Key。空串表示用户尚未配置，needsKey 的服务此时
+ *                  enabled=false，弹窗补齐 key 后会再把 enabled 翻回 true
+ *                  （见 CampusApiKeyDialog）；course-path-server 不受影响。
  * @param pythonCmd Python 解释器命令，默认 'python'。预留给后续做"本地覆盖"用。
  */
 export function buildCampusMcpServers(
@@ -91,52 +98,44 @@ export function buildCampusMcpServers(
   pythonCmd = 'python'
 ): CampusMcpImportServer[] {
   const trimmedKey = (apiKey || '').trim();
-  const enabled = trimmedKey.length > 0;
-  // env 留空对象而不是 { DASHSCOPE_API_KEY: '' }：两个 server 的 config.py 都用
+  const keyPresent = trimmedKey.length > 0;
+  // env 留空对象而不是 { DASHSCOPE_API_KEY: '' }：各 server 的 config.py 都用
   // os.getenv 读取，空串和不传效果一样，但空串会在 original_json 里留下噪音字段
-  const env: Record<string, string> = enabled ? { DASHSCOPE_API_KEY: trimmedKey } : {};
+  const env: Record<string, string> = keyPresent ? { DASHSCOPE_API_KEY: trimmedKey } : {};
 
-  const policyConfig = {
-    command: pythonCmd,
-    args: [layout.policySearchScript],
-    env,
-  };
-  const ragConfig = {
-    command: pythonCmd,
-    args: [layout.ragScript],
-    env,
-  };
+  const servers: CampusMcpImportServer[] = [];
+  for (const entry of CAMPUS_MCP_WHITELIST) {
+    const scriptPath = campusServiceScriptPath(layout, entry);
+    if (!existsSync(scriptPath)) {
+      // 部分检出（仓库里还没有这个服务）不是错误，跳过即可
+      console.info('[Migration] campus MCP %s not registered (missing %s)', entry.name, entry.scriptMarker);
+      continue;
+    }
 
-  return [
-    {
-      name: CAMPUS_POLICY_SEARCH_NAME,
-      description:
-        '校园规则解码器 - 政策结构化匹配 MCP（开发态自动注册，源码位于仓库 policy-search/，缺失 DASHSCOPE_API_KEY 时禁用）',
+    const enabled = entry.needsKey ? keyPresent : true;
+    const dir = entry.scriptMarker.split('/')[0];
+    const keyNote = entry.needsKey ? '缺失 DASHSCOPE_API_KEY 时禁用' : '核心功能不依赖 DashScope Key';
+    const config = {
+      command: pythonCmd,
+      args: [scriptPath],
+      env,
+    };
+
+    servers.push({
+      name: entry.name,
+      description: `校园规则解码器 - ${entry.label} MCP（开发态自动注册，源码位于仓库 ${dir}/，${keyNote}）`,
       enabled,
       builtin: true,
       transport: {
         type: 'stdio',
-        command: policyConfig.command,
-        args: policyConfig.args,
-        env: policyConfig.env,
+        command: config.command,
+        args: config.args,
+        env: config.env,
       },
-      original_json: JSON.stringify({ mcpServers: { [CAMPUS_POLICY_SEARCH_NAME]: policyConfig } }, null, 2),
-    },
-    {
-      name: CAMPUS_RAG_NAME,
-      description:
-        '校园规则解码器 - RAG 向量检索 MCP（开发态自动注册，源码位于仓库 rag-mcp-server/，缺失 DASHSCOPE_API_KEY 时禁用）',
-      enabled,
-      builtin: true,
-      transport: {
-        type: 'stdio',
-        command: ragConfig.command,
-        args: ragConfig.args,
-        env: ragConfig.env,
-      },
-      original_json: JSON.stringify({ mcpServers: { [CAMPUS_RAG_NAME]: ragConfig } }, null, 2),
-    },
-  ];
+      original_json: JSON.stringify({ mcpServers: { [entry.name]: config } }, null, 2),
+    });
+  }
+  return servers;
 }
 
 /**

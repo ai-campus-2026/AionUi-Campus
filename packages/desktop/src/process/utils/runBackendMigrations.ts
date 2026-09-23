@@ -231,11 +231,14 @@ function buildDefaultMcpServers(): McpImportServer[] {
 }
 
 /**
- * 开发态：探测校园规则解码器仓库并构造 policy_search / rag 两个 MCP 条目。
+ * 开发态：探测校园规则解码器仓库并按白名单注册全部 MCP
+ * （policy_search / rag / contract-scan / policy-comparison / course_path_server，
+ * 以仓库里实际存在的源码为准，见 campusMcp.ts 的 CAMPUS_MCP_WHITELIST）。
  *
  * 仓库找不到（生产构建、AionUi 没装在仓库内）返回空数组，整段逻辑被跳过，
  * 不会影响最终用户的 MCP 列表。API Key 从后端 client preferences 读取，
- * 缺失时条目仍会注册但 enabled=false，等 CampusApiKeyDialog 补齐后再启用。
+ * 缺失时 needsKey 的条目仍会注册但 enabled=false，等 CampusApiKeyDialog 补齐后
+ * 再启用；course-path-server 核心功能不需要 Key，始终 enabled。
  */
 function buildCampusDefaultServers(backendPrefs: BackendClientPreferences): CampusMcpImportServer[] {
   const layout = findCampusRepoLayout();
@@ -467,7 +470,8 @@ async function ensureBootstrapMcpServersInDb(configFile: ConfigFile): Promise<vo
   }
 
   /**
-   * 修复校园 MCP（policy_search / rag）记录里过期的脚本绝对路径，并同步 API Key。
+   * 修复校园 MCP 记录里过期的脚本绝对路径，并同步 API Key / 启用状态
+   * （覆盖白名单内全部服务，不只是 bootstrap 首次注册的那批）。
    *
    * 与浏览器 MCP 同思路：换电脑或 git clone 到不同目录后，transport.args 里的
    * 绝对路径会失效，按名字判断「已注册」让它永远不会被重新插入。每次启动都对齐
@@ -531,16 +535,16 @@ async function ensureBootstrapMcpServersInDb(configFile: ConfigFile): Promise<vo
 
   /**
    * 白名单 Key 注入：只覆盖明确登记的校园 MCP（policy_search、rag、contract-scan、
-   * policy-comparison，见 campusMcp.ts 的 CAMPUS_MCP_WHITELIST），绝不碰用户自己
-   * 添加的无关 Python MCP。
+   * policy-comparison、course_path_server，见 campusMcp.ts 的 CAMPUS_MCP_WHITELIST），
+   * 绝不碰用户自己添加的无关 Python MCP。
    *
    * 历史教训：这里曾按「stdio + Python 解释器」泛化匹配，会把用户装的任何 Python
    * MCP 都当成校园服务 —— 误写 DASHSCOPE_API_KEY（可能覆盖其他 MCP 自己的同名
    * 变量）、误把用户禁用的条目重新启用、误改他人配置。识别规则已收敛为白名单：
    * 名称命中或 server.py 路径标记命中。
    *
-   * 不按 builtin 标记当闸门：校园 MCP 常是手动添加的（contract-scan /
-   * policy-comparison 就不由 bootstrap 注册），builtin 为 false。唯一守卫是
+   * 不按 builtin 标记当闸门：bootstrap 会注册白名单服务，但用户也可能手动导入
+   * 同名/别名条目（builtin 为 false），识别只认白名单。唯一守卫是
    * preferences 里存有非空 Key —— 该 Key 只能由本项目的 CampusApiKeyDialog 写入，
    * 生产构建里恒为空，整段被跳过。
    */
