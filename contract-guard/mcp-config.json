@@ -2,8 +2,7 @@
   "mcpServers": {
     "contract-scan": {
       "command": "python",
-      "args": ["D:/AI-Campus-Workspace/AionUi-Campus-SSH/contract-guard/server.py"],
-      "cwd": "D:/contract-guard"
+      "args": ["<仓库绝对路径>/contract-guard/server.py"]
     }
   }
 }

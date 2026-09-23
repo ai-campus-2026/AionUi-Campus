@@ -45,13 +45,14 @@ knowledge_base/
 ### 1. 安装依赖
 
 ```bash
-cd d:\AI-Campus-Workspace\policy-search
+cd <仓库路径>/policy-search
 pip install -r requirements.txt
 ```
 
 ### 2. 配置环境变量
 
-复制 `.env.example` 为 `.env`，填入你的 DashScope API Key：
+首次启动会自动从 `.env.example` 生成 `.env`（无需手动复制）；应用内运行时 Key 由宿主自动注入，
+手动调测时编辑 `.env` 填入你的 DashScope API Key：
 
 ```bash
 DASHSCOPE_API_KEY=sk-your-api-key-here
@@ -76,7 +77,7 @@ python server.py
   "mcpServers": {
     "policy_search": {
       "command": "python",
-      "args": ["d:/AI-Campus-Workspace/policy-search/server.py"],
+      "args": ["<仓库绝对路径>/policy-search/server.py"],
       "env": {
         "DASHSCOPE_API_KEY": "sk-your-api-key-here"
       }
@@ -84,6 +85,9 @@ python server.py
   }
 }
 ```
+
+> 把 `<仓库绝对路径>` 换成本机仓库所在位置。服务按自身文件位置解析路径与 `.env`，
+> 不依赖启动目录，无需设置 `cwd`。
 
 ## 使用示例
 

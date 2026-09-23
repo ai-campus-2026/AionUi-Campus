@@ -104,11 +104,8 @@ pip install -r requirements.txt
 
 ### 2. 配置环境变量
 
-```bash
-cp .env.example .env
-```
-
-编辑 `.env`，填入 DashScope API Key（[获取地址](https://dashscope.console.aliyun.com/)）。
+首次启动会自动从 `.env.example` 生成 `.env`（无需手动复制）；应用内运行时 Key 由宿主自动注入，
+手动调测时编辑 `.env` 填入 DashScope API Key（[获取地址](https://dashscope.console.aliyun.com/)）。
 
 ### 3. 启动 / 测试
 
@@ -135,13 +132,15 @@ python -m pytest tests/ -v
   "mcpServers": {
     "rag": {
       "command": "python",
-      "args": ["D:/AI-Campus-Workspace/AionUi-Campus/rag-mcp-server/server.py"],
-      "cwd": "D:/AI-Campus-Workspace/AionUi-Campus/rag-mcp-server"
+      "args": ["<仓库绝对路径>/rag-mcp-server/server.py"]
     }
   }
 }
 ```
 
+> 把 `<仓库绝对路径>` 换成本机仓库所在位置。服务按自身文件位置解析路径与 `.env`，
+> 不依赖启动目录，无需设置 `cwd`（导入器也会丢弃该字段）。
+>
 > API Key 从项目目录的 `.env` 读取，无需在 MCP 配置中明文传递。
 
 ## 配置说明
@@ -182,7 +181,7 @@ rag-mcp-server/
 ├── tests/              # 单元测试（离线，假 embedding）
 ├── requirements.txt    # Python 依赖
 ├── .env.example        # 环境变量模板
-├── .env                # 实际配置（已 gitignore，自行创建）
+├── .env                # 实际配置（已 gitignore，首次启动自动生成）
 └── chroma_data/        # ChromaDB 数据目录（自动生成）
 ```
 

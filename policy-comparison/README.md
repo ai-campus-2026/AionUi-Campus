@@ -63,17 +63,17 @@ server.py            —— 单工具 MCP 服务（compare_policy_versions）
 ### 1. 安装依赖
 
 ```bash
-cd D:/AI-Campus-Workspace/AionUi-Campus/policy-comparison
+cd <仓库路径>/policy-comparison
 pip install -r requirements.txt
 ```
 
 ### 2. 配置环境变量（可选）
 
-复制 `.env.example` 为 `.env` 并填入 Key；**应用内运行时 Key 由宿主自动注入，无需手动配置**。未配置 Key 时自动使用规则对比。
+首次启动会自动从 `.env.example` 生成 `.env`（无需手动复制）；**应用内运行时 Key 由宿主自动注入，无需手动配置**。未配置 Key 时自动使用规则对比。
 
 ### 3. 注册到应用
 
-在设置 → MCP 中按 `mcp-config.json` 添加（command `python`，args 指向 `server.py`，cwd 为本目录）。
+在设置 → MCP 中按 `mcp-config.json` 添加：先把 `<仓库绝对路径>` 换成本机仓库位置（command `python`，args 指向 `server.py`）；服务按自身文件位置解析路径，无需设置 cwd。
 
 ### 4. 试跑
 

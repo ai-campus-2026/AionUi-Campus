@@ -2,8 +2,7 @@
   "mcpServers": {
     "policy-comparison": {
       "command": "python",
-      "args": ["D:/AI-Campus-Workspace/AionUi-Campus/policy-comparison/server.py"],
-      "cwd": "D:/AI-Campus-Workspace/AionUi-Campus/policy-comparison"
+      "args": ["<仓库绝对路径>/policy-comparison/server.py"]
     }
   }
 }
