@@ -1,0 +1,3 @@
+﻿packages/desktop/src/renderer/pages/workbench/WorkbenchPage.tsx(201,13): error TS2322: Type 'RefObject<{ focus: () => void; }>' is not assignable to type 'Ref<RefTextAreaType>'.
+  Type 'RefObject<{ focus: () => void; }>' is not assignable to type 'RefObject<RefTextAreaType>'.
+    Type '{ focus: () => void; }' is missing the following properties from type 'RefTextAreaType': blur, dom

@@ -58,13 +58,29 @@ describe('resolveFeedbackModule', () => {
     );
     // Pages where preselecting a module makes no sense (multi-purpose or
     // pre-auth surfaces where the user picks the module themselves).
-    const moduleLess = new Set(['/guid', '/login', '/test/components']);
+    // Campus surfaces (home/workbench/policy-*) are multi-purpose aggregators
+    // without a dedicated feedback module, same as /guid. Matched by prefix so
+    // sub-routes like /workbench/report/:conversationId are covered too.
+    const moduleLessPrefixes = [
+      '/guid',
+      '/login',
+      '/test/components',
+      '/home',
+      '/workbench',
+      '/policy-checklist',
+      '/academic-path',
+      '/rule-analysis',
+      '/policy-comparison',
+      '/contract-scan',
+    ];
+    const isModuleLess = (pathname: string) =>
+      moduleLessPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
     const paths = [...routerSrc.matchAll(/path='([^*'][^']*)'/g)].map((m) => m[1]);
     expect(paths.length).toBeGreaterThan(10);
     for (const routePath of paths) {
       // Substitute params with plausible values so prefix matching applies.
       const concrete = routePath.replace(/:[^/]+/g, 'sample-id');
-      if (moduleLess.has(concrete)) continue;
+      if (isModuleLess(concrete)) continue;
       expect(resolveFeedbackModule(concrete), `route ${routePath} has no feedback module`).toBeDefined();
     }
   });

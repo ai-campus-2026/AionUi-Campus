@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "policy-comparison": {
+      "command": "python",
+      "args": ["<仓库绝对路径>/policy-comparison/server.py"]
+    }
+  }
+}

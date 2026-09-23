@@ -15,8 +15,15 @@ import {
   resolveImageGenerationMcpEnv,
   type ImageGenerationMcpEnvResolveResult,
 } from '@/common/config/imageGenerationMcpEnv';
+import { collectCampusMcpServers, hasCampusEnvKey, withCampusApiKey } from '@/common/config/campusMcp';
 import { BUILTIN_IMAGE_GEN_NAME, type IMcpServer, type IProvider } from '@/common/config/storage';
 import { getBuiltinMcpScriptPath, type ProcessConfig as ProcessConfigType } from './initStorage';
+import {
+  buildCampusMcpServers,
+  findCampusRepoLayout,
+  isCampusServerPathDrifted,
+  type CampusMcpImportServer,
+} from './campusMcpBootstrap';
 import { migrateAssistantsToBackend } from './migrateAssistants';
 
 type ConfigFile = typeof ProcessConfigType;
@@ -223,6 +230,31 @@ function buildDefaultMcpServers(): McpImportServer[] {
   ];
 }
 
+/**
+ * 开发态：探测校园规则解码器仓库并按白名单注册全部 MCP
+ * （policy_search / rag / contract-scan / policy-comparison / course_path_server，
+ * 以仓库里实际存在的源码为准，见 campusMcp.ts 的 CAMPUS_MCP_WHITELIST）。
+ *
+ * 仓库找不到（生产构建、AionUi 没装在仓库内）返回空数组，整段逻辑被跳过，
+ * 不会影响最终用户的 MCP 列表。API Key 从后端 client preferences 读取，
+ * 缺失时 needsKey 的条目仍会注册但 enabled=false，等 CampusApiKeyDialog 补齐后
+ * 再启用；course-path-server 核心功能不需要 Key，始终 enabled。
+ */
+function buildCampusDefaultServers(backendPrefs: BackendClientPreferences): CampusMcpImportServer[] {
+  const layout = findCampusRepoLayout();
+  if (!layout) {
+    return [];
+  }
+  const rawKey = backendPrefs['tools.campusMcp.dashscopeApiKey'];
+  const apiKey = typeof rawKey === 'string' ? rawKey : '';
+  console.info(
+    '[Migration] campus MCP repo detected at %s, dashscope key present: %s',
+    layout.repoRoot,
+    apiKey.trim() ? 'yes' : 'no'
+  );
+  return buildCampusMcpServers(layout, apiKey);
+}
+
 async function isCommandAvailable(command: string): Promise<boolean> {
   return await new Promise((resolve) => {
     execFile(command, ['--version'], { timeout: 3000 }, (error) => {
@@ -309,7 +341,10 @@ async function ensureBootstrapMcpServersInDb(configFile: ConfigFile): Promise<vo
   logImageGenerationEnvResolution(imageEnvResolution, 'bootstrap');
   const imageServer = buildBuiltinImageGenerationServer(imageEnvResolution, imageConfig);
   const defaultServers = buildDefaultMcpServers();
-  const missing = [...defaultServers, imageServer].filter((server) => !existingByName.has(server.name));
+  const campusServers = buildCampusDefaultServers(backendPrefs);
+  const missing = [...defaultServers, ...campusServers, imageServer].filter(
+    (server) => !existingByName.has(server.name)
+  );
   let imageServerUpdated = false;
 
   if (missing.length > 0) {
@@ -434,11 +469,132 @@ async function ensureBootstrapMcpServersInDb(configFile: ConfigFile): Promise<vo
     }
   }
 
+  /**
+   * 修复校园 MCP 记录里过期的脚本绝对路径，并同步 API Key / 启用状态
+   * （覆盖白名单内全部服务，不只是 bootstrap 首次注册的那批）。
+   *
+   * 与浏览器 MCP 同思路：换电脑或 git clone 到不同目录后，transport.args 里的
+   * 绝对路径会失效，按名字判断「已注册」让它永远不会被重新插入。每次启动都对齐
+   * 一次实际路径。同时把 backendPrefs 里最新的 DashScope Key 同步进 env ——
+   * 这样 CampusApiKeyDialog 保存 key 后，下次启动 bootstrap 就会把 enabled
+   * 翻回 true，不必等用户手动去设置里开。
+   *
+   * 注意：updateServer 的 data 字段不接受 enabled（类型上是
+   * Pick<..., 'name'|'description'|'transport'|'original_json'|'builtin'>），
+   * 启用/禁用必须走单独的 toggleServer 接口 —— 与 useMcpServerCRUD 里
+   * persistEnabledState 的做法一致。
+   */
+  let campusServerUpdated = false;
+  if (campusServers.length > 0) {
+    for (const desired of campusServers) {
+      const existingCampus = existingByName.get(desired.name);
+      if (!existingCampus) continue;
+
+      const pathDrifted = isCampusServerPathDrifted(existingCampus, desired);
+      const existingEnv = existingCampus.transport.type === 'stdio' ? existingCampus.transport.env || {} : {};
+      const desiredEnv = desired.transport.type === 'stdio' ? desired.transport.env || {} : {};
+      const envChanged = !areStringRecordsEqual(existingEnv, desiredEnv);
+      const enabledChanged = Boolean(existingCampus.enabled) !== Boolean(desired.enabled);
+
+      if (!pathDrifted && !envChanged && !enabledChanged) continue;
+
+      console.info(
+        '[Migration] campus MCP %s drifted, path: %s, env: %s, enabled: %s',
+        desired.name,
+        pathDrifted ? 'yes' : 'no',
+        envChanged ? 'yes' : 'no',
+        enabledChanged ? 'yes' : 'no'
+      );
+
+      // transport / original_json 走 updateServer
+      if (pathDrifted || envChanged) {
+        await mcpService.updateServer.invoke({
+          id: existingCampus.id,
+          data: {
+            transport: desired.transport,
+            original_json: desired.original_json,
+          },
+        });
+      }
+      // enabled 单独走 toggleServer
+      if (enabledChanged) {
+        try {
+          await mcpService.toggleServer.invoke({ id: existingCampus.id });
+        } catch (toggleError) {
+          // toggle 失败不致命：transport 已经对齐，下次启动还会再试
+          console.warn(
+            '[Migration] campus MCP %s toggleServer failed, will retry next launch',
+            desired.name,
+            toggleError
+          );
+        }
+      }
+      campusServerUpdated = true;
+    }
+  }
+
+  /**
+   * 白名单 Key 注入：只覆盖明确登记的校园 MCP（policy_search、rag、contract-scan、
+   * policy-comparison、course_path_server，见 campusMcp.ts 的 CAMPUS_MCP_WHITELIST），
+   * 绝不碰用户自己添加的无关 Python MCP。
+   *
+   * 历史教训：这里曾按「stdio + Python 解释器」泛化匹配，会把用户装的任何 Python
+   * MCP 都当成校园服务 —— 误写 DASHSCOPE_API_KEY（可能覆盖其他 MCP 自己的同名
+   * 变量）、误把用户禁用的条目重新启用、误改他人配置。识别规则已收敛为白名单：
+   * 名称命中或 server.py 路径标记命中。
+   *
+   * 不按 builtin 标记当闸门：bootstrap 会注册白名单服务，但用户也可能手动导入
+   * 同名/别名条目（builtin 为 false），识别只认白名单。唯一守卫是
+   * preferences 里存有非空 Key —— 该 Key 只能由本项目的 CampusApiKeyDialog 写入，
+   * 生产构建里恒为空，整段被跳过。
+   */
+  const rawCampusKey = backendPrefs['tools.campusMcp.dashscopeApiKey'];
+  const campusApiKey = typeof rawCampusKey === 'string' ? rawCampusKey.trim() : '';
+  let campusKeyInjected = 0;
+  if (campusApiKey) {
+    const allServersNow = await mcpService.listServers.invoke();
+    for (const server of collectCampusMcpServers(allServersNow)) {
+      if (server.transport.type !== 'stdio') continue;
+      const currentKey = server.transport.env?.DASHSCOPE_API_KEY?.trim() || '';
+      // 已经是对的 Key 就跳过（bootstrap 注册的条目上面那段漂移修复已经同步过）
+      if (hasCampusEnvKey(server) && currentKey === campusApiKey) continue;
+
+      const updated = withCampusApiKey(server, campusApiKey);
+      console.info(
+        '[Migration] injecting DashScope key into campus MCP %s (had key: %s, enabled: %s)',
+        server.name,
+        hasCampusEnvKey(server) ? 'yes' : 'no',
+        server.enabled ? 'yes' : 'no'
+      );
+      await mcpService.updateServer.invoke({
+        id: server.id,
+        data: {
+          transport: updated.transport,
+          original_json: updated.original_json,
+        },
+      });
+      if (!server.enabled) {
+        try {
+          await mcpService.toggleServer.invoke({ id: server.id });
+        } catch (toggleError) {
+          console.warn(
+            '[Migration] campus MCP %s toggleServer failed during key injection, will retry next launch',
+            server.name,
+            toggleError
+          );
+        }
+      }
+      campusKeyInjected += 1;
+    }
+  }
+
   console.info(
-    '[Migration] MCP bootstrap completed, imported %d missing defaults, updated image server: %s, updated browser server: %s, image config source: %s, image enabled: %s',
+    '[Migration] MCP bootstrap completed, imported %d missing defaults, updated image server: %s, updated browser server: %s, updated campus servers: %s, injected key into %d campus MCP(s), image config source: %s, image enabled: %s',
     missing.length,
     imageServerUpdated ? 'yes' : 'no',
     browserServerUpdated ? 'yes' : 'no',
+    campusServerUpdated ? 'yes' : 'no',
+    campusKeyInjected,
     imageConfigSource,
     imageConfig?.switch === true ? 'yes' : 'no'
   );

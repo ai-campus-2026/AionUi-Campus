@@ -237,3 +237,6 @@ graphify-out/
 # Local scratch/analysis (wireframes, candidate mockups)
 .analysis/
 temp/
+# Python virtual environments
+.venv/
+**/.venv/

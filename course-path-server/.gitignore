@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.env
+/curriculum_knowledge_base/documents/
+/curriculum_knowledge_base/catalogs/
+/curriculum_knowledge_base/evidence/
+/curriculum_knowledge_base/index.json
+/curriculum_knowledge_base/vector_index/
+/student_progress/

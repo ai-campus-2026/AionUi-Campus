@@ -110,7 +110,7 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const toolbarRef = useRef<HTMLDivElement | null>(null);
-  const lastNonSettingsPathRef = useRef('/guid');
+  const lastNonSettingsPathRef = useRef('/home');
 
   // 监听工作空间折叠状态，保持按钮图标一致 / Sync workspace collapsed state for toggle button
   useEffect(() => {
@@ -176,12 +176,8 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
   };
 
   const handleBackToChat = () => {
-    const target = lastNonSettingsPathRef.current;
-    if (target && !target.startsWith('/settings')) {
-      void navigate(target);
-      return;
-    }
-    void navigate(-1);
+    // 直接返回校园工作台首页
+    void navigate('/home');
   };
 
   useEffect(() => {

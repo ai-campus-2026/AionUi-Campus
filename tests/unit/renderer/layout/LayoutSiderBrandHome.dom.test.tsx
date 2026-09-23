@@ -104,30 +104,30 @@ describe('Layout sider brand Home button', () => {
     vi.clearAllMocks();
   });
 
-  it('navigates to the recorded last non-settings path when clicked in a settings route', () => {
+  it('navigates to the campus home when clicked in a settings route', () => {
     currentPathname = '/settings/about';
     sessionStorage.setItem('aion:last-non-settings-path', '/conversation/abc');
     renderLayout();
 
     fireEvent.click(screen.getByLabelText(BACK_KEY));
-    expect(navigate).toHaveBeenCalledWith('/conversation/abc');
+    expect(navigate).toHaveBeenCalledWith('/home');
   });
 
-  it('falls back to /guid in a settings route when no path is recorded', () => {
+  it('navigates to the campus home when no previous path is recorded', () => {
     currentPathname = '/settings/system';
     renderLayout();
 
     fireEvent.click(screen.getByLabelText(BACK_KEY));
-    expect(navigate).toHaveBeenCalledWith('/guid');
+    expect(navigate).toHaveBeenCalledWith('/home');
   });
 
-  it('falls back to /guid when the recorded path is itself a settings path', () => {
+  it('navigates to the campus home when the recorded path is itself a settings path', () => {
     currentPathname = '/settings/about';
     sessionStorage.setItem('aion:last-non-settings-path', '/settings/system');
     renderLayout();
 
     fireEvent.click(screen.getByLabelText(BACK_KEY));
-    expect(navigate).toHaveBeenCalledWith('/guid');
+    expect(navigate).toHaveBeenCalledWith('/home');
   });
 
   it('activates via keyboard (Enter and Space) in a settings route', () => {
@@ -139,7 +139,7 @@ describe('Layout sider brand Home button', () => {
     fireEvent.keyDown(brand, { key: 'Enter' });
     fireEvent.keyDown(brand, { key: ' ' });
     expect(navigate).toHaveBeenCalledTimes(2);
-    expect(navigate).toHaveBeenCalledWith('/conversation/abc');
+    expect(navigate).toHaveBeenCalledWith('/home');
   });
 
   it('ignores non-activation keys in a settings route', () => {

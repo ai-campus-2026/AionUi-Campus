@@ -1,0 +1,322 @@
+/**
+ * @license
+ * Copyright 2025 AionUi (aionui.com)
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * 校园规则解码器 MCP 的 DashScope API Key 首次配置弹窗。
+ *
+ * 触发条件（自动弹出，三者同时满足）：
+ *   1. 后端 client preferences 里 `tools.campusMcp.dashscopeApiKey` 为空/未设置；
+ *   2. MCP 列表里存在至少一个**白名单内的校园 MCP**（policy_search / rag /
+ *      contract-scan / policy-comparison / course_path_server，按名称（含别名）
+ *      或 server.py 路径标记命中，见 common/config/campusMcp.ts 的
+ *      CAMPUS_MCP_WHITELIST）—— 白名单条目常常是手动添加的，builtin 为 false，
+ *      用 builtin 当闸门会让弹窗永远不出现；
+ *   3. 这些条目里**任意一个需要 Key 且** transport.env 还没有 DASHSCOPE_API_KEY
+ *      —— 注意两点：（a）不能看 enabled 标志：Python server 没有 key 也能正常
+ *      启动并通过连接测试，enabled 只说明「进程起来了」，不代表「配置好了」；
+ *      （b）course_path_server 核心功能不依赖 Key，不参与缺 Key 判定与告警。
+ *
+ * 识别只认显式白名单。历史上曾按「stdio + Python 解释器命令」泛化识别，会把用户
+ * 自己装的无关 Python MCP 也误判成校园服务（误写 Key、误启用、甚至覆盖其他 MCP
+ * 自己的 DASHSCOPE_API_KEY），现已收敛为白名单，绝不能回退到泛化匹配。
+ *
+ * 手动入口：设置 → 工具 页的提示条通过 campusApiKeyDialogBus 发事件打开本弹窗
+ * （此时即使 preferences 里已有 key 也打开，输入框预填旧值，方便更换）。预填
+ * 顺序：preferences 里的 Key → 白名单条目 env 里已有且非空的 Key（用户可能只
+ * 手动填过某一条）→ 空。
+ *
+ * 保存动作：
+ *   - 把 key 写进 client preferences（下次启动 bootstrap 直接读到，不必再弹）；
+ *   - 同步更新白名单内全部条目的 transport.env 与 enabled=true，让本次会话立刻
+ *     可用，不必重启应用（course_path_server 被注入 Key 是为了启用其可选语义
+ *     检索，不影响其核心功能）。
+ *
+ * 「稍后再说」只关闭弹窗，不写任何持久化标记 —— 下次启动还会再弹。这是有意的：
+ * 开发态下 key 是必需品，反复提醒比静默禁用更友好；真正不想用的人可以在设置里
+ * 把这些 MCP 条目删掉（弹窗检测不到白名单内 MCP 就不再出现），或者配置过 key
+ * 之后再手动禁用（preferences 里已有 key 会直接短路，同样不会再弹）。
+ */
+
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Input, Message, Typography } from '@arco-design/web-react';
+import { mcpService } from '@/common/adapter/ipcBridge';
+import type { IMcpServer } from '@/common/config/storage';
+import { getClientBusinessSetting, setClientBusinessSetting } from '@/renderer/services/clientBusinessSettings';
+import {
+  notifyCampusApiKeyDialogSaved,
+  onCampusApiKeyDialogOpenRequest,
+} from '@/renderer/services/campusApiKeyDialogBus';
+import AionModal from '@/renderer/components/base/AionModal';
+import { toBackendMcpPayload } from '@/renderer/hooks/mcp/catalog';
+import {
+  collectCampusMcpServers,
+  findStoredCampusApiKey,
+  hasCampusEnvKey,
+  requiresCampusApiKey,
+  withCampusApiKey,
+} from '@/common/config/campusMcp';
+
+const CAMPUS_SETTING_KEY = 'tools.campusMcp.dashscopeApiKey' as const;
+
+const CampusApiKeyDialog: React.FC = () => {
+  const [visible, setVisible] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [campusServers, setCampusServers] = useState<IMcpServer[]>([]);
+
+  /**
+   * 拉取 MCP 列表，挑出白名单内的校园 MCP（policy_search / rag / contract-scan /
+   * policy-comparison / course_path_server，名称（含别名）或 server.py 路径标记命中）。
+   *
+   * 不用「builtin 内置标记」当闸门：校园 MCP 经常是用户手动添加的，builtin 为
+   * false/undefined，用它当闸门会导致弹窗与提示条永远不出现；也不用「stdio +
+   * Python 解释器」的泛化特征 —— 那会把用户自己装的无关 Python MCP 也误判进来。
+   * 判据只有显式白名单（见 common/config/campusMcp.ts）。没有任何白名单条目时
+   * 返回 null（弹窗无意义）。
+   */
+  const loadCampusServers = useCallback(async (): Promise<IMcpServer[] | null> => {
+    const servers = (await mcpService.listServers.invoke()) || [];
+    const targets = collectCampusMcpServers(servers);
+    return targets.length > 0 ? targets : null;
+  }, []);
+
+  /**
+   * 启动时检查是否需要自动弹窗。
+   *
+   * 顺序很重要：先读 key（便宜），再读 MCP 列表（贵一点）。key 已配置就直接
+   * 短路，连 MCP 列表都不用拉，避免每次启动都多一次 IPC。
+   *
+   * 注意不看 enabled：Python server 没 key 也能启动并通过连接测试（设置页绿勾），
+   * 只有 env 里真的没有 DASHSCOPE_API_KEY 才说明还没配置好、需要提醒；缺 Key
+   * 判定只看 needsKey 的服务（course_path_server 核心功能不依赖 Key，不算缺）。
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    const check = async () => {
+      try {
+        const existingKey = await getClientBusinessSetting(CAMPUS_SETTING_KEY);
+        if (existingKey && existingKey.trim()) return; // 已配置，不打扰
+
+        const targets = await loadCampusServers();
+        // 列表里存在白名单内的校园 MCP 才有意义（否则没有需要 key 的服务）
+        if (!targets) return;
+        // 只看核心功能依赖 Key 的服务；一个都没有（只有 course_path_server）就不打扰
+        const keyTargets = targets.filter(requiresCampusApiKey);
+        if (keyTargets.length === 0) return;
+        // 需要 Key 的条目都已经在 env 里带了 key（用户自己填过），不再打扰
+        if (keyTargets.every(hasCampusEnvKey)) return;
+
+        if (cancelled) return;
+        setCampusServers(targets);
+        // 某条已有 Key 时预填，方便一键把同一把 Key 补到其余条目
+        setApiKey(findStoredCampusApiKey(targets));
+        setVisible(true);
+      } catch (error) {
+        // 探测失败不应该阻塞应用启动，静默记日志即可
+        console.warn('[CampusApiKeyDialog] preflight check failed', error);
+      }
+    };
+
+    void check();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadCampusServers]);
+
+  /**
+   * 手动入口：设置 → 工具 页提示条点「填写 API Key」时发事件打开本弹窗。
+   * 此时即使 preferences 里已有 key 也打开（输入框预填旧值），方便更换。
+   * preferences 为空时退回从条目 env 里发现的 Key（用户可能只手动填过某一条）。
+   */
+  useEffect(
+    () =>
+      onCampusApiKeyDialogOpenRequest(() => {
+        const open = async () => {
+          try {
+            const targets = await loadCampusServers();
+            if (!targets) return;
+            const storedKey = await getClientBusinessSetting(CAMPUS_SETTING_KEY);
+            const prefillKey = storedKey && storedKey.trim() ? storedKey : findStoredCampusApiKey(targets);
+            setCampusServers(targets);
+            setApiKey(prefillKey);
+            setVisible(true);
+          } catch (error) {
+            console.warn('[CampusApiKeyDialog] manual open failed', error);
+          }
+        };
+        void open();
+      }),
+    [loadCampusServers]
+  );
+
+  const handleSkip = useCallback(() => {
+    setVisible(false);
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    const trimmed = apiKey.trim();
+    if (!trimmed) {
+      Message.warning('请输入 DashScope API Key');
+      return;
+    }
+    if (campusServers.length === 0) {
+      // 理论上不会发生（visible=true 时一定已经填好 campusServers），防御性兜底
+      setVisible(false);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // 1. 持久化 key，下次启动 bootstrap 直接读到
+      await setClientBusinessSetting(CAMPUS_SETTING_KEY, trimmed);
+
+      // 2. 同步更新白名单内全部校园 MCP 条目，本次会话立刻生效
+      for (const server of campusServers) {
+        const updated = withCampusApiKey(server, trimmed);
+        await mcpService.updateServer.invoke({
+          id: updated.id,
+          data: toBackendMcpPayload(updated),
+        });
+        // enabled 不在 toBackendMcpPayload 的字段里，单独走 toggle/enable 接口
+        if (!server.enabled) {
+          try {
+            await mcpService.toggleServer.invoke({ id: updated.id });
+          } catch (toggleError) {
+            // toggle 失败不算致命：key 已经写进 env，下次启动 bootstrap 会把
+            // enabled 翻成 true。这里只记日志，不打断保存流程。
+            console.warn('[CampusApiKeyDialog] toggleServer failed for %s', updated.id, toggleError);
+          }
+        }
+      }
+
+      const names = campusServers.map((server) => server.name).join('、');
+      Message.success(`已保存，已为 ${campusServers.length} 个 MCP 注入 Key：${names}`);
+      notifyCampusApiKeyDialogSaved();
+      setVisible(false);
+      setApiKey('');
+    } catch (error) {
+      console.error('[CampusApiKeyDialog] save failed', error);
+      Message.error(`保存失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setSaving(false);
+    }
+  }, [apiKey, campusServers]);
+
+  const subtitle = useMemo(() => {
+    // 缺 Key 告警只看需要 Key 的服务；course_path_server 核心功能不依赖 Key，不算缺
+    const keyTargets = campusServers.filter(requiresCampusApiKey);
+    const pending = keyTargets.filter((server) => !hasCampusEnvKey(server));
+    const names = (pending.length > 0 ? pending : keyTargets).map((server) => server.name).join('、');
+    return names ? `检测到 ${names} 等 MCP 尚未配置 DashScope API Key` : '检测到校园 MCP 尚未配置 DashScope API Key';
+  }, [campusServers]);
+
+  return (
+    <AionModal
+      visible={visible}
+      variant='standard'
+      size='medium'
+      maskClosable={false}
+      header={{
+        title: '配置 DashScope API Key',
+        subtitle,
+        showClose: true,
+      }}
+      footer={{
+        render: () => (
+          <div className='flex justify-end gap-8px'>
+            <button
+              type='button'
+              onClick={handleSkip}
+              disabled={saving}
+              className='px-16px py-6px rd-6px border border-solid border-[var(--bg-3)] bg-transparent text-t-secondary cursor-pointer hover:bg-2 disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              稍后再说
+            </button>
+            <button
+              type='button'
+              onClick={handleSave}
+              disabled={saving || !apiKey.trim()}
+              className='px-16px py-6px rd-6px border-0 bg-[var(--primary-6)] text-white cursor-pointer hover:bg-[var(--primary-5)] disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              {saving ? '保存中…' : '保存并启用'}
+            </button>
+          </div>
+        ),
+      }}
+      onCancel={handleSkip}
+    >
+      <div className='flex flex-col gap-16px'>
+        <Typography.Paragraph className='m-0 text-13px text-t-secondary leading-20px'>
+          校园规则解码器的全部 MCP（政策结构化匹配、向量检索、合同审查、政策对比、课程规划）中，前四个依赖 阿里云
+          DashScope 的 embedding / rerank / LLM 接口，是必需项；课程规划仅在语义检索时用到 Key。请在下方输入框里填入你的
+          API Key，保存后会自动注入到检测到的每一个 MCP 并启用它们。
+        </Typography.Paragraph>
+
+        {campusServers.length > 0 && (
+          <div className='flex flex-col gap-6px px-12px py-10px rd-8px bg-fill-2'>
+            <span className='text-12px font-600 text-t-primary'>
+              已自动检测到 {campusServers.length} 个 MCP，保存后将注入 Key：
+            </span>
+            <div className='flex flex-wrap gap-6px'>
+              {campusServers.map((server) => (
+                <span
+                  key={server.id}
+                  className='px-8px py-2px rd-6px text-12px border border-solid border-[var(--bg-3)] bg-[var(--dialog-fill-0)] text-t-secondary'
+                >
+                  {server.name}
+                  {hasCampusEnvKey(server)
+                    ? '（已有 Key，将覆盖）'
+                    : requiresCampusApiKey(server)
+                      ? ''
+                      : '（Key 可选）'}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className='flex flex-col gap-6px'>
+          <label htmlFor='campus-dashscope-api-key' className='text-13px font-600 text-t-primary leading-18px'>
+            DashScope API Key
+          </label>
+          <Input.Password
+            id='campus-dashscope-api-key'
+            aria-label='DashScope API Key'
+            size='large'
+            value={apiKey}
+            onChange={setApiKey}
+            placeholder='在这里粘贴 sk- 开头的密钥'
+            disabled={saving}
+            autoFocus
+            onPressEnter={() => {
+              if (!saving && apiKey.trim()) void handleSave();
+            }}
+          />
+          <Typography.Paragraph className='m-0 text-12px text-t-tertiary leading-18px'>
+            还没有 Key？到
+            <a
+              href='https://dashscope.console.aliyun.com/'
+              target='_blank'
+              rel='noreferrer'
+              className='text-[var(--primary-6)] no-underline hover:underline'
+            >
+              dashscope.console.aliyun.com
+            </a>
+            免费创建后粘贴到上方输入框，填完点「保存并启用」或直接按回车。
+          </Typography.Paragraph>
+        </div>
+
+        <Typography.Paragraph className='m-0 text-12px text-t-tertiary leading-18px'>
+          Key 只会写入本地后端数据库，不会上传到任何第三方服务。保存后启动不会再弹本窗口； 如需更换或清除，到「设置 →
+          工具」页编辑这些条目的 env 字段 （DASHSCOPE_API_KEY），清除后该页会重新出现提示条，点它可再次打开本窗口。
+        </Typography.Paragraph>
+      </div>
+    </AionModal>
+  );
+};
+
+export default CampusApiKeyDialog;
