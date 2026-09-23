@@ -9,6 +9,7 @@ import {
   sendComparisonRequest,
   loadLatestDiffResult,
   checkMcpAvailable,
+  endAutoApprove,
 } from './policyComparisonClient';
 import { tryParsePolicyDiffResult } from './adaptDiffResult';
 
@@ -208,11 +209,12 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
       let result: PolicyDiffResult | null = null;
       let lastStatus: 'no_tool_output' | 'parse_failed' = 'no_tool_output';
       const pollStart = Date.now();
-      while (Date.now() - pollStart < 30000) {
+      while (Date.now() - pollStart < 120000) {
         await new Promise((r) => setTimeout(r, 2000));
         const loaded = await loadLatestDiffResult(conv.id);
         if (loaded.status === 'ok' && loaded.result) {
           result = loaded.result;
+          endAutoApprove();
           break;
         }
         lastStatus = loaded.status === 'parse_failed' ? 'parse_failed' : 'no_tool_output';
@@ -222,6 +224,7 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
       setAnalyzeStep(steps.length - 1);
 
       if (!result) {
+        endAutoApprove();
         clearInterval(stepTimer);
         setAnalyzeStep(steps.length - 1);
         if (lastStatus === 'parse_failed') {
@@ -238,6 +241,7 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
       await new Promise((r) => setTimeout(r, 600));
       saveAndGo(result);
     } catch (e) {
+      endAutoApprove();
       clearInterval(stepTimer);
       const errMsg = e instanceof Error ? e.message : String(e);
       console.error('[policy-comparison] MCP 调用失败:', errMsg);
