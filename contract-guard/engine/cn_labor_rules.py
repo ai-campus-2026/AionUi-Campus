@@ -42,6 +42,83 @@ def _extract_number(text: str, pattern: str) -> float | None:
     return None
 
 
+# ---- 中文数字支持（"三千五"=3500、"一万二"=12000、"三年"=3） ----
+
+_CN_DIGITS = {"零": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
+_CN_UNITS = {"十": 10, "百": 100, "千": 1000, "万": 10000}
+
+# 数值通配 token：阿拉伯数字（含千分位）或中文数字串
+_NUM_TOKEN = r"([0-9][0-9,]*(?:\.[0-9]+)?|[零一二两三四五六七八九十百千万]{1,8})"
+
+# 正则间隔中需要排除的字符（防止跨过另一个数值抓到错误的数字）
+_NOT_NUM_CHARS = "[^0-9零一二两三四五六七八九十百千万]"
+
+
+def _cn_to_num(token: str) -> float | None:
+    """中文数字/阿拉伯数字 token → 数值。
+
+    支持：三千=3000、三千五=3500、一万二=12000、一万二千三=12300、
+    四十五=45、十五=15、五百零六=506；纯阿拉伯数字（可含千分位）原样解析。
+    """
+    token = (token or "").strip()
+    if not token:
+        return None
+    if re.fullmatch(r"[0-9][0-9,]*(?:\.[0-9]+)?", token):
+        return float(token.replace(",", ""))
+
+    total = 0.0    # 已结算部分（万级）
+    section = 0.0  # 当前段（十/百/千级）累计
+    number = 0.0   # 待并入的个位数字
+    last_unit = 0  # 最近使用的单位（用于"三千五"这类尾数缩略）
+    had_zero = False
+    for ch in token:
+        if ch == "零":
+            had_zero = True
+        elif ch in _CN_DIGITS:
+            number = _CN_DIGITS[ch]
+        elif ch in _CN_UNITS:
+            unit = _CN_UNITS[ch]
+            if unit == 10000:
+                section = (section + number) * unit
+                total += section
+                section = 0.0
+            else:
+                if number == 0:
+                    number = 1  # "十五" = 15
+                section += number * unit
+            last_unit = unit
+            number = 0.0
+            had_zero = False
+        else:
+            return None
+
+    tail = number
+    if number and last_unit and not had_zero:
+        # 缩略写法："三千五" → 尾数按百计 = 3500；"四十五" → 5*1 = 45
+        tail = number * (last_unit // 10)
+    return total + section + tail
+
+
+def _find_amount(text: str, patterns: list[str]) -> float | None:
+    """按顺序尝试多个正则，返回首个可解析的数值（支持中文数字与长间隔表述）。"""
+    for pat in patterns:
+        m = re.search(pat, text, re.IGNORECASE)
+        if not m:
+            continue
+        for g in m.groups():
+            if not g:
+                continue
+            v = _cn_to_num(g)
+            if v is not None:
+                return v
+    return None
+
+
+def _fmt_g(v: float) -> str:
+    """数值展示：36.0 → "36"，36.5 → "36.5"。"""
+    return f"{v:g}"
+
+
 def _sentences(text: str) -> list[str]:
     """Split text into sentences."""
     return re.split(r"(?<=[.!?。！？])\s+", text)
@@ -292,15 +369,16 @@ def check_probation_wage_80(text: str, lang: str = "zh") -> StatuteCheck:
     title = rule["title"]
     basis = f"{rule['law']} {rule['article']}"
 
-    # 提取试用期工资（支持"试用期工资为3000元"等写法）
-    trial_salary = _extract_number(text, r"试用期工资[^\d]{0,5}?([0-9,]+)\s*元")
-    if trial_salary is None:
-        trial_salary = _extract_number(text, r"试用期[^元\d]{0,10}?([0-9,]+)\s*元")
-
-    # 提取转正/约定工资（支持"约定为5000元"等写法）
-    full_salary = _extract_number(text, r"(?:转正|正式|约定)[^\d]{0,5}?([0-9,]+)\s*元")
-    if full_salary is None:
-        full_salary = _extract_number(text, r"月薪[^\d]{0,5}?([0-9,]+)\s*元")
+    # 1) 金额式：分别提取试用期工资与转正/约定工资
+    #    容忍长间隔（"转正后工资为每月3500元"）与中文数字（"三千元"）
+    trial_salary = _find_amount(text, [
+        rf"试用期(?:工资|月薪|薪资|报酬|工资标准){_NOT_NUM_CHARS}{{0,15}}?{_NUM_TOKEN}\s*元",
+        rf"试用期(?:内)?{_NOT_NUM_CHARS}{{0,12}}?{_NUM_TOKEN}\s*元",
+    ])
+    full_salary = _find_amount(text, [
+        rf"(?:转正后|转正|正式|期满后){_NOT_NUM_CHARS}{{0,18}}?{_NUM_TOKEN}\s*元",
+        rf"(?<!试用期)(?<!试用)(?:约定|月薪|月工资|基本工资){_NOT_NUM_CHARS}{{0,15}}?{_NUM_TOKEN}\s*元",
+    ])
 
     if trial_salary is not None and full_salary is not None and full_salary > 0:
         ratio = trial_salary / full_salary
@@ -316,9 +394,34 @@ def check_probation_wage_80(text: str, lang: str = "zh") -> StatuteCheck:
             quote=_excerpt(text, "试用期工资") if "试用期工资" in text else _excerpt(text, f"{trial_salary:.0f}元"),
         )
 
+    # 2) 比例式：合同只写比例（"试用期工资为转正工资的80%"）
+    m = re.search(r"试用期[^%。\n]{0,30}?([0-9]{1,3}(?:\.[0-9]+)?)\s*%", text)
+    if m:
+        rate = float(m.group(1))
+        if rate < 80:
+            return StatuteCheck(
+                rule_id=rule_id, title=title, basis=basis, status=StatuteStatus.VIOLATION,
+                detail=f"试用期工资比例约定为{_fmt_g(rate)}%，低于法定80%底线",
+                quote=_excerpt(text, m.group(0)),
+            )
+        return StatuteCheck(
+            rule_id=rule_id, title=title, basis=basis, status=StatuteStatus.OK,
+            detail=f"试用期工资比例约定为{_fmt_g(rate)}%，符合法定80%底线",
+            quote=_excerpt(text, m.group(0)),
+        )
+
+    # 3) 识别到了部分信息时，给出更明确的缺失说明
+    if trial_salary is not None or full_salary is not None:
+        missing = "转正/约定工资" if full_salary is None else "试用期工资"
+        return StatuteCheck(
+            rule_id=rule_id, title=title, basis=basis, status=StatuteStatus.UNKNOWN,
+            detail=f"已识别一方金额，但未找到{missing}条款，无法比较是否达到80%（建议人工复核）",
+            quote="",
+        )
+
     return StatuteCheck(
         rule_id=rule_id, title=title, basis=basis, status=StatuteStatus.UNKNOWN,
-        detail="未找到明确的试用期工资和转正工资金额，无法判断",
+        detail="未找到试用期工资条款（金额或比例），无法判断",
         quote="",
     )
 
@@ -330,21 +433,59 @@ def check_trial_period_limit(text: str, lang: str = "zh") -> StatuteCheck:
     title = rule["title"]
     basis = f"{rule['law']} {rule['article']}"
 
-    # 提取合同期限（转换为月数）
+    # 1) 提取合同期限（统一换算为月）
+    #    覆盖："合同期限三年"、"合同期限3个月"、"三年期劳动合同"、"为期两年的劳动合同"
     contract_months = None
-    m = re.search(r"合同期限[：:\s]*([0-9]+)\s*年", text)
-    if m:
-        contract_months = int(m.group(1)) * 12
+    years = _find_amount(text, [
+        rf"合同期(?:限)?[：:\s为]{{0,3}}{_NUM_TOKEN}\s*年",
+        rf"(?<!试用)为期{_NUM_TOKEN}\s*年",
+        rf"{_NUM_TOKEN}\s*年期(?:的)?(?:劳动|聘用|用工|实习)?合同",
+        rf"{_NUM_TOKEN}\s*年的(?:劳动|聘用|用工|实习)?合同",
+    ])
+    if years is not None:
+        contract_months = years * 12
     else:
-        m = re.search(r"合同期限[：:\s]*([0-9]+)\s*(?:个月|月)", text)
-        if m:
-            contract_months = int(m.group(1))
+        months = _find_amount(text, [
+            rf"合同期(?:限)?[：:\s为]{{0,3}}{_NUM_TOKEN}\s*(?:个月|月)",
+        ])
+        if months is not None:
+            contract_months = months
 
-    # 提取试用期（月数）
-    trial_months = None
-    m = re.search(r"试用期[：:\s]*([0-9]+)\s*(?:个月|月)", text)
-    if m:
-        trial_months = int(m.group(1))
+    # 2) 提取试用期（优先"个月/月"，其次"年"，最后"日/天"）
+    #    覆盖："试用期三个月"、"试用期为3个月"、"试用期最长不超过六个月"
+    trial_months = _find_amount(text, [
+        rf"试用期(?:为|：|:|\s)*(?:最长|不得超过|不超过|不超|不得超)?{_NOT_NUM_CHARS}{{0,6}}?{_NUM_TOKEN}\s*(?:个月|月)",
+    ])
+    trial_days = None
+    trial_years = None
+    if trial_months is None:
+        # "试用期为3年"：年为单位的试用期（超绝对上限，必须识别）
+        # 负向前瞻排除样板句"试用期包含在三年期劳动合同内"（"年"后接"期/合/同"属合同期限）
+        trial_years = _find_amount(text, [
+            rf"试用期(?:为|：|:|\s)*(?:最长|不得超过|不超过|不超|不得超)?{_NOT_NUM_CHARS}{{0,6}}?{_NUM_TOKEN}\s*年(?![期合同])",
+        ])
+        if trial_years is not None:
+            trial_months = trial_years * 12
+    if trial_months is None:
+        trial_days = _find_amount(text, [
+            rf"试用期(?:为|：|:|\s)*(?:最长|不得超过|不超过|不超|不得超)?{_NOT_NUM_CHARS}{{0,6}}?{_NUM_TOKEN}\s*(?:日|天)",
+        ])
+        if trial_days is not None:
+            trial_months = trial_days / 30.0
+
+    trial_display = (
+        f"{_fmt_g(trial_days)}天" if trial_days is not None
+        else (f"{_fmt_g(trial_years)}年" if trial_years is not None
+              else (f"{_fmt_g(trial_months)}个月" if trial_months is not None else ""))
+    )
+
+    # 3) 绝对上限：任何情况下试用期不得超过6个月
+    if trial_months is not None and trial_months > 6:
+        return StatuteCheck(
+            rule_id=rule_id, title=title, basis=basis, status=StatuteStatus.VIOLATION,
+            detail=f"约定试用期{trial_display}，超过法定绝对上限6个月",
+            quote=_excerpt(text, "试用期") if "试用期" in text else _excerpt(text, trial_display),
+        )
 
     if contract_months is not None and trial_months is not None:
         # 根据法定上限判断
@@ -358,21 +499,33 @@ def check_trial_period_limit(text: str, lang: str = "zh") -> StatuteCheck:
         else:
             max_trial = 6
 
+        cm = _fmt_g(contract_months)
+        if max_trial == 0:
+            return StatuteCheck(
+                rule_id=rule_id, title=title, basis=basis, status=StatuteStatus.VIOLATION,
+                detail=f"合同期限{cm}个月（不满3个月），依法不得约定试用期，但合同约定了{trial_display}",
+                quote=_excerpt(text, "试用期") if "试用期" in text else _excerpt(text, trial_display),
+            )
         if trial_months > max_trial:
             return StatuteCheck(
                 rule_id=rule_id, title=title, basis=basis, status=StatuteStatus.VIOLATION,
-                detail=f"合同期限{contract_months}个月，试用期{trial_months}个月，超过法定上限{max_trial}个月",
-                quote=_excerpt(text, f"试用期") if "试用期" in text else _excerpt(text, f"{trial_months}个月"),
+                detail=f"合同期限{cm}个月，约定试用期{trial_display}，超过法定上限{max_trial}个月",
+                quote=_excerpt(text, "试用期") if "试用期" in text else _excerpt(text, trial_display),
             )
         return StatuteCheck(
             rule_id=rule_id, title=title, basis=basis, status=StatuteStatus.OK,
-            detail=f"合同期限{contract_months}个月，试用期{trial_months}个月，符合法定上限{max_trial}个月",
-            quote=_excerpt(text, f"试用期") if "试用期" in text else _excerpt(text, f"{trial_months}个月"),
+            detail=f"合同期限{cm}个月，约定试用期{trial_display}，未超过法定上限{max_trial}个月",
+            quote=_excerpt(text, "试用期") if "试用期" in text else _excerpt(text, trial_display),
         )
 
+    missing = []
+    if contract_months is None:
+        missing.append("合同期限")
+    if trial_months is None:
+        missing.append("试用期期限")
     return StatuteCheck(
         rule_id=rule_id, title=title, basis=basis, status=StatuteStatus.UNKNOWN,
-        detail="未找到明确的合同期限和试用期期限，无法判断",
+        detail=f"未找到明确的{'、'.join(missing)}，无法比对法定上限（条款表述特殊时建议人工复核）",
         quote="",
     )
 
