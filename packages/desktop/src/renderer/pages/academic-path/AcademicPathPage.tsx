@@ -1,8 +1,8 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { PathView, ProgramPlan, StudentProgress, CourseStatus, CourseCategory } from './types';
-import { parseProgramPlan, adaptMcpPlan, loadProgramGraph } from './programParser';
+import { parseProgramPlan, adaptMcpPlan, loadProgramGraph, mergeProgramGraphWithPreview } from './programParser';
 import { loadCourseStatuses, saveCourseStatuses } from './progressClient';
 import EmptyState from './components/EmptyState';
 import MyInfo from './components/MyInfo';
@@ -70,6 +70,7 @@ const AcademicPathPage: React.FC = () => {
   const [returnView, setReturnView] = useState<'empty' | 'history'>('empty');
   const [isParsing, setIsParsing] = useState(false);
   const [tempViewPlan, setTempViewPlan] = useState<ProgramPlan | null>(null);
+  const uploadRequestRef = useRef(0);
 
   // ---- 顶部导航栏 ----
   const TopNav = ({ active }: { active: 'workbench' | 'profile' | 'history' | 'empty' }) => (
@@ -197,6 +198,7 @@ const AcademicPathPage: React.FC = () => {
   const handleUpload = useCallback(
     async (attachmentPath: string) => {
       if (isParsing) return;
+      const requestId = ++uploadRequestRef.current;
       setParseError(null);
       setIsParsing(true);
       try {
@@ -206,30 +208,35 @@ const AcademicPathPage: React.FC = () => {
           return;
         }
         if (result.plan) {
-          const graphResult = await loadProgramGraph(result.plan.id);
-          if (graphResult.type === 'ready') {
-            setPendingPlan({
-              ...graphResult.plan,
-              recommendedSequences: result.plan.recommendedSequences,
-            });
-            setParseWarnings([...new Set([...(result.warnings ?? []), ...(graphResult.warnings ?? [])])]);
-          } else {
-            setPendingPlan(result.plan);
+          const previewPlan = result.plan;
+          setPendingPlan(previewPlan);
+          setParseWarnings(result.warnings ?? []);
+          setParseSource('mcp');
+          setParseError(null);
+          setView('confirm');
+          void loadProgramGraph(previewPlan.id).then((graphResult) => {
+            if (uploadRequestRef.current !== requestId) return;
+            if (graphResult.type === 'ready') {
+              setPendingPlan((current) =>
+                current?.id === previewPlan.id ? mergeProgramGraphWithPreview(previewPlan, graphResult.plan) : current
+              );
+              setParseWarnings([...new Set([...(result.warnings ?? []), ...(graphResult.warnings ?? [])])]);
+              return;
+            }
             setParseWarnings([
               ...new Set([
                 ...(result.warnings ?? []),
                 `${t('mcp.curriculumGraphUnavailable')} (${graphResult.errorCode})`,
               ]),
             ]);
-          }
-          setParseSource('mcp');
-          setParseError(null);
-          setView('confirm');
+          });
         }
       } catch {
-        setParseError({ code: 'UNKNOWN', message: t('mcp.curriculumImportFailed') });
+        if (uploadRequestRef.current === requestId) {
+          setParseError({ code: 'UNKNOWN', message: t('mcp.curriculumImportFailed') });
+        }
       } finally {
-        setIsParsing(false);
+        if (uploadRequestRef.current === requestId) setIsParsing(false);
       }
     },
     [isParsing, t]
@@ -238,6 +245,7 @@ const AcademicPathPage: React.FC = () => {
   // ---- 调试注入 ----
   const handleDebugInject = useCallback((json: object) => {
     try {
+      uploadRequestRef.current += 1;
       const injectedPlan = adaptMcpPlan(json as import('./programParser').McpProgramPlanResult, '调试注入.json');
       setPendingPlan(injectedPlan);
       setParseWarnings(['⚠ 调试注入数据（非真实 MCP 解析结果）']);

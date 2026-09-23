@@ -92,6 +92,53 @@ export async function loadProgramGraph(documentId: string): Promise<GraphLoadRes
   }
 }
 
+function createUniqueCourseLookup(courses: Course[], keyOf: (course: Course) => string): Map<string, Course> {
+  const lookup = new Map<string, Course>();
+  const duplicates = new Set<string>();
+  courses.forEach((course) => {
+    const key = keyOf(course).trim().toLocaleLowerCase().replace(/\s+/g, '');
+    if (!key) return;
+    if (lookup.has(key)) duplicates.add(key);
+    else lookup.set(key, course);
+  });
+  duplicates.forEach((key) => lookup.delete(key));
+  return lookup;
+}
+
+/** Keep preview-only vision guidance when replacing preview courses with the verified graph. */
+export function mergeProgramGraphWithPreview(preview: ProgramPlan, graph: ProgramPlan): ProgramPlan {
+  const graphById = createUniqueCourseLookup(graph.courses, (course) => course.id);
+  const graphByName = createUniqueCourseLookup(graph.courses, (course) => course.name);
+  const previewById = createUniqueCourseLookup(preview.courses, (course) => course.id);
+  const resolveCourseId = (previewId: string): string | undefined => {
+    const normalizedId = previewId.trim().toLocaleLowerCase().replace(/\s+/g, '');
+    const directMatch = graphById.get(normalizedId);
+    if (directMatch) return directMatch.id;
+    const previewCourse = previewById.get(normalizedId);
+    if (!previewCourse) return undefined;
+    return graphByName.get(previewCourse.name.trim().toLocaleLowerCase().replace(/\s+/g, ''))?.id;
+  };
+
+  const seenEdges = new Set<string>();
+  const recommendedSequences = (preview.recommendedSequences ?? []).flatMap((edge) => {
+    const from = resolveCourseId(edge.from);
+    const to = resolveCourseId(edge.to);
+    if (!from || !to || from === to) return [];
+    const target = graph.courses.find((course) => course.id === to);
+    if (target?.prerequisites.includes(from)) return [];
+    const key = `${from}\u0000${to}`;
+    if (seenEdges.has(key)) return [];
+    seenEdges.add(key);
+    return [{ ...edge, from, to }];
+  });
+
+  return {
+    ...graph,
+    id: preview.id,
+    recommendedSequences,
+  };
+}
+
 /** Adapt a course preview for both the normal upload flow and the JSON debug panel. */
 export function adaptMcpPlan(raw: McpProgramPlanResult, fileName?: string, documentId?: string): ProgramPlan {
   if (!raw.major || !Array.isArray(raw.courses) || raw.courses.length === 0) {

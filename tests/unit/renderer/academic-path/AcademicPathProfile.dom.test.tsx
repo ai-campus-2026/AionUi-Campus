@@ -15,6 +15,11 @@ vi.mock('@renderer/pages/academic-path/programParser', () => ({
   adaptMcpPlan: () => testPlan,
   parseProgramPlan: parseProgramPlanMock,
   loadProgramGraph: loadProgramGraphMock,
+  mergeProgramGraphWithPreview: (preview: ProgramPlan, graph: ProgramPlan) => ({
+    ...graph,
+    id: preview.id,
+    recommendedSequences: preview.recommendedSequences,
+  }),
 }));
 vi.mock('@renderer/pages/academic-path/progressClient', () => ({
   loadCourseStatuses: loadCourseStatusesMock,
@@ -45,6 +50,7 @@ vi.mock('@renderer/pages/academic-path/components/ConfirmPlan', () => ({
   default: ({ plan, onConfirm }: { plan: ProgramPlan; onConfirm: (value: ProgramPlan) => void }) => (
     <div>
       <span data-testid='confirm-plan'>{plan.id}</span>
+      <span data-testid='confirm-course'>{plan.courses[0]?.id}</span>
       <button type='button' onClick={() => onConfirm(plan)}>
         Confirm plan
       </button>
@@ -159,15 +165,22 @@ describe('academic path profile navigation', () => {
     await waitFor(() => expect(parseProgramPlanMock).toHaveBeenCalledTimes(2));
   });
 
-  it('uses the verified course graph after the upload preview is ingested', async () => {
+  it('shows the upload preview without waiting for full graph extraction', async () => {
+    let resolveGraph!: (value: { type: 'ready'; plan: ProgramPlan; warnings: string[] }) => void;
+    const graphPromise = new Promise<{ type: 'ready'; plan: ProgramPlan; warnings: string[] }>((resolve) => {
+      resolveGraph = resolve;
+    });
     parseProgramPlanMock.mockResolvedValue({ type: 'ready', plan: testPlan, warnings: [] });
-    loadProgramGraphMock.mockResolvedValue({ type: 'ready', plan: historyPlan, warnings: [] });
+    loadProgramGraphMock.mockReturnValue(graphPromise);
     render(<AcademicPathPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Upload plan' }));
 
-    await waitFor(() => expect(loadProgramGraphMock).toHaveBeenCalledWith(testPlan.id));
-    expect(await screen.findByTestId('confirm-plan')).toHaveTextContent(historyPlan.id);
+    expect(await screen.findByTestId('confirm-plan')).toHaveTextContent(testPlan.id);
+    expect(screen.getByTestId('confirm-course')).toBeEmptyDOMElement();
+
+    resolveGraph({ type: 'ready', plan: historyPlan, warnings: [] });
+    await waitFor(() => expect(screen.getByTestId('confirm-course')).toHaveTextContent('new-course'));
   });
 
   it('keeps the real preview when full graph extraction is not ready', async () => {

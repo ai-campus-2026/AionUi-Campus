@@ -65,6 +65,16 @@ function isAvailable(course: Course, statuses: Record<string, CourseStatus>): bo
   return course.prerequisites.every((pid) => statuses[pid] === 'passed');
 }
 
+function getSuggestedPrerequisites(plan: ProgramPlan, course: Course): Course[] {
+  const formalPrerequisites = new Set(course.prerequisites);
+  const suggestedIds = new Set(
+    plan.recommendedSequences
+      ?.filter((edge) => edge.to === course.id && !formalPrerequisites.has(edge.from))
+      .map((edge) => edge.from) ?? []
+  );
+  return plan.courses.filter((candidate) => suggestedIds.has(candidate.id));
+}
+
 const PathWorkbench: React.FC<Props> = ({
   plan,
   progress,
@@ -140,12 +150,16 @@ const PathWorkbench: React.FC<Props> = ({
         case 'available':
           return isAvailable(c, statuses) && statuses[c.id] === 'not_taken';
         case 'locked':
-          return !isAvailable(c, statuses) && statuses[c.id] === 'not_taken';
+          return (
+            statuses[c.id] === 'not_taken' &&
+            (!isAvailable(c, statuses) ||
+              getSuggestedPrerequisites(plan, c).some((course) => statuses[course.id] !== 'passed'))
+          );
         default:
           return true;
       }
     });
-  }, [plan.courses, filter, search, statuses]);
+  }, [plan, filter, search, statuses]);
 
   const coursesBySemester = useMemo(() => {
     const map: Record<number, Course[]> = {};
@@ -270,6 +284,7 @@ const PathWorkbench: React.FC<Props> = ({
   const selectedPrereqs = selectedCourse?.prerequisites
     .map((pid) => plan.courses.find((c) => c.id === pid))
     .filter(Boolean) as Course[];
+  const selectedSuggestedPrereqs = selectedCourse ? getSuggestedPrerequisites(plan, selectedCourse) : [];
   const selectedSuccessors = plan.courses.filter((c) => c.prerequisites.includes(selectedCourseId ?? ''));
 
   return (
@@ -389,6 +404,9 @@ const PathWorkbench: React.FC<Props> = ({
                   const status = statuses[course.id] ?? 'not_taken';
                   const meta = STATUS_META[status];
                   const available = isAvailable(course, statuses);
+                  const hasUnmetSuggestion = getSuggestedPrerequisites(plan, course).some(
+                    (prerequisite) => statuses[prerequisite.id] !== 'passed'
+                  );
                   const isSelected = selectedCourseId === course.id;
                   const isRelated = relatedIds.has(course.id);
                   const dimmed = selectedCourseId && !isRelated;
@@ -416,6 +434,14 @@ const PathWorkbench: React.FC<Props> = ({
                         {meta.icon} {meta.label}
                         {status === 'not_taken' && available && (
                           <span className='ap-course-node__available'>✦ 当前可修</span>
+                        )}
+                        {status === 'not_taken' && hasUnmetSuggestion && (
+                          <span
+                            className='ap-course-node__available'
+                            title={t('mcp.curriculumSuggestedPrerequisitesHint')}
+                          >
+                            ◇ {t('mcp.curriculumSuggestedPrerequisites')}
+                          </span>
                         )}
                         {status === 'not_taken' && !available && (
                           <span className='ap-course-node__locked'>🔒 暂不可修</span>
@@ -566,6 +592,21 @@ const PathWorkbench: React.FC<Props> = ({
                       {STATUS_META[statuses[p.id] ?? 'not_taken'].icon}
                     </span>
                     <span>{p.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {selectedSuggestedPrereqs.length > 0 && (
+              <div className='ap-detail-panel__section'>
+                <div className='ap-detail-panel__section-title'>{t('mcp.curriculumSuggestedPrerequisites')}</div>
+                <div className='ap-detail-panel__warning'>{t('mcp.curriculumSuggestedPrerequisitesHint')}</div>
+                {selectedSuggestedPrereqs.map((prerequisite) => (
+                  <div key={prerequisite.id} className='ap-detail-panel__relation'>
+                    <span className={`ap-detail-panel__relation-status ${statuses[prerequisite.id] ?? 'not_taken'}`}>
+                      {STATUS_META[statuses[prerequisite.id] ?? 'not_taken'].icon}
+                    </span>
+                    <span>{prerequisite.name}</span>
                   </div>
                 ))}
               </div>

@@ -43,7 +43,7 @@ const plan: ProgramPlan = {
 function Harness({ onSync }: { onSync: () => Promise<boolean> }) {
   const [progress, setProgress] = useState<StudentProgress>({
     planId: plan.id,
-    courseStatuses: { 'course-1': 'not_taken' },
+    courseStatuses: { 'course-1': 'not_taken', 'course-2': 'not_taken' },
   });
   const onCourseStatusChange = (courseId: string, status: CourseStatus) => {
     setProgress((previous) => ({
@@ -87,5 +87,17 @@ describe('academic path progress synchronization', () => {
     const { container } = render(<Harness onSync={vi.fn().mockResolvedValue(true)} />);
 
     await waitFor(() => expect(container.querySelector('path[stroke-dasharray="6 4"]')).not.toBeNull());
+  });
+
+  it('includes unmet suggested predecessors in the relationship filter and course details', () => {
+    render(<Harness onSync={vi.fn().mockResolvedValue(true)} />);
+
+    fireEvent.click(screen.getByRole('button', { name: '存在先修限制' }));
+
+    expect(screen.queryByText('Calculus')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Advanced Calculus'));
+    expect(screen.getByText('mcp.curriculumSuggestedPrerequisitesHint')).toBeInTheDocument();
+    expect(screen.getByText('Calculus')).toBeInTheDocument();
+    expect(screen.queryByText(/暂不可修/)).not.toBeInTheDocument();
   });
 });
