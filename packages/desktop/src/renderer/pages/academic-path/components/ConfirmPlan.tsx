@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Home } from '@icon-park/react';
 import type { ProgramPlan } from '../types';
 
@@ -16,7 +15,6 @@ interface Props {
 
 const ConfirmPlan: React.FC<Props> = ({ plan, onConfirm, onBack, warnings, source }) => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const requiredCount = plan.courses.filter((c) => c.category === 'required' || c.category === 'core').length;
   const electiveCount = plan.courses.filter((c) => c.category === 'elective').length;
   const relationCount = plan.courses.reduce((sum, c) => sum + c.prerequisites.length, 0);
@@ -25,7 +23,7 @@ const ConfirmPlan: React.FC<Props> = ({ plan, onConfirm, onBack, warnings, sourc
     { label: '课程总数', value: plan.courses.length },
     { label: '必修/核心课', value: requiredCount },
     { label: '选修课', value: electiveCount },
-    { label: '总学分', value: plan.totalCredits ?? '—' },
+    { label: '总学分', value: plan.totalCredits },
     { label: '先修关系', value: relationCount },
   ];
 
@@ -114,11 +112,6 @@ const ConfirmPlan: React.FC<Props> = ({ plan, onConfirm, onBack, warnings, sourc
         </div>
 
         {/* 先修关系示例 */}
-        {plan.recommendedSequences?.length ? (
-          <div className='ap-confirm__section'>
-            <p>{t('mcp.curriculumRecommendedSequenceLegend', { count: plan.recommendedSequences.length })}</p>
-          </div>
-        ) : null}
         <div className='ap-confirm__section'>
           <h2 className='ap-confirm__section-title'>课程先修关系（部分）</h2>
           <div className='ap-confirm__relations'>

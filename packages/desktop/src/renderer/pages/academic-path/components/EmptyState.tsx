@@ -1,12 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Home } from '@icon-park/react';
-import { useTranslation } from 'react-i18next';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ipcBridge } from '@/common';
 import { parsingSteps } from '../mockData';
 
 interface Props {
-  onUpload: (attachmentPath: string) => void;
+  onUpload: (fileName: string) => void;
+  recentPlanName?: string;
+  onUseRecentPlan?: () => void;
   /** 调试注入：直接传入 MCP 格式 JSON，跳过真实调用 */
   onDebugInject: (json: object) => void;
   /** 解析失败信息 */
@@ -17,12 +16,11 @@ interface Props {
 }
 
 const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasHistory, onViewHistory, onBack }) => {
-  const navigate = useNavigate();
-  const { t } = useTranslation();
+  const [dragging, setDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
   const [parseStep, setParseStep] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
   // ---- 调试：JSON 注入 ----
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugJson, setDebugJson] = useState('');
@@ -32,26 +30,33 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
     try {
       const files = await ipcBridge.dialog.showOpen.invoke({
         properties: ['openFile'],
-        filters: [{ name: 'Curriculum', extensions: ['pdf'] }],
+        filters: [{ name: '培养方案', extensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'] }],
       });
       if (files && files.length > 0) {
         const path = files[0];
         const name = path.split(/[\\/]/).pop() || path;
         setSelectedFile(name);
-        setSelectedPath(path);
       }
     } catch {
       /* ignore */
     }
   }, []);
 
-  // Start a real import; a filename alone is never treated as an attachment.
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setSelectedFile(e.dataTransfer.files[0].name);
+    }
+  }, []);
+
+  // 开始分析 → 内联显示解析动画，同时通知父组件调用 MCP
   const handleStart = useCallback(() => {
-    if (!selectedPath) return;
+    if (!selectedFile) return;
     setParsing(true);
     setParseStep(0);
-    onUpload(selectedPath);
-  }, [selectedPath, onUpload]);
+    onUpload(selectedFile);
+  }, [selectedFile, onUpload]);
 
   // 解析步骤动画
   useEffect(() => {
@@ -59,8 +64,8 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
     if (parseStep >= parsingSteps.length) {
       return;
     }
-    const timer = setTimeout(() => setParseStep((s) => s + 1), 700);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setParseStep((s) => s + 1), 700);
+    return () => clearTimeout(t);
   }, [parsing, parseStep, parseError]);
 
   // 取消解析
@@ -68,7 +73,6 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
     setParsing(false);
     setParseStep(0);
     setSelectedFile(null);
-    setSelectedPath(null);
   }, []);
 
   // ---- 调试：Ctrl+Shift+D 开关注入面板 ----
@@ -188,19 +192,9 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
   // 默认：上传状态
   return (
     <div className='ap-empty'>
+      {/* 装饰性背景：淡灰色课程节点连线 */}
       <header className='ap-empty__header'>
-        <button type='button' className='ap-back' onClick={onBack}>
-          ← 返回
-        </button>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button
-            type='button'
-            className='ap-btn ap-btn--ghost ap-home-btn'
-            onClick={() => navigate('/')}
-            title='返回首页'
-          >
-            <Home size={15} theme='outline' fill='currentColor' />
-          </button>
           <button
             type='button'
             className='ap-btn ap-btn--ghost ap-debug-btn'
@@ -209,43 +203,65 @@ const EmptyState: React.FC<Props> = ({ onUpload, onDebugInject, parseError, hasH
           >
             调试
           </button>
-          {hasHistory && (
-            <button type='button' className='ap-btn ap-btn--primary' onClick={onViewHistory}>
-              培养方案历史
-            </button>
-          )}
         </div>
       </header>
 
       <div className='ap-empty__inner'>
         <div className='ap-empty__icon'>🎓</div>
         <h1 className='ap-empty__title'>建立你的学业路径</h1>
-        <p className='ap-empty__desc'>{t('mcp.curriculumUploadDescription')}</p>
+        <p className='ap-empty__desc'>
+          上传你的专业培养方案，AI 将自动识别课程、学分、培养要求和课程先修关系，为你生成个人学业地图。
+        </p>
 
-        <div className={`ap-empty__dropzone ${selectedFile ? 'ap-empty__dropzone--filled' : ''}`} onClick={handleFile}>
+        <div
+          className={`ap-empty__dropzone ${dragging ? 'ap-empty__dropzone--dragging' : ''} ${selectedFile ? 'ap-empty__dropzone--filled' : ''}`}
+          onClick={handleFile}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={handleDrop}
+        >
+          <input
+            ref={inputRef}
+            type='file'
+            accept='.pdf,.doc,.docx,.jpg,.jpeg,.png'
+            style={{ display: 'none' }}
+            onChange={handleFile}
+          />
           {selectedFile ? (
             <>
               <div className='ap-empty__dropzone-icon'>✓</div>
               <div className='ap-empty__dropzone-title'>{selectedFile}</div>
-              <div className='ap-empty__dropzone-sub'>{t('mcp.curriculumChooseAnother')}</div>
+              <div className='ap-empty__dropzone-sub'>已选择，点击可重新选择</div>
             </>
           ) : (
             <>
               <div className='ap-empty__dropzone-icon'>📄</div>
-              <div className='ap-empty__dropzone-title'>{t('mcp.curriculumChooseFile')}</div>
-              <div className='ap-empty__dropzone-formats'>{t('mcp.curriculumSupportedFormats')}</div>
+              <div className='ap-empty__dropzone-title'>上传培养方案</div>
+              <div className='ap-empty__dropzone-sub'>点击或拖拽文件到此处</div>
+              <div className='ap-empty__dropzone-formats'>支持 PDF / Word / 图片</div>
             </>
           )}
         </div>
 
-        <div className='ap-empty__start-wrap'>
+        <div
+          className='ap-empty__start-wrap'
+          style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}
+        >
+          {selectedFile && (
+            <button type='button' className='ap-btn ap-btn--ghost' onClick={() => setSelectedFile(null)}>
+              取消选择
+            </button>
+          )}
           <button
             type='button'
             className={`ap-btn ap-btn--primary ap-btn--large ap-empty__start-btn ${!selectedFile ? 'ap-btn--disabled' : ''}`}
-            disabled={!selectedPath}
+            disabled={!selectedFile}
             onClick={handleStart}
           >
-            {t('mcp.curriculumStoreButton')}
+            开始分析
           </button>
         </div>
       </div>

@@ -11,11 +11,6 @@ vi.mock('@renderer/pages/academic-path/programParser', () => ({
   adaptMcpPlan: () => testPlan,
   parseProgramPlan: vi.fn(),
 }));
-vi.mock('@renderer/pages/academic-path/progressClient', () => ({
-  clearCourseStatuses: vi.fn(),
-  loadCourseStatuses: vi.fn().mockResolvedValue(null),
-  saveCourseStatuses: vi.fn(),
-}));
 vi.mock('@renderer/pages/academic-path/components/EmptyState', () => ({
   default: ({ onDebugInject }: { onDebugInject: (value: object) => void }) => (
     <button type='button' onClick={() => onDebugInject({})}>
@@ -31,11 +26,7 @@ vi.mock('@renderer/pages/academic-path/components/ConfirmPlan', () => ({
   ),
 }));
 vi.mock('@renderer/pages/academic-path/components/PathWorkbench', () => ({
-  default: ({ onViewProfile }: { onViewProfile: () => void }) => (
-    <button type='button' onClick={onViewProfile}>
-      Open profile
-    </button>
-  ),
+  default: () => <div>Path content</div>,
 }));
 vi.mock('@renderer/pages/academic-path/components/PlanHistory', () => ({ default: () => null }));
 vi.mock('@renderer/pages/academic-path/components/MyInfo', () => ({
@@ -63,22 +54,21 @@ describe('academic path profile navigation', () => {
     navigateMock.mockReset();
   });
 
-  it('opens My Info after a curriculum is confirmed and returns to the path', async () => {
+  it('opens My Info from the top navigation and returns to the path', () => {
     render(<AcademicPathPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Import plan' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm plan' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Open profile' }));
+    fireEvent.click(screen.getByRole('button', { name: '我的信息' }));
 
     expect(screen.getByText('Profile content')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'mcp.curriculumBackToPath' }));
-    expect(screen.getByRole('button', { name: 'Open profile' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '我的学业路径' }));
+    expect(screen.getByText('Path content')).toBeInTheDocument();
   });
 
-  it('does not expose My Info before a curriculum is confirmed', () => {
+  it('exposes the original top-level navigation on the import view', () => {
     render(<AcademicPathPage />);
 
-    expect(screen.queryByRole('button', { name: 'Open profile' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '我的信息' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '培养方案历史' })).toBeInTheDocument();
   });
 });
