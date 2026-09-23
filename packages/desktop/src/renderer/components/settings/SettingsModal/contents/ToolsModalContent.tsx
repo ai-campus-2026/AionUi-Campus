@@ -19,7 +19,7 @@ import AionSelect from '@/renderer/components/base/AionSelect';
 import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
 import AddMcpServerModal from '@/renderer/pages/settings/components/AddMcpServerModal';
 import McpServerItem from '@/renderer/pages/settings/ToolsSettings/McpServerItem';
-import { collectCampusMcpServers, hasCampusEnvKey } from '@/common/config/campusMcp';
+import { collectCampusMcpServers, hasCampusEnvKey, requiresCampusApiKey } from '@/common/config/campusMcp';
 import { onCampusApiKeyDialogSaved, requestCampusApiKeyDialog } from '@/renderer/services/campusApiKeyDialogBus';
 import {
   useMcpServers,
@@ -53,7 +53,9 @@ const areEnvRecordsEqual = (a: Record<string, string>, b: Record<string, string>
  * 检测不靠 builtin 标记（校园 MCP 常是手动添加的，builtin 为 false，用它当闸门
  * 会让本条永远不出现），也不做「凡是 Python 启动就算校园 MCP」的泛化匹配 ——
  * 那会把用户自己装的无关 Python MCP 误判进来。只认 campusMcp.ts 里的显式白名单：
- * policy_search、rag、contract-scan、policy-comparison（名称或 server.py 路径命中）。
+ * policy_search、rag、contract-scan、policy-comparison、course_path_server
+ * （名称含别名或 server.py 路径命中）。缺 Key 告警只看需要 Key 的前四个；
+ * course_path_server 核心功能不依赖 Key（needsKey=false），不参与告警。
  *
  * 为什么常驻：填过 key 之后启动弹窗会按设计短路不再弹，如果本条只在「缺 key」时
  * 出现，那么全部配好后入口就彻底消失、再也没法更换/重填 key。所以只要列表里存在
@@ -66,17 +68,22 @@ const areEnvRecordsEqual = (a: Record<string, string>, b: Record<string, string>
  */
 const CampusApiKeyNotice: React.FC = () => {
   const [total, setTotal] = useState(0);
+  const [keyTotal, setKeyTotal] = useState(0);
   const [missingNames, setMissingNames] = useState<string[]>([]);
 
   const refresh = useCallback(async () => {
     try {
       const servers = (await mcpService.listServers.invoke()) || [];
       const targets = collectCampusMcpServers(servers);
+      // 缺 Key 告警只看需要 Key 的服务；course_path_server 核心功能不依赖 Key
+      const keyTargets = targets.filter(requiresCampusApiKey);
       setTotal(targets.length);
-      setMissingNames(targets.filter((server) => !hasCampusEnvKey(server)).map((server) => server.name));
+      setKeyTotal(keyTargets.length);
+      setMissingNames(keyTargets.filter((server) => !hasCampusEnvKey(server)).map((server) => server.name));
     } catch (error) {
       console.warn('[CampusApiKeyNotice] refresh failed', error);
       setTotal(0);
+      setKeyTotal(0);
       setMissingNames([]);
     }
   }, []);
@@ -97,7 +104,9 @@ const CampusApiKeyNotice: React.FC = () => {
     <div className='flex items-center justify-between gap-12px px-12px py-8px rd-8px bg-fill-2 border border-solid border-[var(--bg-3)]'>
       <span className='text-12px text-t-secondary leading-18px'>
         {allConfigured
-          ? `校园规则解码器 MCP 的 DashScope API Key 已配置（共 ${total} 个 MCP），如需更换或重填点右侧按钮。`
+          ? keyTotal > 0
+            ? `校园规则解码器 MCP 的 DashScope API Key 已配置（共 ${total} 个 MCP），如需更换或重填点右侧按钮。`
+            : `校园规则解码器 MCP 暂不依赖 DashScope API Key（共 ${total} 个 MCP），课程规划可自愿配置以启用语义检索。`
           : `校园规则解码器 MCP（${missingNames.join(' / ')}）缺少 DASHSCOPE_API_KEY，相关工具调用会失败。`}
       </span>
       <button
@@ -109,7 +118,7 @@ const CampusApiKeyNotice: React.FC = () => {
             : 'shrink-0 px-12px py-4px rd-6px border-0 bg-[var(--primary-6)] text-white text-12px cursor-pointer hover:bg-[var(--primary-5)]'
         }
       >
-        {allConfigured ? '修改 Key' : '填写 API Key'}
+        {allConfigured ? (keyTotal > 0 ? '修改 Key' : '配置 Key') : '填写 API Key'}
       </button>
     </div>
   );
