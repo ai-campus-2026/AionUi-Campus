@@ -121,7 +121,13 @@ TOOLS = [
             "- 用户发送 'd:/docs/国家奖学金评定细则.pdf' 但没说话 → 文件名包含'奖学金'和'评定细则'，自动调用此工具\n"
             "- 用户发送 'd:/docs/综合素质测评实施办法.pdf' 但没说话 → 文件名包含'综测'和'测评办法'，自动调用此工具\n"
             "- 用户发送 'd:/docs/学生转专业管理办法.pdf' 但没说话 → 文件名包含'转专业'和'管理办法'，自动调用此工具\n"
-            "- 用户发送 'd:/docs/助学金评审实施细则.pdf' 但没说话 → 文件名包含'助学金'和'实施细则'，自动调用此工具"
+            "- 用户发送 'd:/docs/助学金评审实施细则.pdf' 但没说话 → 文件名包含'助学金'和'实施细则'，自动调用此工具\n"
+            "\n"
+            "=== 加载成功后动作（必须遵守） ===\n"
+            "- 当本工具返回 success=true 时，必须紧接着调用 query_policy 完成一次基准匹配（前端「政策解读」页将据此生成分析快照），不得跳过；\n"
+            "- user_info 优先从对话中用户已提供的信息填充（GPA、排名、英语成绩、论文、竞赛等按 query_policy 的字段规范填写）；\n"
+            "- 若用户尚未提供任何个人信息，必须至少传入本工具返回结果里的 school 与 year（严禁传空对象，会被服务端拒绝）；\n"
+            "- category 参数传本工具返回结果里的 category_key 字段值。"
         ),
         inputSchema={
             "type": "object",
@@ -158,7 +164,9 @@ TOOLS = [
             "- 我的GPA是、我有多少论文、保研条件、奖学金条件\n"
             "- 我能不能申请、我是否符合条件、政策eligibility\n"
             "- 帮我看看、帮我查一下、匹配一下\n"
-            "适用场景：用户提供了个人信息，想知道自己符合哪些政策条件。\n"
+            "- 刚成功调用 load_policy_document（success=true）后 → 必须立即用本工具完成一次基准匹配\n"
+            "适用场景：用户提供了个人信息，想知道自己符合哪些政策条件；政策文档加载成功后的基准匹配亦属本工具职责"
+            "（无用户信息时按文档 school/year 兜底，只传 school/year 即可，user_info 不能为空对象）。\n"
             "\n"
             "=== 字段填写规范（重要，直接影响判定准确性） ===\n"
             "1. 数值字段分制：GPA/绩点填 gpa（4分/5分制小数）；百分制平均成绩填 average_score（如 90）；"
@@ -475,13 +483,20 @@ async def _handle_load_policy(arguments: Dict[str, Any]) -> List[TextContent]:
             "doc_id": doc_id,
             "title": meta["title"],
             "category": Config.CATEGORIES.get(meta["category"], meta["category"]),
+            "category_key": meta["category"],
             "school": meta["school"],
             "year": meta["year"],
             "requirements_summary": req_summary,
             "total_conditions": sum(v["count"] for v in req_summary.values()),
             "logic_groups_count": len(policy_data["logic_groups"]),
             "important_dates_count": len(policy_data["important_dates"]),
-            "message": f"政策文档已成功加载并存储，doc_id: {doc_id}",
+            "message": (
+                f"政策文档已成功加载并存储，doc_id: {doc_id}。"
+                "下一步（必须执行）：请立即调用 query_policy 完成一次基准匹配（前端「政策解读」页将据此生成分析快照）。"
+                "user_info 优先从对话中用户已提供的信息填充；若用户尚未提供任何个人信息，"
+                "必须至少传入本结果里的 school 与 year（严禁传空对象，会被拒绝）；"
+                "category 参数传本结果里的 category_key 字段值。"
+            ),
         }
         return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]
 
