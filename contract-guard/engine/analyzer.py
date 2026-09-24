@@ -1,4 +1,4 @@
-"""DashScope/qwen-plus 适配器 — 替换 ContractGuard 原版的 OpenRouter 调用。
+"""DashScope/qwen3.8-flash 适配器 — 替换 ContractGuard 原版的 OpenRouter 调用。
 
 保持 analyze_contract() 函数签名不变，确保上游调用不受影响。
 """
@@ -23,7 +23,7 @@ from pydantic import ValidationError
 from engine.models import AnalysisResult
 from engine.prompts_zh import get_prompts
 
-DEFAULT_MODEL = "qwen-plus"
+DEFAULT_MODEL = "qwen3.8-flash"
 MAX_CONTRACT_CHARS = 120_000  # ~30K tokens
 
 
