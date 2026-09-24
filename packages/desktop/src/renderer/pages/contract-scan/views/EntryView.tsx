@@ -58,6 +58,7 @@ const EntryView: React.FC<EntryViewProps> = ({
   const [dragOver, setDragOver] = useState(false);
   const [scanStep, setScanStep] = useState(0);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
 
   // 调试状态
   const [debugOpen, setDebugOpen] = useState(false);
@@ -77,6 +78,16 @@ const EntryView: React.FC<EntryViewProps> = ({
     const t = setTimeout(() => setScanStep((s) => s + 1), 1500);
     return () => clearTimeout(t);
   }, [scanning, scanStep]);
+
+  // 等待秒数计时
+  React.useEffect(() => {
+    if (!scanning) {
+      setElapsed(0);
+      return;
+    }
+    const t = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, [scanning]);
 
   // 调试：注入 JSON
   const handleDebugInject = () => {
@@ -323,6 +334,13 @@ const EntryView: React.FC<EntryViewProps> = ({
 
               {/* 动态提示 */}
               <p className={'cs-scan-hint'}>{SCAN_STEPS[scanStep]?.hint}</p>
+              <p className={'cs-scan-wait-hint'}>
+                {elapsed < 15
+                  ? 'AI 正在分析，请耐心等待…'
+                  : elapsed < 45
+                    ? `已等待 ${elapsed} 秒，AI 正在深度分析，预计还需 30-60 秒`
+                    : `已等待 ${elapsed} 秒，分析时间较长，请耐心等待，不要关闭页面`}
+              </p>
 
               {/* 文件信息 */}
               <div className={'cs-scan-file-info'}>

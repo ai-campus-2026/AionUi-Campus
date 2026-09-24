@@ -5,7 +5,7 @@ icy-search\knowledge_base
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: ([2026-09-03 18:...\knowledge_base:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 [2026-09-03 18:27:51,364] INFO: LLMClient ��ʼ����ɣ�ʹ��ģ��: qwen-plus
 [2026-09-03 18:27:51,364] INFO: PolicyParser ��ʼ�����
 [2026-09-03 18:27:51,364] INFO: PolicyParser ��ʼ�����
@@ -141,4 +141,3 @@ icy-search\knowledge_base
       "condition_matches": [
         {
           "item": "课程出勤要求",
-        

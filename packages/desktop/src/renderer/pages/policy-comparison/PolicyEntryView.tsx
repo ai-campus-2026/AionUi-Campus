@@ -9,6 +9,7 @@ import {
   sendComparisonRequest,
   loadLatestDiffResult,
   checkMcpAvailable,
+  endAutoApprove,
 } from './policyComparisonClient';
 import { tryParsePolicyDiffResult } from './adaptDiffResult';
 
@@ -48,6 +49,7 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
     'running' | 'success' | 'no_mcp' | 'timeout' | 'parse_failed' | 'error'
   >('running');
   const [analyzeErrorMsg, setAnalyzeErrorMsg] = useState<string>('');
+  const [elapsed, setElapsed] = useState(0);
   const [mcpAvailable, setMcpAvailable] = useState<boolean | null>(null);
   // ---- 调试：JSON 注入 ----
   const [debugOpen, setDebugOpen] = useState(false);
@@ -68,6 +70,16 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  // 等待秒数计时
+  useEffect(() => {
+    if (!analyzing) {
+      setElapsed(0);
+      return;
+    }
+    const t = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, [analyzing]);
 
   // ---- 加载知识库文件列表 ----
   useEffect(() => {
@@ -213,6 +225,7 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
         const loaded = await loadLatestDiffResult(conv.id, sendRes.fence);
         if (loaded.status === 'ok' && loaded.result) {
           result = loaded.result;
+          endAutoApprove();
           break;
         }
         lastStatus = loaded.status === 'parse_failed' ? 'parse_failed' : 'no_tool_output';
@@ -222,6 +235,7 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
       setAnalyzeStep(steps.length - 1);
 
       if (!result) {
+        endAutoApprove();
         clearInterval(stepTimer);
         setAnalyzeStep(steps.length - 1);
         if (lastStatus === 'parse_failed') {
@@ -238,6 +252,7 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
       await new Promise((r) => setTimeout(r, 600));
       saveAndGo(result);
     } catch (e) {
+      endAutoApprove();
       clearInterval(stepTimer);
       const errMsg = e instanceof Error ? e.message : String(e);
       console.error('[policy-comparison] MCP 调用失败:', errMsg);
@@ -475,6 +490,14 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
                       </div>
                     ))}
                   </div>
+
+                  <p className='pc-analyzing__wait-hint'>
+                    {elapsed < 15
+                      ? 'AI 正在分析，请耐心等待…'
+                      : elapsed < 45
+                        ? `已等待 ${elapsed} 秒，AI 正在深度分析，预计还需 30-60 秒`
+                        : `已等待 ${elapsed} 秒，分析时间较长，请耐心等待，不要关闭页面`}
+                  </p>
                   <button type='button' className='pc-btn pc-btn--ghost pc-analyzing__cancel' onClick={handleCancel}>
                     取消
                   </button>

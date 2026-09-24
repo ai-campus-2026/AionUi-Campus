@@ -140,7 +140,7 @@ def check_rent_deposit_cap(text: str, lang: str = "zh") -> StatuteCheck:
     deposit = _extract_number(text, r"押金[：:\s]*([0-9,]+)\s*元")
     if deposit is None:
         deposit = _extract_number(text, r"保证金[：:\s]*([0-9,]+)\s*元")
-    
+
     rent = _extract_number(text, r"月租[金：:\s]*([0-9,]+)\s*元")
     if rent is None:
         rent = _extract_number(text, r"租金[：:\s]*([0-9,]+)\s*元/月")
@@ -689,7 +689,7 @@ def check_working_hours_max(text: str, lang: str = "zh") -> StatuteCheck:
 
     # 提取日工作时长
     daily_hours = _extract_number(text, r"(?:工作|上班|工时)[^\d]{0,10}?([0-9]+)\s*(?:小时|h|H)")
-    
+
     # 提取周工作时长
     weekly_hours = _extract_number(text, r"每周[^\d]{0,10}?([0-9]+)\s*(?:小时|h|H)")
     if weekly_hours is None:
@@ -885,14 +885,14 @@ def run_all_nda_checks(text: str, lang: str = "zh") -> list[StatuteCheck]:
 def run_all_checks(text: str, contract_type: str = "unknown", lang: str = "zh") -> list[StatuteCheck]:
     """根据合同类型运行相应检查。"""
     checks = []
-    
+
     if contract_type in ("rental", "lease", "unknown"):
         checks.extend(run_all_rental_checks(text, lang))
-    
+
     if contract_type in ("employment", "internship", "unknown"):
         checks.extend(run_all_employment_checks(text, lang))
-    
+
     if contract_type in ("nda", "unknown"):
         checks.extend(run_all_nda_checks(text, lang))
-    
+
     return checks

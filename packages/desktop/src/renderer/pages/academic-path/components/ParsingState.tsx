@@ -11,6 +11,7 @@ interface Props {
 
 const ParsingState: React.FC<Props> = ({ onDone, error, onReupload }) => {
   const [step, setStep] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     if (step >= parsingSteps.length) {
@@ -20,6 +21,12 @@ const ParsingState: React.FC<Props> = ({ onDone, error, onReupload }) => {
     const t = setTimeout(() => setStep((s) => s + 1), 700);
     return () => clearTimeout(t);
   }, [step, onDone]);
+
+  // 等待秒数计时
+  useEffect(() => {
+    const t = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   // 解析失败界面
   if (error) {
@@ -56,6 +63,13 @@ const ParsingState: React.FC<Props> = ({ onDone, error, onReupload }) => {
             </div>
           ))}
         </div>
+        <p className='ap-parsing__wait-hint'>
+          {elapsed < 15
+            ? 'AI 正在分析，请耐心等待…'
+            : elapsed < 45
+              ? `已等待 ${elapsed} 秒，AI 正在深度分析，预计还需 30-60 秒`
+              : `已等待 ${elapsed} 秒，分析时间较长，请耐心等待，不要关闭页面`}
+        </p>
       </div>
     </div>
   );
