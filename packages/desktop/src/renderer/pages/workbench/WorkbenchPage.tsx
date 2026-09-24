@@ -213,13 +213,13 @@ const WorkbenchPage: React.FC = () => {
   }, []);
 
   // --- 发送：简化版（create + initial_message + navigate，等价于 GuidPage 默认路径）---
-  // 模型偏好：优先 qwen-plus（队友 MCP 与全组统一模型），未配置时回退当前默认模型
+  // 模型偏好：优先 qwen3.8-flash（队友 MCP 与全组统一模型），未配置时回退当前默认模型
   const resolvePreferredModel = useCallback((): TProviderWithModel | undefined => {
     const providers = modelSelection.modelList;
     if (providers && providers.length > 0) {
-      const qwenPlusProvider = providers.find((p) => p.models.some((m) => m === 'qwen-plus'));
-      if (qwenPlusProvider) {
-        return { ...qwenPlusProvider, use_model: 'qwen-plus' };
+      const preferredProvider = providers.find((p) => p.models.some((m) => m === 'qwen3.8-flash'));
+      if (preferredProvider) {
+        return { ...preferredProvider, use_model: 'qwen3.8-flash' };
       }
     }
     return modelSelection.current_model;

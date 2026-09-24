@@ -210,19 +210,19 @@ const PolicyEntryView: React.FC<Props> = ({ history, onSaveHistory, onStartCompa
         throw new Error(conv.error);
       }
 
-      // ---- 2. 发送对比请求 ----
+      // ---- 2. 发送对比请求（sendRes.fence 记录发送前的会话位置，供轮询过滤旧结果） ----
       const sendRes = await sendComparisonRequest(conv.id, oldFile.name, newFile.name);
       if (!sendRes.ok && !sendRes.isConflict) {
         throw new Error(sendRes.error || '发送对比请求失败');
       }
 
-      // ---- 3. 轮询 MCP 结果（最多 30 秒） ----
+      // ---- 3. 轮询 MCP 结果（最多 150 秒；只接受围栏之后的新结果，避免显示上一次的旧快照） ----
       let result: PolicyDiffResult | null = null;
       let lastStatus: 'no_tool_output' | 'parse_failed' = 'no_tool_output';
       const pollStart = Date.now();
-      while (Date.now() - pollStart < 120000) {
+      while (Date.now() - pollStart < 150000) {
         await new Promise((r) => setTimeout(r, 2000));
-        const loaded = await loadLatestDiffResult(conv.id);
+        const loaded = await loadLatestDiffResult(conv.id, sendRes.fence);
         if (loaded.status === 'ok' && loaded.result) {
           result = loaded.result;
           endAutoApprove();

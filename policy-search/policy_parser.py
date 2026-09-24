@@ -16,6 +16,30 @@ from llm_client import LLMClient
 from checklist_annotator import annotate_policy
 
 
+# 抽取文本"乱码率"阈值：控制字符（不含 \n\r\t）与 U+FFFD 替换符占比超过此值判定为不可读。
+# 实测：PyPDF2 不支持 /UniGB-UCS2-H 等中文 CMap 时乱码率约 0.24，pdfplumber 正常抽取约 0.00。
+_GARBAGE_OK_THRESHOLD = 0.05
+
+
+def _garbage_ratio(text: str) -> float:
+    """估算文本乱码率：控制字符（不含换行/制表）与 U+FFFD 替换符占比。
+
+    用于识别 PyPDF2 遇到不支持的中文 CMap（如 /UniGB-UCS2-H）时产出的乱码——
+    这类乱码以大量 C1 控制字符为特征，而正常中文文本该比例接近 0。
+    """
+    if not text:
+        return 1.0
+    sample = text[:8000]
+    bad = 0
+    for ch in sample:
+        if ch == '\ufffd':
+            bad += 1
+            continue
+        if unicodedata.category(ch)[0] == 'C' and ch not in ('\n', '\r', '\t'):
+            bad += 1
+    return bad / max(1, len(sample))
+
+
 class PolicyParser:
     """政策文档解析器：从 PDF/DOCX/HTML/Excel/文本中提取结构化政策信息"""
 
@@ -120,28 +144,41 @@ class PolicyParser:
 
     def _extract_pdf_text(self, pdf_path: str) -> str:
         """
-        从 PDF 提取文本（多引擎策略）
+        从 PDF 提取文本（多引擎策略，按乱码率择优）
 
-        优先级：PyPDF2 > pdfplumber > 兜底
+        优先级：PyPDF2（可读时）> pdfplumber > 兜底。
+        PyPDF2 不支持部分中文 CMap（如 /UniGB-UCS2-H），会抽出乱码但长度仍 >100，
+        旧逻辑会直接返回乱码；现改为乱码时自动回退 pdfplumber，并选乱码更少的一方。
         """
-        # 策略1：PyPDF2（更稳定，兼容性好）
-        text = self._extract_with_pypdf2(pdf_path)
-        if text and len(text.strip()) > 100:
-            logger.info(f"PyPDF2 提取成功，文本长度: {len(text)}")
-            return text
+        pypdf2_text = self._extract_with_pypdf2(pdf_path)
+        # 快路径：PyPDF2 结果可读且足够长，直接返回
+        if (
+            pypdf2_text
+            and len(pypdf2_text.strip()) > 100
+            and _garbage_ratio(pypdf2_text) < _GARBAGE_OK_THRESHOLD
+        ):
+            logger.info(f"PyPDF2 提取成功，文本长度: {len(pypdf2_text)}")
+            return pypdf2_text
 
-        # 策略2：pdfplumber（对表格和复杂排版更好）
-        text = self._extract_with_pdfplumber(pdf_path)
-        if text and len(text.strip()) > 100:
-            logger.info(f"pdfplumber 提取成功，文本长度: {len(text)}")
-            return text
+        pdfplumber_text = self._extract_with_pdfplumber(pdf_path)
 
-        # 策略3：如果两个引擎都失败，返回已提取的内容（即使较短）
-        if text:
-            logger.warning(f"PDF 提取文本较短（{len(text)} 字符）")
-            return text
+        candidates = [
+            (name, text)
+            for name, text in (("PyPDF2", pypdf2_text), ("pdfplumber", pdfplumber_text))
+            if text and text.strip()
+        ]
+        if not candidates:
+            raise ValueError(f"无法从 PDF 中提取文本: {pdf_path}")
 
-        raise ValueError(f"无法从 PDF 中提取文本: {pdf_path}")
+        # 选乱码率最低的一份；并列时取更长的一份
+        best_name, best_text = min(candidates, key=lambda nt: (_garbage_ratio(nt[1]), -len(nt[1])))
+        if _garbage_ratio(best_text) >= _GARBAGE_OK_THRESHOLD:
+            logger.warning(
+                f"两种方式抽取均疑似乱码（选 {best_name}，长度 {len(best_text)}），结果可能含乱码: {pdf_path}"
+            )
+        else:
+            logger.info(f"{best_name} 提取成功（已回退乱码来源），文本长度: {len(best_text)}")
+        return best_text
 
     def _extract_docx_text(self, docx_path: str) -> str:
         """

@@ -71,8 +71,9 @@ class Config:
     # LLM 模型：优先 POLICY_COMPARE_LLM_MODEL，其次 LLM_MODEL
     LLM_MODEL: str = os.getenv("POLICY_COMPARE_LLM_MODEL") or os.getenv("LLM_MODEL", "qwen3.7-plus")
 
-    # LLM 超时（秒）。前端仅轮询 30s（含 Agent 决策耗时），超时即降级规则对比尽快返回
-    LLM_TIMEOUT: int = int(os.getenv("POLICY_COMPARE_LLM_TIMEOUT", "20"))
+    # LLM 超时（秒）。前端轮询放宽到 150s（含 Agent 决策耗时），这里留约 30s 余量，
+    # 让大文件也能让 LLM 引擎跑完；仅当单次 LLM 超过此上限才降级规则对比尽快返回。
+    LLM_TIMEOUT: int = int(os.getenv("POLICY_COMPARE_LLM_TIMEOUT", "120"))
 
     # 是否禁用 LLM（设置为 1/true 时强制走规则对比，便于离线调试）
     _disable_llm_raw: str = os.getenv("POLICY_COMPARE_DISABLE_LLM", "").strip().lower()

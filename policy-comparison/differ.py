@@ -217,7 +217,7 @@ def llm_compare(old_doc: Dict[str, Any], new_doc: Dict[str, Any]) -> Optional[Li
         new_version=new_doc.get("version") or "新版",
         new_text=_cap_text(new_doc.get("text") or ""),
     )
-    # 不重试：单次超时即可降级规则对比，需控制在前端 30s 轮询预算内
+    # 不重试：单次超时即降级规则对比；上限见 Config.LLM_TIMEOUT（默认 120s，对齐前端 150s 轮询预算）
     result = LLMClient().extract_json(_SYSTEM_PROMPT, user_prompt, max_retries=0)
     if not result.get("success"):
         logger.warning(f"LLM 对比失败: {str(result.get('content'))[:200]}")

@@ -233,12 +233,50 @@ export async function ensureComparisonConversation(): Promise<{ id: string } | {
   }
 }
 
-/** 向对话发送对比请求；失败返回具体错误 */
+/**
+ * 对比请求的“围栏”：发送前会话中最新一条工具消息 id + 发送时刻。
+ * 轮询只接受围栏之后新出现的工具结果，避免把上一次对比留下的旧快照当成新结果。
+ */
+export interface CompareFence {
+  /** 发送前会话中最新一条工具消息 id；发送前没有工具消息时为 null */
+  newestToolMessageId: string | null;
+  /** 发送时刻（毫秒时间戳）；围栏消息滚出分页窗口时的兜底过滤依据 */
+  sentAt: number;
+}
+
+const TOOL_MESSAGE_TYPES = new Set(['tool_call', 'tool_group', 'acp_tool_call']);
+
+function isToolMessage(m: { type?: string }): boolean {
+  return !!m.type && TOOL_MESSAGE_TYPES.has(m.type);
+}
+
+/** 取会话中最新一条工具消息 id（消息按时间升序返回，从尾部往前找） */
+async function captureNewestToolMessageId(conversationId: string): Promise<string | null> {
+  try {
+    const page = await loadLatestConversationMessages(conversationId, { limit: 100, contentMode: 'full' });
+    const items = page.items ?? [];
+    for (let i = items.length - 1; i >= 0; i--) {
+      const m = items[i];
+      if (isToolMessage(m) && m.id) return m.id;
+    }
+  } catch {
+    // 围栏获取失败不阻断发送：loadLatestDiffResult 会按 sentAt 兜底过滤
+  }
+  return null;
+}
+
+/** 向对话发送对比请求；失败返回具体错误。发送前记录围栏（fence），供轮询只取新结果。 */
 export async function sendComparisonRequest(
   id: string,
   oldFileName: string,
   newFileName: string
-): Promise<{ ok: boolean; error?: string; isConflict?: boolean }> {
+): Promise<{ ok: boolean; error?: string; isConflict?: boolean; fence: CompareFence }> {
+  // 围栏必须在发送前捕获：本次对比的新输出一定出现在它之后
+  const fence: CompareFence = {
+    newestToolMessageId: await captureNewestToolMessageId(id),
+    sentAt: Date.now(),
+  };
+  // 工作台是纯轮询、无聊天确认 UI，发送后即启动待确认自动放行
   beginAutoApprove(id);
   const text = `你现在必须调用 compare_policy_versions 这个 MCP 工具来对比两个政策文件的差异，不要自己手动分析。
 
@@ -248,12 +286,12 @@ export async function sendComparisonRequest(
 调用完成后，直接把工具返回的完整 JSON 结果原样返回给我，不要自己总结，不要添加任何额外内容。`;
   try {
     await ipcBridge.conversation.sendMessage.invoke({ conversation_id: id, input: text });
-    return { ok: true };
+    return { ok: true, fence };
   } catch (e) {
     console.error('[policy-comparison] sendMessage failed:', e);
     const msg = errText(e);
     const isConflict = /409|already running|CONFLICT/i.test(msg);
-    return { ok: false, error: msg, isConflict };
+    return { ok: false, error: msg, isConflict, fence };
   }
 }
 
@@ -267,13 +305,15 @@ export interface LoadedDiffResult {
 }
 
 /**
- * 加载对话最近一条可解析的政策对比工具结果。
+ * 加载对话中“本次对比”产生的政策对比工具结果。
+ * 传入 fence 时只考虑围栏（发送前记录）之后新出现的工具消息，
+ * 绝不回退到发送前的旧结果（无围栏时会命中上一次对比的输出，即旧快照问题的根因）。
  * 两段式解析（与规则分析一致）：
  *   1. 先尝试分页消息中的 output
  *   2. 解析失败时，从数据库加载完整消息重新解析
  * 无可用结果时返回 null。
  */
-export async function loadLatestDiffResult(conversationId: string): Promise<LoadedDiffResult> {
+export async function loadLatestDiffResult(conversationId: string, fence?: CompareFence): Promise<LoadedDiffResult> {
   try {
     const page = await loadLatestConversationMessages(conversationId, { limit: 100, contentMode: 'full' });
     const toolMsgs = (page.items ?? []).filter(
@@ -282,7 +322,24 @@ export async function loadLatestDiffResult(conversationId: string): Promise<Load
     // MCP 没有返回任何工具结果（可能还在运行或调用超时）
     if (toolMsgs.length === 0) return { status: 'no_tool_output' };
 
-    const normalized = normalizeToolMessages(toolMsgs);
+    // 围栏过滤：只取发送后新出现的工具消息。旧结果仍留在会话分页里，
+    // 不切片的话会把上一次对比的旧快照当成新结果返回。
+    let eligible = toolMsgs;
+    if (fence) {
+      if (fence.newestToolMessageId) {
+        const fenceIdx = toolMsgs.findIndex((m) => m.id === fence.newestToolMessageId);
+        eligible =
+          fenceIdx >= 0
+            ? toolMsgs.slice(fenceIdx + 1)
+            : toolMsgs.filter((m) => (m.created_at ?? 0) >= fence.sentAt - 1500);
+      } else {
+        // 发送前会话里没有工具消息（或围栏获取失败）：按发送时刻兜底过滤
+        eligible = toolMsgs.filter((m) => (m.created_at ?? 0) >= fence.sentAt - 1500);
+      }
+    }
+    if (eligible.length === 0) return { status: 'no_tool_output' };
+
+    const normalized = normalizeToolMessages(eligible);
     let hasOutput = false;
     for (let i = normalized.length - 1; i >= 0; i--) {
       const tool = normalized[i];

@@ -958,10 +958,12 @@ def _progress_known_course_codes(document_id: str) -> set[str]:
             raise
 
     document, source, _attachment = curriculum_store.load_source_for_retry(document_id)
+    cohort = document.get("cohort")
+    preview_grade = cohort if isinstance(cohort, str) and re.fullmatch(r"20\d{2}", cohort) else ""
     try:
         preview = parse_program_plan_pages(
             native_pdf_pages_for_plan(source),
-            grade=str(document.get("cohort") or ""),
+            grade=preview_grade,
             version=document.get("version") if isinstance(document.get("version"), str) else None,
         )
     except (ProgramPlanParseError, AttachmentExtractError, OSError, ValueError) as error:

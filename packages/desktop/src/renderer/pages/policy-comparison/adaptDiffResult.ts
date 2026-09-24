@@ -59,7 +59,8 @@ function parseDirect(obj: unknown): PolicyDiffResult | null {
     const parsed = parseChange(c);
     if (parsed) changes.push(parsed);
   }
-  if (changes.length === 0) return null;
+  // 允许空变更集：对比工具对“两个版本无差异”会返回合法的空 changes，
+  // Diff 页对空变更集有空态展示（“两个版本没有发现明显变化”）。
 
   const summaryRaw = r.summary;
   let summary = { total: changes.length, modified: 0, added: 0, removed: 0 };
